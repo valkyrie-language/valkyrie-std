@@ -1,0 +1,16 @@
+{
+    name: "std.adaptor.wasm",
+    description: "Valkyrie WebAssembly SDK -- Web 浏览器 API 绑定",
+    main: "source/console.v",
+    dependencies: {
+        "core": "workspace"
+    },
+    build: [
+        {
+            target: "nyar"
+        }
+    ],
+    engines: {
+        vcc: ">=0.1.0"
+    }
+}

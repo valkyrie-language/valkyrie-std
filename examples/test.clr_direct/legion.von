@@ -1,0 +1,14 @@
+{
+    name: "test.clr_direct",
+    version: "0.0.0.0",
+    description: "CLR直连外部函数测试",
+    dependencies: {
+        "std": false
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ]
+}

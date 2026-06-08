@@ -1,0 +1,22 @@
+{
+    name: "test.any_value",
+    version: "0.0.0.0",
+    description: "显式 any 类型多目标编译测试",
+    license: "MIT",
+    dependencies: {},
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

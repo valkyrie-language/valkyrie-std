@@ -1,0 +1,22 @@
+{
+    name: "test.ffi_foreign",
+    version: "0.0.0.0",
+    description: "FFI / 外部函数接口 / C 互操作 / 系统调用测试",
+    license: "MIT",
+    dependencies: {},
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

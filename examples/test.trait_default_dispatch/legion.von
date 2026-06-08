@@ -1,0 +1,22 @@
+{
+    name: "test.trait_default_dispatch",
+    version: "0.0.0.0",
+    description: "Trait 默认方法多目标编译测试",
+    license: "MIT",
+    dependencies: {},
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

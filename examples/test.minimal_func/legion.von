@@ -1,0 +1,15 @@
+{
+    name: "test.minimal_func",
+    version: "0.0.0.0",
+    description: "最小函数测试 - 判断编译管线是否正常工作",
+    license: "MIT",
+    dependencies: {
+        "std": false,
+        "core": false
+    },
+    build: [
+        {
+            target: "nyar"
+        }
+    ]
+}

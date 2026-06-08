@@ -1,0 +1,22 @@
+{
+    name: "test.nullable_type",
+    version: "0.0.0.0",
+    description: "可空类型语法特性测试",
+    license: "MIT",
+    dependencies: {},
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

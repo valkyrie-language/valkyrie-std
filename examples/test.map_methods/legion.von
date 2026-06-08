@@ -1,0 +1,22 @@
+{
+    name: "test.map_methods",
+    version: "0.0.0.0",
+    description: "map/dict 常用方法测试",
+    license: "MIT",
+    dependencies: {},
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

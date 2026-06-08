@@ -1,0 +1,27 @@
+{
+    name: "test.if_expression",
+    version: "0.0.0.0",
+    description: "if 表达式语法特性测试",
+    license: "MIT",
+    dependencies: {
+        "some_name": {
+            version: true,
+            test: true,
+        }
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

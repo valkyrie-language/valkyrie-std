@@ -1,0 +1,15 @@
+{
+    name: "nyar-core",
+    version: "0.1.0",
+    description: "Nyar 核心应用",
+    license: "MIT",
+    type: "application",
+    main: "source/main.v",
+    dependencies: {},
+    build: [
+        {
+            target: "nyar"
+        }
+    ],
+    devDependencies: {}
+}

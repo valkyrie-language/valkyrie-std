@@ -1,0 +1,24 @@
+{
+    name: "test.hello_world",
+    version: "0.0.0.0",
+    description: "Hello World 多目标编译测试",
+    license: "MIT",
+    dependencies: {
+        "std": true
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true,
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

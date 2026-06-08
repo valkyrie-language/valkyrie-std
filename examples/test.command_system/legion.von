@@ -1,0 +1,15 @@
+{
+    name: "test.command_system",
+    version: "0.0.0.0",
+    description: "命令行属性驱动系统集成测试",
+    license: "MIT",
+    dependencies: {
+        "core": true,
+        "std": true
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed"
+        }
+    ]
+}

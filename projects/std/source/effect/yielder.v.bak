@@ -1,0 +1,22 @@
+namespace std.effect;
+
+⍝ 生成器效应
+⍝ 用于实现迭代器/生成器语义
+⍝ Yield { value: T } 产生一个值并暂停
+⍝ YieldBreak 终止生成
+unite Yielder<T> {
+    ⍝ 产生一个值并暂停
+    Yield { value: T }
+    ⍝ 终止生成
+    YieldBreak
+}
+
+⍝ 为 Yielder<T> 实现 Effectful trait
+⍝ 每次 yield 后恢复为 ()
+imply Yielder<T>: Effectful {
+    type Resume = ();
+}
+
+imply Yielder<T>: Case {
+    ...
+}

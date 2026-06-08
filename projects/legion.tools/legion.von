@@ -1,0 +1,19 @@
+{
+    name: "legion.tools",
+    description: "Legion 构造工具",
+    build: [
+        {
+            target: "clr"
+        },
+        {
+            target: "nyar"
+        }
+    ],
+    publish: [
+        {
+            target: "clr",
+            type: "nuget",
+            package_id: "Sonic.Legion"
+        }
+    ]
+}

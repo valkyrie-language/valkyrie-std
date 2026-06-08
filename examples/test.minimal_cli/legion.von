@@ -1,0 +1,12 @@
+{
+    name: "test.minimal_cli",
+    version: "0.0.0.0",
+    description: "最小命令行测试",
+    license: "MIT",
+    dependencies: {},
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed"
+        }
+    ]
+}
