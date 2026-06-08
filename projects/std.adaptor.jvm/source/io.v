@@ -26,3 +26,12 @@ micro jvm_file_list(path: string): i32
 
 [jvm("java.io.File", "renameTo")]
 micro jvm_file_rename_to(old_path: string, new_path: string): bool
+
+[jvm("java.nio.file.Path", "of")]
+micro jvm_path_of(path: string): i32
+
+[jvm("java.nio.file.Files", "readString")]
+micro jvm_file_read_all_text(path_handle: i32): string
+
+[jvm("java.nio.file.Files", "writeString")]
+micro jvm_file_write_all_text(path_handle: i32, content: string): i32

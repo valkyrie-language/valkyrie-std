@@ -1,15 +1,26 @@
 {
     name: "nyar-core",
     version: "0.1.0",
-    description: "Nyar 核心应用",
+    description: "Nyar 核心库 — 目标三元组、构建矩阵、编译上下文等基础设施",
     license: "MIT",
-    type: "application",
-    main: "source/main.v",
+    type: "library",
     dependencies: {},
     build: [
         {
             target: "nyar"
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        },
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true
         }
     ],
-    devDependencies: {}
 }

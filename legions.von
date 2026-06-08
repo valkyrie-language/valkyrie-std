@@ -59,6 +59,8 @@
         "projects/core",
         "projects/nyar",
         "projects/std",
+        "projects/std.data.text.v",
+        "projects/std.data.text.von",
         "projects/std.adaptor.clr",
         "projects/std.adaptor.jvm",
         "projects/std.adaptor.linux",

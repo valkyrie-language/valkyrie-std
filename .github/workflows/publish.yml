@@ -17,7 +17,7 @@ on:
 
 env:
   DOTNET_VERSION: '11.0'
-  REGISTRY_URL: ${{ vars.VALHALLA_REGISTRY_URL || 'https://valhalla.valkyrie-lang.dev' }}
+  REGISTRY_URL: ${{ vars.VALHALLA_REGISTRY_URL || 'https://valhalla.valkyrie.dev' }}
 
 jobs:
   publish:

@@ -1,9 +1,20 @@
 {
     name: "legion.tools",
     description: "Legion 构造工具",
+    dependencies: {
+        core: false,
+        std: true,
+        "std.data.text.von": { version: "workspace" }
+    },
     build: [
         {
             target: "clr"
+        },
+        {
+            target: "jvm"
+        },
+        {
+            target: "wasm"
         },
         {
             target: "nyar"

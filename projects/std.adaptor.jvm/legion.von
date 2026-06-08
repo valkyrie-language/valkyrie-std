@@ -13,7 +13,7 @@
     },
     build: [
         {
-            target: "nyar"
+            target: "jvm-openjdk-unknown-managed"
         }
     ],
     cpu: {

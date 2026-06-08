@@ -29,6 +29,9 @@ micro directory_delete(path: string, recursive: bool): unit
 [clr("System.IO.Directory", "GetFiles")]
 micro directory_get_files(path: string): i32
 
+[clr("System.IO.Directory", "GetCurrentDirectory")]
+micro directory_get_current_directory(): string
+
 [clr("System.IO.Path", "Combine")]
 micro path_combine(path1: string, path2: string): string
 

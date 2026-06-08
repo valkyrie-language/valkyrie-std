@@ -11,6 +11,8 @@ TestResults/
 obj/
 bin/
 *.trx
+*.log
+*.txt
 
 # V
 .legion/
