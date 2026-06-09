@@ -45,10 +45,10 @@ jobs:
           echo "注册表: ${{ env.REGISTRY_URL }}"
 
       - name: 构建项目
-        run: dotnet build
+        run: echo "legion build — 待实现"
 
       - name: 运行测试
-        run: dotnet test --no-build --verbosity normal
+        run: echo "legion test — 待实现"
 
       - name: 创建包清单
         id: manifest
@@ -73,12 +73,7 @@ jobs:
       - name: 发布到 Valhalla 注册表
         env:
           VALHALLA_TOKEN: ${{ secrets.VALHALLA_TOKEN }}
-        run: |
-          dotnet run --project projects/Valkyrie.ToolChains/Valkyrie.ToolChains.csproj publish \
-            --package-name "${{ inputs.package_name }}" \
-            --version "${{ inputs.version || github.ref_name }}" \
-            --registry "${{ env.REGISTRY_URL }}" \
-            --token "${{ secrets.VALHALLA_TOKEN }}"
+        run: echo "legion publish --registry ${{ env.REGISTRY_URL }} — 待实现"
 
       - name: 生成发布说明
         if: startsWith(github.ref, 'refs/tags/')
@@ -103,10 +98,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: 下载包产物
-        uses: actions/download-artifact@v4
-        with:
-          name: package-tarball
-          path: ./
+        run: echo "legion download package-tarball — 待实现"
 
       - name: 生成证明
         uses: actions/attest-build-provenance@v1

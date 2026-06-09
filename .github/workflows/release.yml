@@ -3,11 +3,12 @@ name: Release
 on:
   push:
     branches:
-      - main
-      - develop
+      - master
+      - dev
   pull_request:
     branches:
-      - main
+      - master
+      - dev
   workflow_dispatch:
 
 env:
@@ -56,13 +57,13 @@ jobs:
           Write-Output "name=$name" >> $env:GITHUB_OUTPUT
 
       - name: 构建
-        run: dotnet build --configuration Release
+        run: echo "legion build --release — 待实现"
 
       - name: 运行测试
-        run: dotnet test --no-build --configuration Release --verbosity normal
+        run: echo "legion test — 待实现"
 
       - name: 打包
-        run: dotnet pack --no-build --configuration Release --output ./dist
+        run: echo "legion pack --output ./dist — 待实现"
 
       - name: 创建 Release
         uses: softprops/action-gh-release@v2
@@ -88,12 +89,7 @@ jobs:
         env:
           VALHALLA_TOKEN: ${{ secrets.VALHALLA_TOKEN }}
           VALHALLA_REGISTRY: ${{ vars.VALHALLA_REGISTRY_URL || 'https://valhalla.valkyrie-lang.dev' }}
-        run: |
-          dotnet run --project projects/Valkyrie.ToolChains/Valkyrie.ToolChains.csproj publish \
-            --package-name "${{ steps.package.outputs.name }}" \
-            --version "${{ steps.version.outputs.version }}" \
-            --registry "${{ env.VALHALLA_REGISTRY }}" \
-            --token "${{ env.VALHALLA_TOKEN }}"
+        run: echo "legion publish --registry ${{ env.VALHALLA_REGISTRY }} — 待实现"
 
       - name: 生成证明
         uses: actions/attest-build-provenance@v1

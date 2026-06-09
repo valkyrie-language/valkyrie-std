@@ -1,0 +1,17 @@
+{
+    name: "std.data.binary.wasm",
+    version: "0.1.0",
+    description: "WASM 二进制解析库 - 解码 .wasm 字节流为结构化数据",
+    license: "MIT",
+    type: "library",
+    dependencies: {
+        core: false,
+        std: false
+    },
+    build: [
+        { target: "nyar" },
+        { target: "clr" },
+        { target: "jvm" },
+        { target: "wasm" }
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    name: "std.data.text.msil",
+    version: "0.1.0",
+    description: "MSIL/ILASM 文本解析库 - 词法分析",
+    license: "MIT",
+    type: "library",
+    dependencies: {
+        core: false,
+        std: false,
+        "std.data.text.v": "workspace"
+    },
+    build: [
+        { target: "nyar" },
+        { target: "clr" },
+        { target: "jvm" },
+        { target: "wasm" }
+    ]
+}

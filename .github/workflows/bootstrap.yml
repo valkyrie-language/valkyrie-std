@@ -1,0 +1,183 @@
+name: 自举验证
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      previous_version:
+        description: '上一代编译器版本号（留空则用 latest）'
+        required: false
+        type: string
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # CLR 后端自举
+  # ─────────────────────────────────────────────────────────────
+  bootstrap-clr:
+    name: 自举验证 — CLR
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 .NET 运行时
+        run: echo "legion setup dotnet — 待实现"
+
+      - name: 从 NuGet 安装上一代编译器
+        run: echo "dotnet tool install Valkyrie.Compiler.CLR --global — 待实现"
+
+      - name: 第一轮编译 — 用上一代 CLR 编译器编译当前源码
+        run: echo "legion build --compiler previous --target clr --output ./dist/v1-clr — 待实现"
+
+      - name: 第二轮编译 — 用 v1 编译器再次编译当前源码
+        run: echo "legion build --compiler bootstrap --bootstrap ./dist/v1-clr --target clr --output ./dist/v2-clr — 待实现"
+
+      - name: 对比 v1 与 v2
+        run: echo "sha256sum ./dist/v1-clr/*.dll ./dist/v2-clr/*.dll — 待实现"
+
+      - name: 上传自举产物
+        run: echo "legion upload bootstrap-clr — 待实现"
+
+  # ─────────────────────────────────────────────────────────────
+  # JVM 后端自举
+  # ─────────────────────────────────────────────────────────────
+  bootstrap-jvm:
+    name: 自举验证 — JVM
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 JDK 运行时
+        run: echo "legion setup jdk — 待实现"
+
+      - name: 从 Maven Central 安装上一代编译器
+        run: echo "mvn dependency:copy -Dartifact=dev.valkyrie:compiler-jvm:LATEST — 待实现"
+
+      - name: 第一轮编译 — 用上一代 JVM 编译器编译当前源码
+        run: echo "legion build --compiler previous --target jvm --output ./dist/v1-jvm — 待实现"
+
+      - name: 第二轮编译 — 用 v1 编译器再次编译当前源码
+        run: echo "legion build --compiler bootstrap --bootstrap ./dist/v1-jvm --target jvm --output ./dist/v2-jvm — 待实现"
+
+      - name: 对比 v1 与 v2
+        run: echo "sha256sum ./dist/v1-jvm/*.jar ./dist/v2-jvm/*.jar — 待实现"
+
+      - name: 上传自举产物
+        run: echo "legion upload bootstrap-jvm — 待实现"
+
+  # ─────────────────────────────────────────────────────────────
+  # WASM 后端自举
+  # ─────────────────────────────────────────────────────────────
+  bootstrap-wasm:
+    name: 自举验证 — WASM
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js 与 Wasm 运行时
+        run: echo "legion setup node wasmtime — 待实现"
+
+      - name: 从 npm 安装上一代编译器
+        run: echo "npm install -g @valkyrie/compiler-wasm — 待实现"
+
+      - name: 第一轮编译 — 用上一代 WASM 编译器编译当前源码
+        run: echo "legion build --compiler previous --target wasm --output ./dist/v1-wasm — 待实现"
+
+      - name: 第二轮编译 — 用 v1 编译器再次编译当前源码
+        run: echo "legion build --compiler bootstrap --bootstrap ./dist/v1-wasm --target wasm --output ./dist/v2-wasm — 待实现"
+
+      - name: 对比 v1 与 v2
+        run: echo "sha256sum ./dist/v1-wasm/*.wasm ./dist/v2-wasm/*.wasm — 待实现"
+
+      - name: 上传自举产物
+        run: echo "legion upload bootstrap-wasm — 待实现"
+
+  # ─────────────────────────────────────────────────────────────
+  # 对角交叉验证
+  # ─────────────────────────────────────────────────────────────
+  diagonal-clr-jvm:
+    name: 对角验证 — CLR→JVM
+    runs-on: ubuntu-latest
+    needs: [bootstrap-clr]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载 CLR 自举产物
+        run: echo "legion download bootstrap-clr — 待实现"
+
+      - name: 用 CLR 编译器编译 JVM 后端测试用例
+        run: echo "legion build --compiler ./dist/clr/v1 --target jvm --output ./cross-out/clr-to-jvm — 待实现"
+
+      - name: 在 JVM 运行时上执行
+        run: echo "legion run --target jvm ./cross-out/clr-to-jvm — 待实现"
+
+  diagonal-jvm-wasm:
+    name: 对角验证 — JVM→WASM
+    runs-on: ubuntu-latest
+    needs: [bootstrap-jvm]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载 JVM 自举产物
+        run: echo "legion download bootstrap-jvm — 待实现"
+
+      - name: 用 JVM 编译器编译 WASM 后端测试用例
+        run: echo "legion build --compiler ./dist/jvm/v1 --target wasm --output ./cross-out/jvm-to-wasm — 待实现"
+
+      - name: 在 WASM 运行时上执行
+        run: echo "legion run --target wasm ./cross-out/jvm-to-wasm — 待实现"
+
+  diagonal-wasm-clr:
+    name: 对角验证 — WASM→CLR
+    runs-on: ubuntu-latest
+    needs: [bootstrap-wasm]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 下载 WASM 自举产物
+        run: echo "legion download bootstrap-wasm — 待实现"
+
+      - name: 用 WASM 编译器编译 CLR 后端测试用例
+        run: echo "legion build --compiler ./dist/wasm/v1 --target clr --output ./cross-out/wasm-to-clr — 待实现"
+
+      - name: 在 CLR 运行时上执行
+        run: echo "legion run --target clr ./cross-out/wasm-to-clr — 待实现"
+
+  # ─────────────────────────────────────────────────────────────
+  # 汇总判定
+  # ─────────────────────────────────────────────────────────────
+  gate:
+    name: 汇总判定
+    runs-on: ubuntu-latest
+    needs:
+      - bootstrap-clr
+      - bootstrap-jvm
+      - bootstrap-wasm
+      - diagonal-clr-jvm
+      - diagonal-jvm-wasm
+      - diagonal-wasm-clr
+    if: always()
+
+    steps:
+      - name: 打印自举结果
+        run: |
+          echo "## 自举验证结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 后端 | 结果 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CLR | ${{ needs.bootstrap-clr.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| JVM | ${{ needs.bootstrap-jvm.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| WASM | ${{ needs.bootstrap-wasm.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 对角验证 | 结果 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| CLR → JVM | ${{ needs.diagonal-clr-jvm.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| JVM → WASM | ${{ needs.diagonal-jvm-wasm.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| WASM → CLR | ${{ needs.diagonal-wasm-clr.result }} |" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,23 @@
+{
+    name: "test.cross_backend",
+    version: "0.0.0.0",
+    description: "跨后端外部函数绑定测试（CLR + JVM + WASM）",
+    license: "MIT",
+    dependencies: {
+        "std": true
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        },
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            wat: true,
+        }
+    ]
+}
