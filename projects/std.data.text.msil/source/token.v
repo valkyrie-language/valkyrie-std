@@ -4,39 +4,73 @@ namespace std.data.text.msil;
 unite MsilTokenKind {
     EndOfFile
 
-    Directive
+    // 指令 -- 纯分派标记，不携带数据
+    AssemblyDirective
+    ModuleDirective
+    ClassDirective
+    OverrideDirective
+    PermissionDirective
+    PermissionSetDirective
+    HashDirective
+    VerDirective
+    LocaleDirective
+    PublicKeyDirective
+    CustomDirective
+    PackDirective
+    SizeDirective
+    FieldDirective
+    MethodDirective
+    PropertyDirective
+    EventDirective
+    MaxStackDirective
+    LocalsDirective
+    TryDirective
+    LineDirective
+    LanguageDirective
+    EntryPointDirective
+    GetDirective
+    SetDirective
+    AddOnDirective
+    RemoveOnDirective
+    FireDirective
+    PInvokeImplDirective
 
-    Opcode
+    // 关键字 -- 纯分派标记，不携带数据
+    ExtendsKeyword
+    ImplementsKeyword
+    CatchKeyword
+    FilterKeyword
+    FinallyKeyword
+    FaultKeyword
+    InitKeyword
+    DefaultKeyword
+    VarArgKeyword
+    AtKeyword
+    AsKeyword
+    CilKeyword
+    ManagedKeyword
 
-    Identifier
-
-    TypeReference
-
-    Number
-
-    String
-
-    IllLabel
-
-    Comment
-
-    Modifier
-
-    Punctuation
+    // 带数据变体 -- 值嵌入 kind 内部，无需外部 text 字段
+    Opcode(utf8)
+    Identifier(utf8)
+    TypeReference(utf8)
+    Number(utf8)
+    String(utf8)
+    IllLabel(utf8)
+    Comment(utf8)
+    Punctuation(utf8)
 }
 
 structure MsilToken {
     kind: MsilTokenKind
-    text: utf8
     span: TextSpan
     line: usize
     column: usize
 }
 
-micro new_msil_token(kind: MsilTokenKind, text: utf8, start: usize, stop: usize, line: usize, column: usize) -> MsilToken {
+micro new_msil_token(kind: MsilTokenKind, start: usize, stop: usize, line: usize, column: usize) -> MsilToken {
     return MsilToken {
         kind: kind,
-        text: text,
         span: TextSpan {
             start: start,
             stop: stop
@@ -47,5 +81,20 @@ micro new_msil_token(kind: MsilTokenKind, text: utf8, start: usize, stop: usize,
 }
 
 micro eof_msil_token(position: usize, line: usize, column: usize) -> MsilToken {
-    return new_msil_token(EndOfFile, "", position, position, line, column)
+    return new_msil_token(EndOfFile, position, position, line, column)
+}
+
+/// 判断 token 文本是否为 MSIL 修饰符 -- 仅 lexer 分类用
+micro is_msil_modifier_text(word: utf8) -> bool {
+    return word == "public" || word == "private" || word == "family" || word == "assembly"
+        || word == "famandassem" || word == "famorassem" || word == "privatescope"
+        || word == "static" || word == "instance" || word == "virtual" || word == "abstract"
+        || word == "sealed" || word == "final" || word == "specialname" || word == "rtspecialname"
+        || word == "initonly" || word == "literal" || word == "notserialized"
+        || word == "value" || word == "enum" || word == "interface"
+        || word == "sequential" || word == "auto" || word == "explicit"
+        || word == "ansi" || word == "unicode" || word == "autochar"
+        || word == "beforefieldinit" || word == "forwardref" || word == "preservesig"
+        || word == "internalcall" || word == "synchronized" || word == "noinlining"
+        || word == "aggressiveinlining" || word == "optil" || word == "nooptimization"
 }

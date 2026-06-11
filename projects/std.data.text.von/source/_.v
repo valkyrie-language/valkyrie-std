@@ -1,6 +1,6 @@
 namespace std.data.text.von;
 
-use std.data.text.v;
+using std.data.text.v;
 
 structure VonDiagnostic {
     message: utf8

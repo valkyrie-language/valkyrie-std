@@ -1,12 +1,9 @@
 {
     name: "std.data.text.von",
-    version: "0.1.0",
+    version: "workspace",
     description: "VON 文本解析库 - 词法分析、语法解析与值模型",
-    license: "MIT",
     type: "library",
     dependencies: {
-        core: false,
-        std: false,
         "std.data.text.v": "workspace"
     },
     build: [

@@ -32,24 +32,24 @@ micro parse_von_tokens(tokens: [VonToken]) -> VonParseResult<VonValue> {
 micro parse_von_value(tokens: [VonToken], index: usize) -> VonParseResult<VonParsedValue> {
     let token: VonToken = peek_von_token(tokens, index)
     match token.kind {
-        case StringLiteral:
+        case StringLiteral(text):
             return Fine(VonParsedValue {
-                value: Text(token.text),
+                value: Text(text),
                 next_index: index + 1
             })
-        case NumberLiteral:
+        case NumberLiteral(text):
             return Fine(VonParsedValue {
-                value: Number(token.text),
+                value: Number(text),
                 next_index: index + 1
             })
-        case BooleanLiteral:
+        case BooleanLiteral(text):
             return Fine(VonParsedValue {
-                value: Flag(token.text == "true"),
+                value: Flag(text == "true"),
                 next_index: index + 1
             })
-        case Identifier:
+        case Identifier(text):
             return Fine(VonParsedValue {
-                value: Name(token.text),
+                value: Name(text),
                 next_index: index + 1
             })
         case LeftBrace:
@@ -150,10 +150,8 @@ micro parse_von_array(tokens: [VonToken], index: usize) -> VonParseResult<VonPar
 micro parse_von_field_name(tokens: [VonToken], index: usize) -> utf8 {
     let token: VonToken = peek_von_token(tokens, index)
     match token.kind {
-        case Identifier:
-            return token.text
-        case StringLiteral:
-            return token.text
+        case Identifier(text) | StringLiteral(text):
+            return text
         else:
             return ""
     }

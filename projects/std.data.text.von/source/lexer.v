@@ -43,37 +43,37 @@ micro lex_von(source: utf8) -> VonParseResult<[VonToken]> {
         }
 
         if ch == "{" {
-            push(tokens, new_von_token(LeftBrace, "{", index, index + 1))
+            push(tokens, new_von_token(LeftBrace, index, index + 1))
             index = index + 1
             continue
         }
 
         if ch == "}" {
-            push(tokens, new_von_token(RightBrace, "}", index, index + 1))
+            push(tokens, new_von_token(RightBrace, index, index + 1))
             index = index + 1
             continue
         }
 
         if ch == "[" {
-            push(tokens, new_von_token(LeftBracket, "[", index, index + 1))
+            push(tokens, new_von_token(LeftBracket, index, index + 1))
             index = index + 1
             continue
         }
 
         if ch == "]" {
-            push(tokens, new_von_token(RightBracket, "]", index, index + 1))
+            push(tokens, new_von_token(RightBracket, index, index + 1))
             index = index + 1
             continue
         }
 
         if ch == ":" {
-            push(tokens, new_von_token(Colon, ":", index, index + 1))
+            push(tokens, new_von_token(Colon, index, index + 1))
             index = index + 1
             continue
         }
 
         if ch == "," {
-            push(tokens, new_von_token(Comma, ",", index, index + 1))
+            push(tokens, new_von_token(Comma, index, index + 1))
             index = index + 1
             continue
         }
@@ -86,7 +86,7 @@ micro lex_von(source: utf8) -> VonParseResult<[VonToken]> {
                 let current: utf8 = source[index]
                 if current == "\"" {
                     index = index + 1
-                    push(tokens, new_von_token(StringLiteral, text, start, index))
+                    push(tokens, new_von_token(StringLiteral(text), start, index))
                     text = ""
                     break
                 }
@@ -136,7 +136,7 @@ micro lex_von(source: utf8) -> VonParseResult<[VonToken]> {
                     break
                 }
             }
-            push(tokens, new_von_token(NumberLiteral, text, start, index))
+            push(tokens, new_von_token(NumberLiteral(text), start, index))
             continue
         }
 
@@ -149,9 +149,9 @@ micro lex_von(source: utf8) -> VonParseResult<[VonToken]> {
             }
 
             if text == "true" || text == "false" {
-                push(tokens, new_von_token(BooleanLiteral, text, start, index))
+                push(tokens, new_von_token(BooleanLiteral(text), start, index))
             } else {
-                push(tokens, new_von_token(Identifier, text, start, index))
+                push(tokens, new_von_token(Identifier(text), start, index))
             }
             continue
         }

@@ -4,35 +4,56 @@ namespace std.data.text.wat;
 unite WatTokenKind {
     EndOfFile
 
-    Keyword
+    // 关键字 —— 纯分派标记，不携带数据
+    ModuleKeyword
+    FuncKeyword
+    ImportKeyword
+    ExportKeyword
+    MemoryKeyword
+    TableKeyword
+    GlobalKeyword
+    DataKeyword
+    TypeKeyword
+    ParamKeyword
+    ResultKeyword
+    LocalKeyword
+    BlockKeyword
+    LoopKeyword
+    IfKeyword
+    ThenKeyword
+    ElseKeyword
+    EndKeyword
+    StartKeyword
+    ElemKeyword
+    OffsetKeyword
+    ItemKeyword
+    MutKeyword
 
-    Opcode
+    // 带数据变体 —— 值嵌入 kind 内部，无需外部 text 字段
+    Opcode(utf8)
+    Identifier(utf8)
+    Number(utf8)
+    String(utf8)
+    Comment(utf8)
+    Punctuation(utf8)
+}
 
-    Identifier
-
-    Number
-
-    String
-
-    Comment
-
-    Punctuation
-
-    ValueType
+/// 判断文本是否为值类型关键词 -- 仅 lexer 分类用
+micro is_wat_value_type(word: utf8) -> bool {
+    return word == "i32" || word == "i64" || word == "f32" || word == "f64"
+        || word == "funcref" || word == "externref" || word == "v128"
 }
 
 structure WatToken {
     kind: WatTokenKind
-    text: utf8
     span: TextSpan
     line: usize
     column: usize
 }
 
-micro new_wat_token(kind: WatTokenKind, text: utf8, start: usize, stop: usize, line: usize, column: usize) -> WatToken {
+micro new_wat_token(kind: WatTokenKind, start: usize, stop: usize, line: usize, column: usize) -> WatToken {
     return WatToken {
         kind: kind,
-        text: text,
         span: TextSpan {
             start: start,
             stop: stop
@@ -43,5 +64,5 @@ micro new_wat_token(kind: WatTokenKind, text: utf8, start: usize, stop: usize, l
 }
 
 micro eof_wat_token(position: usize, line: usize, column: usize) -> WatToken {
-    return new_wat_token(EndOfFile, "", position, position, line, column)
+    return new_wat_token(EndOfFile, position, position, line, column)
 }

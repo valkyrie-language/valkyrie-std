@@ -1,19 +1,139 @@
 namespace std.data.text.msil;
 
-micro is_msil_modifier(word: utf8) -> bool {
-    return word == "public" || word == "private" || word == "family"
-        || word == "assembly" || word == "famandassem" || word == "famorassem"
-        || word == "privatescope" || word == "static" || word == "instance"
-        || word == "virtual" || word == "abstract" || word == "sealed"
-        || word == "final" || word == "specialname" || word == "rtspecialname"
-        || word == "initonly" || word == "literal" || word == "notserialized"
-        || word == "value" || word == "enum" || word == "interface"
-        || word == "sequential" || word == "auto" || word == "explicit"
-        || word == "ansi" || word == "unicode" || word == "autochar"
-        || word == "beforefieldinit" || word == "cil" || word == "managed"
-        || word == "unmanaged" || word == "forwardref" || word == "preservesig"
-        || word == "internalcall" || word == "synchronized" || word == "noinlining"
-        || word == "aggressiveinlining" || word == "optil" || word == "nooptimization"
+/// 将指令文本映射为对应的 token kind
+micro msil_directive_kind(text: utf8) -> MsilTokenKind {
+    if text == ".assembly" {
+        return AssemblyDirective
+    }
+    if text == ".module" {
+        return ModuleDirective
+    }
+    if text == ".class" {
+        return ClassDirective
+    }
+    if text == ".override" {
+        return OverrideDirective
+    }
+    if text == ".permission" {
+        return PermissionDirective
+    }
+    if text == ".permissionset" {
+        return PermissionSetDirective
+    }
+    if text == ".hash" {
+        return HashDirective
+    }
+    if text == ".ver" {
+        return VerDirective
+    }
+    if text == ".locale" {
+        return LocaleDirective
+    }
+    if text == ".publickey" {
+        return PublicKeyDirective
+    }
+    if text == ".custom" {
+        return CustomDirective
+    }
+    if text == ".pack" {
+        return PackDirective
+    }
+    if text == ".size" {
+        return SizeDirective
+    }
+    if text == ".field" {
+        return FieldDirective
+    }
+    if text == ".method" {
+        return MethodDirective
+    }
+    if text == ".property" {
+        return PropertyDirective
+    }
+    if text == ".event" {
+        return EventDirective
+    }
+    if text == ".maxstack" {
+        return MaxStackDirective
+    }
+    if text == ".locals" {
+        return LocalsDirective
+    }
+    if text == ".try" {
+        return TryDirective
+    }
+    if text == ".line" {
+        return LineDirective
+    }
+    if text == ".language" {
+        return LanguageDirective
+    }
+    if text == ".entrypoint" {
+        return EntryPointDirective
+    }
+    if text == ".get" {
+        return GetDirective
+    }
+    if text == ".set" {
+        return SetDirective
+    }
+    if text == ".addon" {
+        return AddOnDirective
+    }
+    if text == ".removeon" {
+        return RemoveOnDirective
+    }
+    if text == ".fire" {
+        return FireDirective
+    }
+    if text == ".pinvokeimpl" {
+        return PInvokeImplDirective
+    }
+    return Opcode(text)
+}
+
+/// 将关键字文本映射为对应的 token kind
+micro msil_keyword_kind(word: utf8) -> MsilTokenKind {
+    if word == "extends" {
+        return ExtendsKeyword
+    }
+    if word == "implements" {
+        return ImplementsKeyword
+    }
+    if word == "catch" {
+        return CatchKeyword
+    }
+    if word == "filter" {
+        return FilterKeyword
+    }
+    if word == "finally" {
+        return FinallyKeyword
+    }
+    if word == "fault" {
+        return FaultKeyword
+    }
+    if word == "init" {
+        return InitKeyword
+    }
+    if word == "default" {
+        return DefaultKeyword
+    }
+    if word == "vararg" {
+        return VarArgKeyword
+    }
+    if word == "at" {
+        return AtKeyword
+    }
+    if word == "as" {
+        return AsKeyword
+    }
+    if word == "cil" {
+        return CilKeyword
+    }
+    if word == "managed" {
+        return ManagedKeyword
+    }
+    return Identifier(word)
 }
 
 micro is_msil_type_ref(word: utf8) -> bool {
@@ -68,10 +188,12 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
             let start: usize = pos
             let start_line: usize = line
             let start_col: usize = col
+            let mut comment_text: utf8 = ""
             while pos < length && source[pos] != "\n" {
+                comment_text = comment_text + source[pos]
                 pos = pos + 1
             }
-            push(tokens, new_msil_token(Comment, "", start, pos, start_line, start_col))
+            push(tokens, new_msil_token(Comment(comment_text), start, pos, start_line, start_col))
             continue
         }
 
@@ -79,9 +201,12 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
             let start: usize = pos
             let start_line: usize = line
             let start_col: usize = col
+            let mut comment_text: utf8 = "/*"
             pos = pos + 2
             while pos < length {
+                comment_text = comment_text + source[pos]
                 if source[pos] == "*" && pos + 1 < length && source[pos + 1] == "/" {
+                    comment_text = comment_text + "/"
                     pos = pos + 2
                     break
                 }
@@ -91,7 +216,7 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
                 }
                 pos = pos + 1
             }
-            push(tokens, new_msil_token(Comment, "", start, pos, start_line, start_col))
+            push(tokens, new_msil_token(Comment(comment_text), start, pos, start_line, start_col))
             continue
         }
 
@@ -118,7 +243,7 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
                 text = text + "\""
                 pos = pos + 1
             }
-            push(tokens, new_msil_token(String, text, start, pos, start_line, start_col))
+            push(tokens, new_msil_token(String(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -139,9 +264,10 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
             }
 
             if is_msil_letter(text[1]) {
-                push(tokens, new_msil_token(Directive, text, start, pos, start_line, start_col))
+                let kind: MsilTokenKind = msil_directive_kind(text)
+                push(tokens, new_msil_token(kind, start, pos, start_line, start_col))
             } else {
-                push(tokens, new_msil_token(Opcode, text, start, pos, start_line, start_col))
+                push(tokens, new_msil_token(Opcode(text), start, pos, start_line, start_col))
             }
             continue
         }
@@ -153,7 +279,7 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
             let start_col: usize = col
             pos = pos + 1
             col = col + 1
-            push(tokens, new_msil_token(Punctuation, ch, start, pos, start_line, start_col))
+            push(tokens, new_msil_token(Punctuation(ch), start, pos, start_line, start_col))
             continue
         }
 
@@ -173,7 +299,7 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
                     text = text + ":"
                     pos = pos + 1
                 }
-                push(tokens, new_msil_token(IllLabel, text, start, pos, start_line, start_col))
+                push(tokens, new_msil_token(IllLabel(text), start, pos, start_line, start_col))
                 continue
             }
         }
@@ -196,7 +322,7 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
                     break
                 }
             }
-            push(tokens, new_msil_token(Number, text, start, pos, start_line, start_col))
+            push(tokens, new_msil_token(Number(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -210,18 +336,15 @@ micro lex_msil(source: utf8) -> MsilParseResult<[MsilToken]> {
                 pos = pos + 1
             }
 
-            if is_msil_modifier(text) {
-                push(tokens, new_msil_token(Modifier, text, start, pos, start_line, start_col))
+            if is_msil_type_ref(text) {
+                push(tokens, new_msil_token(TypeReference(text), start, pos, start_line, start_col))
+            } else if is_msil_modifier_text(text) {
+                push(tokens, new_msil_token(Identifier(text), start, pos, start_line, start_col))
+            } else if is_msil_opcode(text) {
+                push(tokens, new_msil_token(Opcode(text), start, pos, start_line, start_col))
             } else {
-                if is_msil_type_ref(text) {
-                    push(tokens, new_msil_token(TypeReference, text, start, pos, start_line, start_col))
-                } else {
-                    if is_msil_opcode(text) {
-                        push(tokens, new_msil_token(Opcode, text, start, pos, start_line, start_col))
-                    } else {
-                        push(tokens, new_msil_token(Identifier, text, start, pos, start_line, start_col))
-                    }
-                }
+                let kw_kind: MsilTokenKind = msil_keyword_kind(text)
+                push(tokens, new_msil_token(kw_kind, start, pos, start_line, start_col))
             }
             continue
         }

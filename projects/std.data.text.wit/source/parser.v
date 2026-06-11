@@ -28,37 +28,32 @@ micro wit_peek(tokens: [WitToken], index: usize) -> WitToken {
     return tokens[index]
 }
 
-micro wit_check_kind(tokens: [WitToken], index: usize, kind: WitTokenKind) -> bool {
-    return wit_peek(tokens, index).kind == kind
-}
-
-micro wit_check_text(tokens: [WitToken], index: usize, kind: WitTokenKind, text: utf8) -> bool {
-    let token: WitToken = wit_peek(tokens, index)
-    return token.kind == kind && token.text == text
-}
-
 micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
     let mut i: usize = 0
     let mut package: utf8 = ""
 
-    if wit_check_text(tokens, i, Keyword, "package") {
-        i = i + 1
-        if wit_check_kind(tokens, i, Identifier) {
-            package = wit_peek(tokens, i).text
+    match wit_peek(tokens, i).kind {
+        case Keyword("package"):
             i = i + 1
-        }
-        if wit_check_text(tokens, i, Punctuation, ";") {
-            i = i + 1
-        }
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    package = id
+                    i = i + 1
+                ...
+            }
+            match wit_peek(tokens, i).kind {
+                case Punctuation(";"):
+                    i = i + 1
+                ...
+            }
+        ...
     }
 
     let mut definitions: [WitDefinition] = []
 
     while wit_peek(tokens, i).kind != EndOfFile {
-        let token: WitToken = wit_peek(tokens, i)
-
-        if token.kind == Keyword {
-            if token.text == "interface" {
+        match wit_peek(tokens, i).kind {
+            case Keyword("interface"):
                 match parse_wit_interface(tokens, i) {
                     case Fine(result):
                         push(definitions, Interface(result.value))
@@ -66,7 +61,7 @@ micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == "world" {
+            case Keyword("world"):
                 match parse_wit_world(tokens, i) {
                     case Fine(result):
                         push(definitions, World(result.value))
@@ -74,8 +69,7 @@ micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == "type" || token.text == "record" || token.text == "variant"
-                || token.text == "enum" || token.text == "flags" || token.text == "resource" {
+            case Keyword("type") | Keyword("record") | Keyword("variant") | Keyword("enum") | Keyword("flags") | Keyword("resource"):
                 match parse_wit_type_def(tokens, i) {
                     case Fine(result):
                         push(definitions, TypeDef(result.value))
@@ -83,7 +77,7 @@ micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == "use" {
+            case Keyword("use"):
                 match parse_wit_use(tokens, i) {
                     case Fine(result):
                         push(definitions, Use(result.value))
@@ -91,19 +85,18 @@ micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == "include" {
+            case Keyword("include"):
                 i = i + 1
                 let mut path: utf8 = ""
-                if wit_check_kind(tokens, i, Identifier) {
-                    path = wit_peek(tokens, i).text
-                    i = i + 1
+                match wit_peek(tokens, i).kind {
+                    case Identifier(id):
+                        path = id
+                        i = i + 1
+                    ...
                 }
                 push(definitions, Include(WitIncludeDef { path: path }))
-            } else {
+            else:
                 i = i + 1
-            }
-        } else {
-            i = i + 1
         }
     }
 
@@ -117,54 +110,62 @@ micro parse_wit_interface(tokens: [WitToken], index: usize) -> WitParseResult<Wi
     let mut i: usize = index + 1
 
     let mut name: utf8 = ""
-    if wit_check_kind(tokens, i, Identifier) {
-        name = wit_peek(tokens, i).text
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Identifier(id):
+            name = id
+            i = i + 1
+        ...
     }
 
-    if wit_check_text(tokens, i, Punctuation, "{") {
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Punctuation("{"):
+            i = i + 1
+        ...
     }
 
     let mut types: [WitTypeDef] = []
     let mut functions: [WitFunctionDef] = []
     let mut resources: [WitResourceDef] = []
 
-    while wit_peek(tokens, i).kind != EndOfFile && !wit_check_text(tokens, i, Punctuation, "}") {
-        let token: WitToken = wit_peek(tokens, i)
-
-        if token.kind == Keyword && (token.text == "type" || token.text == "record"
-            || token.text == "variant" || token.text == "enum" || token.text == "flags") {
-            match parse_wit_type_def(tokens, i) {
-                case Fine(result):
-                    push(types, result.value)
-                    i = result.next_index
-                case Fail(error):
-                    return Fail(error)
-            }
-        } else if token.kind == Keyword && token.text == "resource" {
-            i = i + 1
-            let mut res_name: utf8 = ""
-            if wit_check_kind(tokens, i, Identifier) {
-                res_name = wit_peek(tokens, i).text
+    while wit_peek(tokens, i).kind != EndOfFile {
+        match wit_peek(tokens, i).kind {
+            case Punctuation("}"):
+                break
+            case Keyword("type") | Keyword("record") | Keyword("variant") | Keyword("enum") | Keyword("flags"):
+                match parse_wit_type_def(tokens, i) {
+                    case Fine(result):
+                        push(types, result.value)
+                        i = result.next_index
+                    case Fail(error):
+                        return Fail(error)
+                }
+            case Keyword("resource"):
                 i = i + 1
-            }
-            push(resources, WitResourceDef { name: res_name })
-        } else if token.kind == Identifier {
-            match parse_wit_function(tokens, i) {
-                case Fine(result):
-                    push(functions, result.value)
-                    i = result.next_index
-                case Fail(error):
-                    return Fail(error)
-            }
-        } else {
-            i = i + 1
+                let mut res_name: utf8 = ""
+                match wit_peek(tokens, i).kind {
+                    case Identifier(id):
+                        res_name = id
+                        i = i + 1
+                    ...
+                }
+                push(resources, WitResourceDef { name: res_name })
+            case Identifier(id):
+                match parse_wit_function(tokens, i) {
+                    case Fine(result):
+                        push(functions, result.value)
+                        i = result.next_index
+                    case Fail(error):
+                        return Fail(error)
+                }
+            else:
+                i = i + 1
         }
     }
 
-    if wit_check_text(tokens, i, Punctuation, "}") {
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Punctuation("}"):
+            i = i + 1
+        ...
     }
 
     return Fine(wit_parsed(WitInterfaceDef {
@@ -179,54 +180,93 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
     let mut i: usize = index + 1
 
     let mut name: utf8 = ""
-    if wit_check_kind(tokens, i, Identifier) {
-        name = wit_peek(tokens, i).text
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Identifier(id):
+            name = id
+            i = i + 1
+        ...
     }
 
-    if wit_check_text(tokens, i, Punctuation, "{") {
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Punctuation("{"):
+            i = i + 1
+        ...
     }
 
     let mut imports: [WitWorldItem] = []
     let mut exports: [WitWorldItem] = []
 
-    while wit_peek(tokens, i).kind != EndOfFile && !wit_check_text(tokens, i, Punctuation, "}") {
-        let token: WitToken = wit_peek(tokens, i)
-
-        if token.kind == Keyword && (token.text == "import" || token.text == "export") {
-            let is_import: bool = token.text == "import"
-            i = i + 1
-
-            let mut item_name: utf8 = ""
-            if wit_check_kind(tokens, i, Identifier) {
-                item_name = wit_peek(tokens, i).text
+    while wit_peek(tokens, i).kind != EndOfFile {
+        match wit_peek(tokens, i).kind {
+            case Punctuation("}"):
+                break
+            case Keyword("import"):
                 i = i + 1
-            }
 
-            let mut target: utf8 = ""
-            if wit_check_kind(tokens, i, PackageRef) || wit_check_kind(tokens, i, Identifier) {
-                target = wit_peek(tokens, i).text
+                let mut item_name: utf8 = ""
+                match wit_peek(tokens, i).kind {
+                    case Identifier(id):
+                        item_name = id
+                        i = i + 1
+                    ...
+                }
+
+                let mut target: utf8 = ""
+                match wit_peek(tokens, i).kind {
+                    case PackageRef(id):
+                        target = id
+                        i = i + 1
+                    case Identifier(id):
+                        target = id
+                        i = i + 1
+                    ...
+                }
+
+                push(imports, WitWorldItem { name: item_name, target: target })
+
+                match wit_peek(tokens, i).kind {
+                    case Punctuation(";"):
+                        i = i + 1
+                    ...
+                }
+            case Keyword("export"):
                 i = i + 1
-            }
 
-            let item: WitWorldItem = WitWorldItem { name: item_name, target: target }
-            if is_import {
-                push(imports, item)
-            } else {
-                push(exports, item)
-            }
+                let mut item_name: utf8 = ""
+                match wit_peek(tokens, i).kind {
+                    case Identifier(id):
+                        item_name = id
+                        i = i + 1
+                    ...
+                }
 
-            if wit_check_text(tokens, i, Punctuation, ";") {
+                let mut target: utf8 = ""
+                match wit_peek(tokens, i).kind {
+                    case PackageRef(id):
+                        target = id
+                        i = i + 1
+                    case Identifier(id):
+                        target = id
+                        i = i + 1
+                    ...
+                }
+
+                push(exports, WitWorldItem { name: item_name, target: target })
+
+                match wit_peek(tokens, i).kind {
+                    case Punctuation(";"):
+                        i = i + 1
+                    ...
+                }
+            else:
                 i = i + 1
-            }
-        } else {
-            i = i + 1
         }
     }
 
-    if wit_check_text(tokens, i, Punctuation, "}") {
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Punctuation("}"):
+            i = i + 1
+        ...
     }
 
     return Fine(wit_parsed(WitWorldDef {
@@ -238,150 +278,225 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
 
 micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<WitParsed<WitTypeDef>> {
     let mut i: usize = index
-    let token: WitToken = wit_peek(tokens, i)
 
-    if token.kind == Keyword && token.text == "type" {
-        i = i + 1
-        let mut type_name: utf8 = ""
-        if wit_check_kind(tokens, i, Identifier) {
-            type_name = wit_peek(tokens, i).text
+    match wit_peek(tokens, i).kind {
+        case Keyword("type"):
             i = i + 1
-        }
-        if wit_check_text(tokens, i, Punctuation, "=") {
-            i = i + 1
-        }
-        let mut target: utf8 = ""
-        if wit_check_kind(tokens, i, Identifier) || wit_check_kind(tokens, i, TypeName) {
-            target = wit_peek(tokens, i).text
-            i = i + 1
-        }
-        if wit_check_text(tokens, i, Punctuation, ";") {
-            i = i + 1
-        }
-        return Fine(wit_parsed(TypeAlias(type_name, target), i))
-    }
-
-    if token.kind == Keyword && token.text == "record" {
-        i = i + 1
-        let mut name: utf8 = ""
-        if wit_check_kind(tokens, i, Identifier) {
-            name = wit_peek(tokens, i).text
-            i = i + 1
-        }
-
-        if wit_check_text(tokens, i, Punctuation, "{") {
-            i = i + 1
-        }
-
-        let mut fields: [WitField] = []
-        while !wit_check_text(tokens, i, Punctuation, "}") && wit_peek(tokens, i).kind != EndOfFile {
-            let field_name: utf8 = wit_peek(tokens, i).text
-            let mut field_type: utf8 = ""
-            i = i + 1
-            if wit_check_text(tokens, i, Punctuation, ":") {
-                i = i + 1
-            }
-            if wit_check_kind(tokens, i, Identifier) || wit_check_kind(tokens, i, TypeName) || wit_check_kind(tokens, i, Punctuation) {
-                field_type = wit_peek(tokens, i).text
-                i = i + 1
-            }
-            push(fields, WitField { name: field_name, type_ref: field_type })
-            if wit_check_text(tokens, i, Punctuation, ",") {
-                i = i + 1
-            }
-        }
-
-        if wit_check_text(tokens, i, Punctuation, "}") {
-            i = i + 1
-        }
-        return Fine(wit_parsed(Record(name, fields), i))
-    }
-
-    if token.kind == Keyword && token.text == "variant" {
-        i = i + 1
-        let mut name: utf8 = ""
-        if wit_check_kind(tokens, i, Identifier) {
-            name = wit_peek(tokens, i).text
-            i = i + 1
-        }
-
-        if wit_check_text(tokens, i, Punctuation, "{") {
-            i = i + 1
-        }
-
-        let mut cases: [WitCase] = []
-        while !wit_check_text(tokens, i, Punctuation, "}") && wit_peek(tokens, i).kind != EndOfFile {
-            let case_name: utf8 = wit_peek(tokens, i).text
-            let mut case_type: utf8 = ""
-            i = i + 1
-            if wit_check_text(tokens, i, Punctuation, "(") {
-                i = i + 1
-                if wit_check_kind(tokens, i, Identifier) || wit_check_kind(tokens, i, TypeName) {
-                    case_type = wit_peek(tokens, i).text
+            let mut type_name: utf8 = ""
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    type_name = id
                     i = i + 1
-                }
-                if wit_check_text(tokens, i, Punctuation, ")") {
+                ...
+            }
+            match wit_peek(tokens, i).kind {
+                case Punctuation("="):
                     i = i + 1
+                ...
+            }
+            let mut target: utf8 = ""
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    target = id
+                    i = i + 1
+                case TypeName(id):
+                    target = id
+                    i = i + 1
+                ...
+            }
+            match wit_peek(tokens, i).kind {
+                case Punctuation(";"):
+                    i = i + 1
+                ...
+            }
+            return Fine(wit_parsed(TypeAlias(type_name, target), i))
+
+        case Keyword("record"):
+            i = i + 1
+            let mut name: utf8 = ""
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    name = id
+                    i = i + 1
+                ...
+            }
+
+            match wit_peek(tokens, i).kind {
+                case Punctuation("{"):
+                    i = i + 1
+                ...
+            }
+
+            let mut fields: [WitField] = []
+            while wit_peek(tokens, i).kind != EndOfFile {
+                match wit_peek(tokens, i).kind {
+                    case Punctuation("}"):
+                        break
+                    case Identifier(field_name):
+                        let mut field_type: utf8 = ""
+                        i = i + 1
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation(":"):
+                                i = i + 1
+                            ...
+                        }
+                        match wit_peek(tokens, i).kind {
+                            case Identifier(id):
+                                field_type = id
+                                i = i + 1
+                            case TypeName(id):
+                                field_type = id
+                                i = i + 1
+                            case Punctuation(id):
+                                field_type = id
+                                i = i + 1
+                            ...
+                        }
+                        push(fields, WitField { name: field_name, type_ref: field_type })
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation(","):
+                                i = i + 1
+                            ...
+                        }
+                    else:
+                        i = i + 1
                 }
             }
-            push(cases, WitCase { name: case_name, type_ref: case_type })
-            if wit_check_text(tokens, i, Punctuation, ",") {
-                i = i + 1
+
+            match wit_peek(tokens, i).kind {
+                case Punctuation("}"):
+                    i = i + 1
+                ...
             }
-        }
+            return Fine(wit_parsed(Record(name, fields), i))
 
-        if wit_check_text(tokens, i, Punctuation, "}") {
+        case Keyword("variant"):
             i = i + 1
-        }
-        return Fine(wit_parsed(Variant(name, cases), i))
-    }
+            let mut name: utf8 = ""
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    name = id
+                    i = i + 1
+                ...
+            }
 
-    if token.kind == Keyword && (token.text == "enum" || token.text == "flags") {
-        let is_enum: bool = token.text == "enum"
-        i = i + 1
-        let mut name: utf8 = ""
-        if wit_check_kind(tokens, i, Identifier) {
-            name = wit_peek(tokens, i).text
-            i = i + 1
-        }
+            match wit_peek(tokens, i).kind {
+                case Punctuation("{"):
+                    i = i + 1
+                ...
+            }
 
-        if wit_check_text(tokens, i, Punctuation, "{") {
-            i = i + 1
-        }
+            let mut cases: [WitCase] = []
+            while wit_peek(tokens, i).kind != EndOfFile {
+                match wit_peek(tokens, i).kind {
+                    case Punctuation("}"):
+                        break
+                    case Identifier(case_name):
+                        let mut case_type: utf8 = ""
+                        i = i + 1
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation("("):
+                                i = i + 1
+                                match wit_peek(tokens, i).kind {
+                                    case Identifier(id):
+                                        case_type = id
+                                        i = i + 1
+                                    case TypeName(id):
+                                        case_type = id
+                                        i = i + 1
+                                    ...
+                                }
+                                match wit_peek(tokens, i).kind {
+                                    case Punctuation(")"):
+                                        i = i + 1
+                                    ...
+                                }
+                            ...
+                        }
+                        push(cases, WitCase { name: case_name, type_ref: case_type })
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation(","):
+                                i = i + 1
+                            ...
+                        }
+                    else:
+                        i = i + 1
+                }
+            }
 
-        let mut case_names: [utf8] = []
-        while !wit_check_text(tokens, i, Punctuation, "}") && wit_peek(tokens, i).kind != EndOfFile {
-            if wit_check_kind(tokens, i, Identifier) {
-                push(case_names, wit_peek(tokens, i).text)
+            match wit_peek(tokens, i).kind {
+                case Punctuation("}"):
+                    i = i + 1
+                ...
+            }
+            return Fine(wit_parsed(Variant(name, cases), i))
+
+        case Keyword("enum") | Keyword("flags"):
+            let is_enum: bool = match wit_peek(tokens, i).kind {
+                case Keyword("enum"):
+                    true
+                else:
+                    false
             }
             i = i + 1
-            if wit_check_text(tokens, i, Punctuation, ",") {
-                i = i + 1
+            let mut name: utf8 = ""
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    name = id
+                    i = i + 1
+                ...
             }
-        }
 
-        if wit_check_text(tokens, i, Punctuation, "}") {
+            match wit_peek(tokens, i).kind {
+                case Punctuation("{"):
+                    i = i + 1
+                ...
+            }
+
+            let mut case_names: [utf8] = []
+            while wit_peek(tokens, i).kind != EndOfFile {
+                match wit_peek(tokens, i).kind {
+                    case Punctuation("}"):
+                        break
+                    case Identifier(id):
+                        push(case_names, id)
+                        i = i + 1
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation(","):
+                                i = i + 1
+                            ...
+                        }
+                    else:
+                        i = i + 1
+                }
+            }
+
+            match wit_peek(tokens, i).kind {
+                case Punctuation("}"):
+                    i = i + 1
+                ...
+            }
+
+            if is_enum {
+                return Fine(wit_parsed(Enum(name, case_names), i))
+            } else {
+                return Fine(wit_parsed(Flags(name, case_names), i))
+            }
+
+        case Keyword("resource"):
             i = i + 1
-        }
+            let mut name: utf8 = ""
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    name = id
+                    i = i + 1
+                ...
+            }
+            return Fine(wit_parsed(Resource(name), i))
 
-        if is_enum {
-            return Fine(wit_parsed(Enum(name, case_names), i))
-        } else {
-            return Fine(wit_parsed(Flags(name, case_names), i))
-        }
+        else:
+            return Fine(wit_parsed(TypeAlias("unknown", "u32"), i))
     }
-
-    if token.kind == Keyword && token.text == "resource" {
-        i = i + 1
-        let mut name: utf8 = ""
-        if wit_check_kind(tokens, i, Identifier) {
-            name = wit_peek(tokens, i).text
-            i = i + 1
-        }
-        return Fine(wit_parsed(Resource(name), i))
-    }
-
-    return Fine(wit_parsed(TypeAlias("unknown", "u32"), i))
 }
 
 micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<WitParsed<WitFunctionDef>> {
@@ -391,58 +506,97 @@ micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<Wit
     let mut is_static: bool = false
     let mut is_constructor: bool = false
 
-    if wit_check_text(tokens, i, Keyword, "constructor") {
-        is_constructor = true
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Keyword("constructor"):
+            is_constructor = true
+            i = i + 1
+        ...
     }
 
-    if wit_check_text(tokens, i, Keyword, "static") {
-        is_static = true
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Keyword("static"):
+            is_static = true
+            i = i + 1
+        ...
     }
 
-    if wit_check_kind(tokens, i, Identifier) {
-        name = wit_peek(tokens, i).text
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Identifier(id):
+            name = id
+            i = i + 1
+        ...
     }
 
     let mut parameters: [WitParam] = []
     let mut results: [WitResult] = []
 
-    if wit_check_text(tokens, i, Punctuation, "(") {
-        i = i + 1
-        while !wit_check_text(tokens, i, Punctuation, ")") && wit_peek(tokens, i).kind != EndOfFile {
-            let param_name: utf8 = wit_peek(tokens, i).text
-            let mut param_type: utf8 = ""
+    match wit_peek(tokens, i).kind {
+        case Punctuation("("):
             i = i + 1
-            if wit_check_text(tokens, i, Punctuation, ":") {
-                i = i + 1
+            while wit_peek(tokens, i).kind != EndOfFile {
+                match wit_peek(tokens, i).kind {
+                    case Punctuation(")"):
+                        break
+                    case Identifier(param_name):
+                        let mut param_type: utf8 = ""
+                        i = i + 1
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation(":"):
+                                i = i + 1
+                            ...
+                        }
+                        match wit_peek(tokens, i).kind {
+                            case Identifier(id):
+                                param_type = id
+                                i = i + 1
+                            case TypeName(id):
+                                param_type = id
+                                i = i + 1
+                            case PackageRef(id):
+                                param_type = id
+                                i = i + 1
+                            ...
+                        }
+                        push(parameters, WitParam { name: param_name, type_ref: param_type })
+                        match wit_peek(tokens, i).kind {
+                            case Punctuation(","):
+                                i = i + 1
+                            ...
+                        }
+                    else:
+                        i = i + 1
+                }
             }
-            if wit_check_kind(tokens, i, Identifier) || wit_check_kind(tokens, i, TypeName) || wit_check_kind(tokens, i, PackageRef) {
-                param_type = wit_peek(tokens, i).text
-                i = i + 1
+            match wit_peek(tokens, i).kind {
+                case Punctuation(")"):
+                    i = i + 1
+                ...
             }
-            push(parameters, WitParam { name: param_name, type_ref: param_type })
-            if wit_check_text(tokens, i, Punctuation, ",") {
-                i = i + 1
-            }
-        }
-        if wit_check_text(tokens, i, Punctuation, ")") {
-            i = i + 1
-        }
+        ...
     }
 
-    if wit_check_text(tokens, i, Punctuation, "->") {
-        i = i + 1
-        if wit_check_kind(tokens, i, Identifier) || wit_check_kind(tokens, i, TypeName) || wit_check_kind(tokens, i, PackageRef) {
-            let result_type: utf8 = wit_peek(tokens, i).text
+    match wit_peek(tokens, i).kind {
+        case Punctuation("->"):
             i = i + 1
-            push(results, WitResult { name: "", type_ref: result_type })
-        }
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    i = i + 1
+                    push(results, WitResult { name: "", type_ref: id })
+                case TypeName(id):
+                    i = i + 1
+                    push(results, WitResult { name: "", type_ref: id })
+                case PackageRef(id):
+                    i = i + 1
+                    push(results, WitResult { name: "", type_ref: id })
+                ...
+            }
+        ...
     }
 
-    if wit_check_text(tokens, i, Punctuation, ";") {
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Punctuation(";"):
+            i = i + 1
+        ...
     }
 
     return Fine(wit_parsed(WitFunctionDef {
@@ -460,21 +614,32 @@ micro parse_wit_use(tokens: [WitToken], index: usize) -> WitParseResult<WitParse
     let mut path: utf8 = ""
     let mut alias: utf8 = ""
 
-    if wit_check_kind(tokens, i, PackageRef) || wit_check_kind(tokens, i, Identifier) {
-        path = wit_peek(tokens, i).text
-        i = i + 1
-    }
-
-    if wit_check_text(tokens, i, Keyword, "as") {
-        i = i + 1
-        if wit_check_kind(tokens, i, Identifier) {
-            alias = wit_peek(tokens, i).text
+    match wit_peek(tokens, i).kind {
+        case PackageRef(id):
+            path = id
             i = i + 1
-        }
+        case Identifier(id):
+            path = id
+            i = i + 1
+        ...
     }
 
-    if wit_check_text(tokens, i, Punctuation, ";") {
-        i = i + 1
+    match wit_peek(tokens, i).kind {
+        case Keyword("as"):
+            i = i + 1
+            match wit_peek(tokens, i).kind {
+                case Identifier(id):
+                    alias = id
+                    i = i + 1
+                ...
+            }
+        ...
+    }
+
+    match wit_peek(tokens, i).kind {
+        case Punctuation(";"):
+            i = i + 1
+        ...
     }
 
     return Fine(wit_parsed(WitUseDef {

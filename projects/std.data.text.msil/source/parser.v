@@ -16,18 +16,10 @@ micro msil_peek(tokens: [MsilToken], index: usize) -> MsilToken {
     return tokens[index]
 }
 
-micro msil_check_kind(tokens: [MsilToken], index: usize, kind: MsilTokenKind) -> bool {
-    return msil_peek(tokens, index).kind == kind
-}
-
-micro msil_check_text(tokens: [MsilToken], index: usize, kind: MsilTokenKind, text: utf8) -> bool {
+/// 仅用于特定值比较（如 Punctuation("{"))，非数据变体比较也安全
+micro msil_expect(tokens: [MsilToken], index: usize, expected: MsilTokenKind) -> MsilParseResult<usize> {
     let token: MsilToken = msil_peek(tokens, index)
-    return token.kind == kind && token.text == text
-}
-
-micro msil_expect(tokens: [MsilToken], index: usize, kind: MsilTokenKind, text: utf8) -> MsilParseResult<usize> {
-    let token: MsilToken = msil_peek(tokens, index)
-    if token.kind == kind && token.text == text {
+    if token.kind == expected {
         return Fine(index + 1)
     }
     return Fail(new_msil_diagnostic("期望 Token 类型不匹配", token.span.start, token.span.stop))
@@ -42,6 +34,63 @@ micro msil_parsed<T>(value: T, next_index: usize) -> MsilParsed<T> {
     return MsilParsed {
         value: value,
         next_index: next_index
+    }
+}
+
+/// 判断指令类 kind（纯分派标记）
+micro is_msil_directive(kind: MsilTokenKind) -> bool {
+    match kind {
+        case AssemblyDirective | ModuleDirective | ClassDirective | OverrideDirective
+            | PermissionDirective | PermissionSetDirective | HashDirective | VerDirective
+            | LocaleDirective | PublicKeyDirective | CustomDirective | PackDirective
+            | SizeDirective | FieldDirective | MethodDirective | PropertyDirective
+            | EventDirective | MaxStackDirective | LocalsDirective | TryDirective
+            | LineDirective | LanguageDirective | EntryPointDirective | GetDirective
+            | SetDirective | AddOnDirective | RemoveOnDirective | FireDirective
+            | PInvokeImplDirective:
+            return true
+        else:
+            return false
+    }
+}
+
+/// 从 Identifier kind 中收集修饰符，跳过非修饰符
+micro collect_msil_modifiers(tokens: [MsilToken], index: usize) -> MsilParsed<[utf8]> {
+    let mut i: usize = index
+    let mut modifiers: [utf8] = []
+    while i < tokens.length {
+        match msil_peek(tokens, i).kind {
+            case Identifier(id) if is_msil_modifier_text(id):
+                push(modifiers, id)
+                i = i + 1
+            else:
+                break
+        }
+    }
+    return msil_parsed(modifiers, i)
+}
+
+/// 尝试从携带数据的 kind 变体中提取文本 —— 用于消除 mega OR-pattern
+micro try_extract_msil_token_text(kind: MsilTokenKind) -> utf8? {
+    match kind {
+        case Identifier(text): return Some(text)
+        case Opcode(text): return Some(text)
+        case TypeReference(text): return Some(text)
+        case Number(text): return Some(text)
+        case String(text): return Some(text)
+        case IllLabel(text): return Some(text)
+        case Comment(text): return Some(text)
+        case Punctuation(text): return Some(text)
+        else: return None()
+    }
+}
+
+/// 尝试获取类型引用或标识符文本 —— 替代 TypeReference | Identifier OR-pattern
+micro try_get_msil_type_or_id(kind: MsilTokenKind) -> utf8? {
+    match kind {
+        case TypeReference(text): return Some(text)
+        case Identifier(text): return Some(text)
+        else: return None()
     }
 }
 
@@ -64,13 +113,10 @@ micro parse_msil_tokens(tokens: [MsilToken]) -> MsilParseResult<MsilAssembly> {
     let mut security_decls: [MsilSecurityDecl] = []
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == EndOfFile {
-            break
-        }
-
-        if token.kind == Directive {
-            if token.text == ".assembly" {
+        match msil_peek(tokens, i).kind {
+            case EndOfFile:
+                break
+            case AssemblyDirective:
                 match parse_msil_assembly(tokens, i) {
                     case Fine(result):
                         assembly_decl = result.value
@@ -78,7 +124,7 @@ micro parse_msil_tokens(tokens: [MsilToken]) -> MsilParseResult<MsilAssembly> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".module" {
+            case ModuleDirective:
                 match parse_msil_module(tokens, i) {
                     case Fine(result):
                         module_decl = result.value
@@ -86,7 +132,7 @@ micro parse_msil_tokens(tokens: [MsilToken]) -> MsilParseResult<MsilAssembly> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".class" {
+            case ClassDirective:
                 match parse_msil_type(tokens, i) {
                     case Fine(result):
                         push(types, result.value)
@@ -94,7 +140,7 @@ micro parse_msil_tokens(tokens: [MsilToken]) -> MsilParseResult<MsilAssembly> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".override" || token.text == ".method" {
+            case OverrideDirective | MethodDirective:
                 match parse_msil_method_impl(tokens, i) {
                     case Fine(result):
                         push(method_impls, result.value)
@@ -102,7 +148,7 @@ micro parse_msil_tokens(tokens: [MsilToken]) -> MsilParseResult<MsilAssembly> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".permission" || token.text == ".permissionset" {
+            case PermissionDirective | PermissionSetDirective:
                 match parse_msil_security(tokens, i) {
                     case Fine(result):
                         push(security_decls, result.value)
@@ -110,11 +156,8 @@ micro parse_msil_tokens(tokens: [MsilToken]) -> MsilParseResult<MsilAssembly> {
                     case Fail(error):
                         return Fail(error)
                 }
-            } else {
+            else:
                 i = i + 1
-            }
-        } else {
-            i = i + 1
         }
     }
 
@@ -131,9 +174,11 @@ micro parse_msil_assembly(tokens: [MsilToken], index: usize) -> MsilParseResult<
     let mut i: usize = index + 1
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut custom_attrs: [MsilCustomAttribute] = []
@@ -143,45 +188,61 @@ micro parse_msil_assembly(tokens: [MsilToken], index: usize) -> MsilParseResult<
     let mut public_key: utf8 = ""
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Punctuation && token.text == "{" {
-            i = i + 1
-        } else if token.kind == Punctuation && token.text == "}" {
-            i = i + 1
-            break
-        } else if token.kind == Directive && token.text == ".hash" {
-            i = i + 1
-            if msil_check_kind(tokens, i, Number) {
+        match msil_peek(tokens, i).kind {
+            case Punctuation("{"):
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".ver" {
-            i = i + 1
-            if msil_check_kind(tokens, i, String) {
-                version = msil_peek(tokens, i).text
+            case Punctuation("}"):
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".locale" {
-            i = i + 1
-            if msil_check_kind(tokens, i, String) {
-                locale = msil_peek(tokens, i).text
+                break
+            case Punctuation(text):
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".publickey" {
-            i = i + 1
-            while i < tokens.length && msil_peek(tokens, i).kind != Punctuation && msil_peek(tokens, i).kind != Directive {
-                public_key = public_key + msil_peek(tokens, i).text
+            case HashDirective:
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".custom" {
-            match parse_msil_custom_attr(tokens, i) {
-                case Fine(result):
-                    push(custom_attrs, result.value)
-                    i = result.next_index
-                case Fail(error):
-                    i = i + 1
-            }
-        } else {
-            i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Number(text):
+                        i = i + 1
+                    ...
+                }
+            case VerDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case String(v):
+                        version = v
+                        i = i + 1
+                    ...
+                }
+            case LocaleDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case String(l):
+                        locale = l
+                        i = i + 1
+                    ...
+                }
+            case PublicKeyDirective:
+                i = i + 1
+                while i < tokens.length {
+                    match try_extract_msil_token_text(msil_peek(tokens, i).kind) {
+                        case Some(text):
+                            public_key = public_key + text
+                            i = i + 1
+                        case None():
+                            if is_msil_directive(msil_peek(tokens, i).kind) {
+                                break
+                            }
+                            i = i + 1
+                    }
+                }
+            case CustomDirective:
+                match parse_msil_custom_attr(tokens, i) {
+                    case Fine(result):
+                        push(custom_attrs, result.value)
+                        i = result.next_index
+                    case Fail(error):
+                        i = i + 1
+                }
+            else:
+                i = i + 1
         }
     }
 
@@ -199,33 +260,32 @@ micro parse_msil_module(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
     let mut i: usize = index + 1
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut custom_attrs: [MsilCustomAttribute] = []
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Punctuation && token.text == "{" {
-            i = i + 1
-            continue
-        }
-        if token.kind == Punctuation && token.text == "}" {
-            i = i + 1
-            break
-        }
-        if token.kind == Directive && token.text == ".custom" {
-            match parse_msil_custom_attr(tokens, i) {
-                case Fine(result):
-                    push(custom_attrs, result.value)
-                    i = result.next_index
-                case Fail(error):
-                    i = i + 1
-            }
-        } else {
-            i = i + 1
+        match msil_peek(tokens, i).kind {
+            case Punctuation("{"):
+                i = i + 1
+            case Punctuation("}"):
+                i = i + 1
+                break
+            case CustomDirective:
+                match parse_msil_custom_attr(tokens, i) {
+                    case Fine(result):
+                        push(custom_attrs, result.value)
+                        i = result.next_index
+                    case Fail(error):
+                        i = i + 1
+                }
+            else:
+                i = i + 1
         }
     }
 
@@ -242,21 +302,26 @@ micro parse_msil_custom_attr(tokens: [MsilToken], index: usize) -> MsilParseResu
     let mut args: [utf8] = []
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Identifier || token.kind == TypeReference {
-            if ctor_ref == "" {
-                ctor_ref = token.text
-            }
-            i = i + 1
-        } else if token.kind == String {
-            push(args, token.text)
-            i = i + 1
-        } else if token.kind == Number {
-            push(args, token.text)
-            i = i + 1
-        } else {
-            i = i + 1
-            break
+        match msil_peek(tokens, i).kind {
+            case Identifier(text):
+                if ctor_ref == "" {
+                    ctor_ref = text
+                }
+                i = i + 1
+            case TypeReference(text):
+                if ctor_ref == "" {
+                    ctor_ref = text
+                }
+                i = i + 1
+            case String(text):
+                push(args, text)
+                i = i + 1
+            case Number(text):
+                push(args, text)
+                i = i + 1
+            else:
+                i = i + 1
+                break
         }
     }
 
@@ -269,37 +334,51 @@ micro parse_msil_custom_attr(tokens: [MsilToken], index: usize) -> MsilParseResu
 micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<MsilParsed<MsilTypeDef>> {
     let mut i: usize = index + 1
 
-    let mut modifiers: [utf8] = []
-    while msil_peek(tokens, i).kind == Modifier {
-        push(modifiers, msil_peek(tokens, i).text)
-        i = i + 1
-    }
+    let mod_result: MsilParsed<[utf8]> = collect_msil_modifiers(tokens, i)
+    let modifiers: [utf8] = mod_result.value
+    i = mod_result.next_index
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut extends: utf8 = ""
-    if msil_check_text(tokens, i, Keyword, "extends") {
-        i = i + 1
-        if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-            extends = msil_peek(tokens, i).text
+    match msil_peek(tokens, i).kind {
+        case ExtendsKeyword:
             i = i + 1
-        }
+            match try_get_msil_type_or_id(msil_peek(tokens, i).kind) {
+                case Some(text):
+                    extends = text
+                    i = i + 1
+                case None():
+                    ...
+            }
+        ...
     }
 
     let mut implements: [utf8] = []
-    if msil_check_text(tokens, i, Keyword, "implements") {
-        i = i + 1
-        while msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-            push(implements, msil_peek(tokens, i).text)
+    match msil_peek(tokens, i).kind {
+        case ImplementsKeyword:
             i = i + 1
-            if msil_check_text(tokens, i, Punctuation, ",") {
-                i = i + 1
+            while true {
+                match try_get_msil_type_or_id(msil_peek(tokens, i).kind) {
+                    case Some(text):
+                        push(implements, text)
+                        i = i + 1
+                        match msil_peek(tokens, i).kind {
+                            case Punctuation(","):
+                                i = i + 1
+                            ...
+                        }
+                    else:
+                        break
+                }
             }
-        }
+        ...
     }
 
     let mut class_attrs: [MsilClassAttr] = []
@@ -308,7 +387,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
     let mut properties: [MsilPropertyDef] = []
     let mut events: [MsilEventDef] = []
 
-    match msil_expect(tokens, i, Punctuation, "{") {
+    match msil_expect(tokens, i, Punctuation("{")) {
         case Fine(new_i):
             i = new_i
         case Fail(error):
@@ -316,26 +395,37 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
     }
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Punctuation && token.text == "}" {
-            i = i + 1
-            break
-        }
-
-        if token.kind == Directive {
-            if token.text == ".pack" || token.text == ".size" {
-                let attr_name: utf8 = token.text
+        match msil_peek(tokens, i).kind {
+            case Punctuation("}"):
+                i = i + 1
+                break
+            case PackDirective:
                 i = i + 1
                 let mut attr_value: utf8 = ""
-                if msil_check_kind(tokens, i, Number) {
-                    attr_value = msil_peek(tokens, i).text
-                    i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Number(text):
+                        attr_value = text
+                        i = i + 1
+                    ...
                 }
                 push(class_attrs, MsilClassAttr {
-                    name: attr_name,
+                    name: ".pack",
                     value: attr_value
                 })
-            } else if token.text == ".field" {
+            case SizeDirective:
+                i = i + 1
+                let mut attr_value: utf8 = ""
+                match msil_peek(tokens, i).kind {
+                    case Number(text):
+                        attr_value = text
+                        i = i + 1
+                    ...
+                }
+                push(class_attrs, MsilClassAttr {
+                    name: ".size",
+                    value: attr_value
+                })
+            case FieldDirective:
                 match parse_msil_field(tokens, i) {
                     case Fine(result):
                         push(fields, result.value)
@@ -343,7 +433,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".method" {
+            case MethodDirective:
                 match parse_msil_method(tokens, i) {
                     case Fine(result):
                         push(methods, result.value)
@@ -351,7 +441,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".property" {
+            case PropertyDirective:
                 match parse_msil_property(tokens, i) {
                     case Fine(result):
                         push(properties, result.value)
@@ -359,7 +449,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".event" {
+            case EventDirective:
                 match parse_msil_event(tokens, i) {
                     case Fine(result):
                         push(events, result.value)
@@ -367,21 +457,26 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".custom" {
+            case CustomDirective:
                 i = skip_msil_to_newline(tokens, i)
-            } else {
+            case Identifier(id) if is_msil_modifier_text(id):
+                match parse_msil_inline_field(tokens, i) {
+                    case Fine(result):
+                        push(fields, result.value)
+                        i = result.next_index
+                    case Fail(error):
+                        i = i + 1
+                }
+            case Identifier(id):
+                match parse_msil_inline_field(tokens, i) {
+                    case Fine(result):
+                        push(fields, result.value)
+                        i = result.next_index
+                    case Fail(error):
+                        i = i + 1
+                }
+            else:
                 i = i + 1
-            }
-        } else if token.kind == Identifier || token.kind == Modifier {
-            match parse_msil_inline_field(tokens, i) {
-                case Fine(result):
-                    push(fields, result.value)
-                    i = result.next_index
-                case Fail(error):
-                    i = i + 1
-            }
-        } else {
-            i = i + 1
         }
     }
 
@@ -401,40 +496,57 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
 micro parse_msil_field(tokens: [MsilToken], index: usize) -> MsilParseResult<MsilParsed<MsilFieldDef>> {
     let mut i: usize = index + 1
 
-    let mut modifiers: [utf8] = []
-    while msil_peek(tokens, i).kind == Modifier {
-        push(modifiers, msil_peek(tokens, i).text)
-        i = i + 1
-    }
+    let mod_result: MsilParsed<[utf8]> = collect_msil_modifiers(tokens, i)
+    let modifiers: [utf8] = mod_result.value
+    i = mod_result.next_index
 
     let mut field_type: utf8 = ""
-    if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-        field_type = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case TypeReference(text) | Identifier(text):
+            field_type = text
+            i = i + 1
+        ...
     }
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut data_offset: utf8 = ""
-    if msil_check_text(tokens, i, Keyword, "at") {
-        i = i + 1
-        if msil_check_kind(tokens, i, Number) {
-            data_offset = msil_peek(tokens, i).text
+    match msil_peek(tokens, i).kind {
+        case AtKeyword:
             i = i + 1
-        }
+            match msil_peek(tokens, i).kind {
+                case Number(text):
+                    data_offset = text
+                    i = i + 1
+                ...
+            }
+        ...
     }
 
     let mut init_value: utf8 = ""
-    if msil_check_text(tokens, i, Punctuation, "=") {
-        i = i + 1
-        while i < tokens.length && msil_peek(tokens, i).kind != Punctuation && msil_peek(tokens, i).kind != Directive {
-            init_value = init_value + msil_peek(tokens, i).text
+    match msil_peek(tokens, i).kind {
+        case Punctuation("="):
             i = i + 1
-        }
+            while i < tokens.length {
+                match msil_peek(tokens, i).kind {
+                    case Identifier(text) | Opcode(text) | TypeReference(text) | Number(text)
+                        | String(text) | IllLabel(text) | Comment(text):
+                        init_value = init_value + text
+                        i = i + 1
+                    else:
+                        if is_msil_directive(msil_peek(tokens, i).kind) {
+                            break
+                        }
+                        i = i + 1
+                }
+            }
+        ...
     }
 
     let mut marshal_info: utf8 = ""
@@ -455,24 +567,25 @@ micro parse_msil_field(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
 micro parse_msil_inline_field(tokens: [MsilToken], index: usize) -> MsilParseResult<MsilParsed<MsilFieldDef>> {
     let mut i: usize = index
 
-    let mut modifiers: [utf8] = []
-    while msil_peek(tokens, i).kind == Modifier {
-        push(modifiers, msil_peek(tokens, i).text)
-        i = i + 1
-    }
+    let mod_result: MsilParsed<[utf8]> = collect_msil_modifiers(tokens, i)
+    let modifiers: [utf8] = mod_result.value
+    i = mod_result.next_index
 
     let mut field_type: utf8 = ""
-    if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-        field_type = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case TypeReference(text) | Identifier(text):
+            field_type = text
+            i = i + 1
+        ...
     }
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
-    } else {
-        return Fail(new_msil_diagnostic("期望字段名称", 0, 0))
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        else:
+            return Fail(new_msil_diagnostic("期望字段名称", 0, 0))
     }
 
     return Fine(msil_parsed(MsilFieldDef {
@@ -489,35 +602,39 @@ micro parse_msil_inline_field(tokens: [MsilToken], index: usize) -> MsilParseRes
 micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<MsilParsed<MsilMethodDef>> {
     let mut i: usize = index + 1
 
-    let mut modifiers: [utf8] = []
-    while msil_peek(tokens, i).kind == Modifier {
-        push(modifiers, msil_peek(tokens, i).text)
-        i = i + 1
-    }
+    let mod_result: MsilParsed<[utf8]> = collect_msil_modifiers(tokens, i)
+    let modifiers: [utf8] = mod_result.value
+    i = mod_result.next_index
 
     let mut call_conv: utf8 = ""
-    if msil_check_text(tokens, i, Keyword, "default") {
-        call_conv = "default"
-        i = i + 1
-    } else if msil_check_text(tokens, i, Keyword, "vararg") {
-        call_conv = "vararg"
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case DefaultKeyword:
+            call_conv = "default"
+            i = i + 1
+        case VarArgKeyword:
+            call_conv = "vararg"
+            i = i + 1
+        ...
     }
 
     let mut return_type: utf8 = ""
-    if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-        return_type = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case TypeReference(text) | Identifier(text):
+            return_type = text
+            i = i + 1
+        ...
     }
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut parameters: [MsilMethodParam] = []
-    match msil_expect(tokens, i, Punctuation, "(") {
+    match msil_expect(tokens, i, Punctuation("(")) {
         case Fine(new_i):
             i = new_i
         case Fail(error):
@@ -525,46 +642,43 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
     }
 
     while i < tokens.length {
-        let tk: MsilToken = msil_peek(tokens, i)
-        if tk.kind == Punctuation && tk.text == ")" {
-            i = i + 1
-            break
-        }
-        if tk.kind == Punctuation && tk.text == "," {
-            i = i + 1
-            continue
-        }
-
-        let mut param_type: utf8 = ""
-        let mut param_name: utf8 = ""
-
-        if tk.kind == TypeReference || tk.kind == Identifier {
-            param_type = tk.text
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                param_name = msil_peek(tokens, i).text
+        match msil_peek(tokens, i).kind {
+            case Punctuation(")"):
                 i = i + 1
-            }
-        } else {
-            i = i + 1
-            continue
+                break
+            case Punctuation(","):
+                i = i + 1
+            case TypeReference(param_type) | Identifier(param_type):
+                let mut param_name: utf8 = ""
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        param_name = n
+                        i = i + 1
+                    ...
+                }
+                push(parameters, MsilMethodParam {
+                    name: param_name,
+                    param_type: param_type,
+                    attrs: []
+                })
+            else:
+                i = i + 1
         }
-
-        push(parameters, MsilMethodParam {
-            name: param_name,
-            param_type: param_type,
-            attrs: []
-        })
     }
 
     let mut impl_attrs: [utf8] = []
-    if msil_check_text(tokens, i, Keyword, "cil") {
-        push(impl_attrs, "cil")
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case CilKeyword:
+            push(impl_attrs, "cil")
+            i = i + 1
+        ...
     }
-    if msil_check_text(tokens, i, Keyword, "managed") {
-        push(impl_attrs, "managed")
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case ManagedKeyword:
+            push(impl_attrs, "managed")
+            i = i + 1
+        ...
     }
 
     let mut pinvoke_info: MsilPInvokeInfo = MsilPInvokeInfo {
@@ -572,29 +686,37 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         entry_point: "",
         attrs: []
     }
-    if msil_check_text(tokens, i, Directive, ".pinvokeimpl") {
-        i = i + 1
-        let mut dll_name: utf8 = ""
-        let mut entry_point: utf8 = ""
-        let mut attrs: [utf8] = []
+    match msil_peek(tokens, i).kind {
+        case PInvokeImplDirective:
+            i = i + 1
+            let mut dll_name: utf8 = ""
+            let mut entry_point: utf8 = ""
+            let mut attrs: [utf8] = []
 
-        if msil_check_kind(tokens, i, String) {
-            dll_name = msil_peek(tokens, i).text
-            i = i + 1
-        }
-        if msil_check_text(tokens, i, Keyword, "as") {
-            i = i + 1
-            if msil_check_kind(tokens, i, String) {
-                entry_point = msil_peek(tokens, i).text
-                i = i + 1
+            match msil_peek(tokens, i).kind {
+                case String(text):
+                    dll_name = text
+                    i = i + 1
+                ...
             }
-        }
+            match msil_peek(tokens, i).kind {
+                case AsKeyword:
+                    i = i + 1
+                    match msil_peek(tokens, i).kind {
+                        case String(text):
+                            entry_point = text
+                            i = i + 1
+                        ...
+                    }
+                ...
+            }
 
-        pinvoke_info = MsilPInvokeInfo {
-            dll_name: dll_name,
-            entry_point: entry_point,
-            attrs: attrs
-        }
+            pinvoke_info = MsilPInvokeInfo {
+                dll_name: dll_name,
+                entry_point: entry_point,
+                attrs: attrs
+            }
+        ...
     }
 
     let mut body: MsilMethodBody = MsilMethodBody {
@@ -606,7 +728,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         exception_clauses: []
     }
 
-    match msil_expect(tokens, i, Punctuation, "{") {
+    match msil_expect(tokens, i, Punctuation("{")) {
         case Fine(new_i):
             i = new_i
             match parse_msil_method_body(tokens, i) {
@@ -653,20 +775,18 @@ micro parse_msil_method_body(tokens: [MsilToken], index: usize) -> MsilParseResu
     let mut exception_clauses: [MsilExceptionClause] = []
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-
-        if token.kind == Punctuation && token.text == "}" {
-            i = i + 1
-            break
-        }
-
-        if token.kind == Directive {
-            if token.text == ".maxstack" {
+        match msil_peek(tokens, i).kind {
+            case Punctuation("}"):
                 i = i + 1
-                if msil_check_kind(tokens, i, Number) {
-                    i = i + 1
+                break
+            case MaxStackDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Number(text):
+                        i = i + 1
+                    ...
                 }
-            } else if token.text == ".locals" {
+            case LocalsDirective:
                 match parse_msil_locals(tokens, i) {
                     case Fine(result):
                         locals = result.value
@@ -674,7 +794,7 @@ micro parse_msil_method_body(tokens: [MsilToken], index: usize) -> MsilParseResu
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".try" {
+            case TryDirective:
                 match parse_msil_exception_clause(tokens, i) {
                     case Fine(result):
                         push(exception_clauses, result.value)
@@ -682,36 +802,32 @@ micro parse_msil_method_body(tokens: [MsilToken], index: usize) -> MsilParseResu
                     case Fail(error):
                         return Fail(error)
                 }
-            } else if token.text == ".line" || token.text == ".language" || token.text == ".entrypoint" {
+            case LineDirective | LanguageDirective | EntryPointDirective:
                 i = skip_msil_to_newline(tokens, i)
-            } else {
+            case IllLabel(label_name):
+                push(instructions, Label(MsilLabel {
+                    name: label_name
+                }))
                 i = i + 1
-            }
-        } else if token.kind == IllLabel {
-            push(instructions, Label(MsilLabel {
-                name: token.text
-            }))
-            i = i + 1
-        } else if token.kind == Opcode {
-            let opcode: utf8 = token.text
-            i = i + 1
-            let mut operand: utf8 = ""
+            case Opcode(opcode):
+                i = i + 1
+                let mut operand: utf8 = ""
 
-            if i < tokens.length {
-                let next: MsilToken = msil_peek(tokens, i)
-                if next.kind == Identifier || next.kind == TypeReference
-                    || next.kind == Number || next.kind == String {
-                    operand = next.text
-                    i = i + 1
+                if i < tokens.length {
+                    match msil_peek(tokens, i).kind {
+                        case Identifier(text) | TypeReference(text) | Number(text) | String(text):
+                            operand = text
+                            i = i + 1
+                        ...
+                    }
                 }
-            }
 
-            push(instructions, Instr(MsilInstr {
-                opcode: opcode,
-                operand: operand
-            }))
-        } else {
-            i = i + 1
+                push(instructions, Instr(MsilInstr {
+                    opcode: opcode,
+                    operand: operand
+                }))
+            else:
+                i = i + 1
         }
     }
 
@@ -728,13 +844,15 @@ micro parse_msil_method_body(tokens: [MsilToken], index: usize) -> MsilParseResu
 micro parse_msil_locals(tokens: [MsilToken], index: usize) -> MsilParseResult<MsilParsed<[MsilLocalDecl]>> {
     let mut i: usize = index + 1
 
-    if msil_check_text(tokens, i, Keyword, "init") {
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case InitKeyword:
+            i = i + 1
+        ...
     }
 
     let mut locals: [MsilLocalDecl] = []
 
-    match msil_expect(tokens, i, Punctuation, "(") {
+    match msil_expect(tokens, i, Punctuation("(")) {
         case Fine(new_i):
             i = new_i
         case Fail(error):
@@ -742,35 +860,28 @@ micro parse_msil_locals(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
     }
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Punctuation && token.text == ")" {
-            i = i + 1
-            break
-        }
-        if token.kind == Punctuation && token.text == "," {
-            i = i + 1
-            continue
-        }
-
-        let mut local_type: utf8 = ""
-        let mut local_name: utf8 = ""
-
-        if token.kind == TypeReference || token.kind == Identifier {
-            local_type = token.text
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                local_name = msil_peek(tokens, i).text
+        match msil_peek(tokens, i).kind {
+            case Punctuation(")"):
                 i = i + 1
-            }
-        } else {
-            i = i + 1
-            continue
+                break
+            case Punctuation(","):
+                i = i + 1
+            case TypeReference(local_type) | Identifier(local_type):
+                let mut local_name: utf8 = ""
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        local_name = n
+                        i = i + 1
+                    ...
+                }
+                push(locals, MsilLocalDecl {
+                    local_type: local_type,
+                    name: local_name
+                })
+            else:
+                i = i + 1
         }
-
-        push(locals, MsilLocalDecl {
-            local_type: local_type,
-            name: local_name
-        })
     }
 
     return Fine(msil_parsed(locals, i))
@@ -782,7 +893,7 @@ micro parse_msil_exception_clause(tokens: [MsilToken], index: usize) -> MsilPars
     let mut try_start: utf8 = ""
     let mut try_end: utf8 = ""
 
-    match msil_expect(tokens, i, Punctuation, "{") {
+    match msil_expect(tokens, i, Punctuation("{")) {
         case Fine(new_i):
             i = new_i
         case Fail(error):
@@ -790,11 +901,13 @@ micro parse_msil_exception_clause(tokens: [MsilToken], index: usize) -> MsilPars
     }
 
     while i < tokens.length {
-        if msil_check_text(tokens, i, Punctuation, "}") {
-            i = i + 1
-            break
+        match msil_peek(tokens, i).kind {
+            case Punctuation("}"):
+                i = i + 1
+                break
+            else:
+                i = i + 1
         }
-        i = i + 1
     }
 
     let mut exception_type: utf8 = ""
@@ -803,39 +916,46 @@ micro parse_msil_exception_clause(tokens: [MsilToken], index: usize) -> MsilPars
     let mut handler_end: utf8 = ""
     let mut filter_label: utf8 = ""
 
-    let token: MsilToken = msil_peek(tokens, i)
-    if token.kind == Keyword && token.text == "catch" {
-        clause_type = "catch"
-        i = i + 1
-        if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-            exception_type = msil_peek(tokens, i).text
+    match msil_peek(tokens, i).kind {
+        case CatchKeyword:
+            clause_type = "catch"
             i = i + 1
-        }
-    } else if token.kind == Keyword && token.text == "filter" {
-        clause_type = "filter"
-        i = i + 1
-    } else if token.kind == Keyword && token.text == "finally" {
-        clause_type = "finally"
-        i = i + 1
-    } else if token.kind == Keyword && token.text == "fault" {
-        clause_type = "fault"
-        i = i + 1
+            match msil_peek(tokens, i).kind {
+                case TypeReference(text) | Identifier(text):
+                    exception_type = text
+                    i = i + 1
+                ...
+            }
+        case FilterKeyword:
+            clause_type = "filter"
+            i = i + 1
+        case FinallyKeyword:
+            clause_type = "finally"
+            i = i + 1
+        case FaultKeyword:
+            clause_type = "fault"
+            i = i + 1
+        ...
     }
 
     while i < tokens.length {
-        if msil_check_text(tokens, i, Punctuation, "{") {
-            i = i + 1
-            break
+        match msil_peek(tokens, i).kind {
+            case Punctuation("{"):
+                i = i + 1
+                break
+            else:
+                i = i + 1
         }
-        i = i + 1
     }
 
     while i < tokens.length {
-        if msil_check_text(tokens, i, Punctuation, "}") {
-            i = i + 1
-            break
+        match msil_peek(tokens, i).kind {
+            case Punctuation("}"):
+                i = i + 1
+                break
+            else:
+                i = i + 1
         }
-        i = i + 1
     }
 
     return Fine(msil_parsed(MsilExceptionClause {
@@ -852,48 +972,56 @@ micro parse_msil_exception_clause(tokens: [MsilToken], index: usize) -> MsilPars
 micro parse_msil_property(tokens: [MsilToken], index: usize) -> MsilParseResult<MsilParsed<MsilPropertyDef>> {
     let mut i: usize = index + 1
 
-    let mut modifiers: [utf8] = []
-    while msil_peek(tokens, i).kind == Modifier {
-        push(modifiers, msil_peek(tokens, i).text)
-        i = i + 1
-    }
+    let mod_result: MsilParsed<[utf8]> = collect_msil_modifiers(tokens, i)
+    let modifiers: [utf8] = mod_result.value
+    i = mod_result.next_index
 
     let mut property_type: utf8 = ""
-    if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-        property_type = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case TypeReference(text) | Identifier(text):
+            property_type = text
+            i = i + 1
+        ...
     }
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut getter: utf8 = ""
     let mut setter: utf8 = ""
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Punctuation && token.text == "{" {
-            i = i + 1
-        } else if token.kind == Punctuation && token.text == "}" {
-            i = i + 1
-            break
-        } else if token.kind == Directive && token.text == ".get" {
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                getter = msil_peek(tokens, i).text
+        match msil_peek(tokens, i).kind {
+            case Punctuation("{"):
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".set" {
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                setter = msil_peek(tokens, i).text
+            case Punctuation("}"):
                 i = i + 1
-            }
-        } else {
-            i = i + 1
+                break
+            case Punctuation(text):
+                i = i + 1
+            case GetDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        getter = n
+                        i = i + 1
+                    ...
+                }
+            case SetDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        setter = n
+                        i = i + 1
+                    ...
+                }
+            else:
+                i = i + 1
         }
     }
 
@@ -910,15 +1038,19 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
     let mut i: usize = index + 1
 
     let mut event_type: utf8 = ""
-    if msil_check_kind(tokens, i, TypeReference) || msil_check_kind(tokens, i, Identifier) {
-        event_type = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case TypeReference(text) | Identifier(text):
+            event_type = text
+            i = i + 1
+        ...
     }
 
     let mut name: utf8 = ""
-    if msil_check_kind(tokens, i, Identifier) {
-        name = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(n):
+            name = n
+            i = i + 1
+        ...
     }
 
     let mut add_on: utf8 = ""
@@ -926,32 +1058,40 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
     let mut fire: utf8 = ""
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Punctuation && token.text == "{" {
-            i = i + 1
-        } else if token.kind == Punctuation && token.text == "}" {
-            i = i + 1
-            break
-        } else if token.kind == Directive && token.text == ".addon" {
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                add_on = msil_peek(tokens, i).text
+        match msil_peek(tokens, i).kind {
+            case Punctuation("{"):
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".removeon" {
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                remove_on = msil_peek(tokens, i).text
+            case Punctuation("}"):
                 i = i + 1
-            }
-        } else if token.kind == Directive && token.text == ".fire" {
-            i = i + 1
-            if msil_check_kind(tokens, i, Identifier) {
-                fire = msil_peek(tokens, i).text
+                break
+            case Punctuation(text):
                 i = i + 1
-            }
-        } else {
-            i = i + 1
+            case AddOnDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        add_on = n
+                        i = i + 1
+                    ...
+                }
+            case RemoveOnDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        remove_on = n
+                        i = i + 1
+                    ...
+                }
+            case FireDirective:
+                i = i + 1
+                match msil_peek(tokens, i).kind {
+                    case Identifier(n):
+                        fire = n
+                        i = i + 1
+                    ...
+                }
+            else:
+                i = i + 1
         }
     }
 
@@ -972,19 +1112,22 @@ micro parse_msil_method_impl(tokens: [MsilToken], index: usize) -> MsilParseResu
     let mut implementation_method: utf8 = ""
 
     while i < tokens.length {
-        let token: MsilToken = msil_peek(tokens, i)
-        if token.kind == Identifier || token.kind == TypeReference {
-            if class_name == "" {
-                class_name = token.text
-            } else if interface_method == "" {
-                interface_method = token.text
-            } else if implementation_method == "" {
-                implementation_method = token.text
-            }
+        match msil_peek(tokens, i).kind {
+            case Identifier(text) | TypeReference(text):
+                if class_name == "" {
+                    class_name = text
+                } else if interface_method == "" {
+                    interface_method = text
+                } else if implementation_method == "" {
+                    implementation_method = text
+                }
+            ...
         }
         i = i + 1
-        if msil_check_kind(tokens, i, EndOfFile) {
-            break
+        match msil_peek(tokens, i).kind {
+            case EndOfFile:
+                break
+            ...
         }
     }
 
@@ -1001,9 +1144,11 @@ micro parse_msil_security(tokens: [MsilToken], index: usize) -> MsilParseResult<
     let mut action: utf8 = ""
     let mut permission_set: utf8 = ""
 
-    if msil_check_kind(tokens, i, Identifier) {
-        action = msil_peek(tokens, i).text
-        i = i + 1
+    match msil_peek(tokens, i).kind {
+        case Identifier(text):
+            action = text
+            i = i + 1
+        ...
     }
 
     return Fine(msil_parsed(MsilSecurityDecl {

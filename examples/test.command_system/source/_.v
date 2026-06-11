@@ -1,7 +1,7 @@
 namespace command_system;
 
-use std.command;
-use std.io;
+using std.command;
+using std.io;
 
 [main]
 micro main(args: [utf8]) -> unit {

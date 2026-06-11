@@ -33,7 +33,7 @@ imply Result<T, E> {
         match self {
             case Fine(value):
                 value
-            case Fail(_):
+            case Fail(error):
                 default
         }
     }

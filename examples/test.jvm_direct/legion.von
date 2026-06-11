@@ -1,0 +1,13 @@
+{
+    name: "test.jvm_direct",
+    version: "0.0.0.0",
+    description: "JVM直连外部函数测试",
+    dependencies: {
+        "std": false
+    },
+    build: [
+        {
+            target: "jvm-openjdk-unknown-managed"
+        }
+    ]
+}

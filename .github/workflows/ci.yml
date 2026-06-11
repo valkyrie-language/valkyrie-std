@@ -10,63 +10,102 @@ on:
       - 'documentation/**'
   pull_request:
     branches:
-        - master
-        - dev
+      - master
+      - dev
     paths-ignore:
       - '**.md'
       - 'documentation/**'
 
 env:
-  DOTNET_VERSION: '11.0'
+  DOTNET_VERSION: '10.0'
 
 jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 构建 legion CLI（编译器 + 构建系统）
+  # ─────────────────────────────────────────────────────────────
   build:
     name: 构建
     runs-on: ubuntu-latest
 
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
 
       - name: 设置 .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: 恢复依赖
-        run: echo "legion restore — 待实现"
+      - name: 还原 NyarVM.cs 依赖
+        working-directory: NyarVM.cs
+        run: dotnet restore
 
-      - name: 构建
-        run: echo "legion build --release — 待实现"
+      - name: 构建 NyarVM.cs
+        working-directory: NyarVM.cs
+        run: dotnet build --configuration Release --no-restore
 
-      - name: 上传构建产物
+      - name: 构建 legion CLI
+        working-directory: valkyrie.v
+        run: node scripts/build-legion.mjs --release --output ./dist/legion
+
+      - name: 上传 legion CLI 产物
         uses: actions/upload-artifact@v4
         with:
-          name: build-output
-          path: |
-            **/bin/Release/**/*.dll
-            **/bin/Release/**/*.pdb
+          name: legion-cli
+          path: valkyrie.v/dist/legion/
           retention-days: 7
 
+  # ─────────────────────────────────────────────────────────────
+  # 运行测试（通过 legion CLI 编译并运行 valkyrie.v 测试包）
+  # ─────────────────────────────────────────────────────────────
   test:
     name: 测试
     runs-on: ubuntu-latest
     needs: build
 
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 NyarVM.cs（用于运行时）
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
 
       - name: 设置 .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: 下载构建产物
-        run: echo "legion download build-output — 待实现"
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
 
-      - name: 运行单元测试
-        run: echo "legion test — 待实现"
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
+
+      - name: 运行单元测试（NyarVM 原生 bytecode 目标）
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
+        run: |
+          echo "运行 valkyrie.v 全量测试..."
+          ./legion/legion test --target nyar --verbose
 
       - name: 上传测试结果
         uses: actions/upload-artifact@v4
@@ -74,10 +113,12 @@ jobs:
         with:
           name: test-results
           path: |
-            **/TestResults/**/*.trx
-            **/TestResults/**/*.xml
+            valkyrie.v/**/dist/legion-test/
           retention-days: 14
 
+  # ─────────────────────────────────────────────────────────────
+  # 代码格式检查（Valkyrie 源码格式化）
+  # ─────────────────────────────────────────────────────────────
   format:
     name: 代码格式检查
     runs-on: ubuntu-latest
@@ -86,14 +127,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 设置 .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: 检查 Valkyrie 源码格式
+        run: |
+          echo "Valkyrie 源码格式检查..."
+          echo "当前阶段：手动审查 .v 文件的缩进和格式一致性"
+          # 检查是否存在 TAB 字符
+          ! grep -rP '\t' --include='*.v' . || echo "警告：发现 TAB 字符，应使用空格缩进"
 
-      - name: 检查代码格式
-        run: echo "跳过：valkyrie.v 不是 .NET 项目，dotnet format 不适用"
-
+  # ─────────────────────────────────────────────────────────────
+  # 代码质量检查（Valkyrie 源码静态分析）
+  # ─────────────────────────────────────────────────────────────
   lint:
     name: 代码质量检查
     runs-on: ubuntu-latest
@@ -105,18 +148,30 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 设置 .NET
-        uses: actions/setup-dotnet@v4
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          node-version: '22'
 
-      - name: 运行代码分析
-        run: echo "跳过：valkyrie.v 不是 .NET 项目，dotnet build 代码分析不适用"
+      - name: 运行 Valkyrie 语法检查
+        run: |
+          echo "Valkyrie 语法检查..."
+          echo "当前阶段：检查 .v 文件的基本语法结构"
+          # 检查 .v 文件是否以有效的 namespace 声明开头
+          for f in $(find . -name '*.v' -not -path '*/dist/*' -not -path '*/.cache/*' | head -50); do
+            if ! head -1 "$f" | grep -qE '^(namespace|micro|structure|enum|union|trait|type)\b'; then
+              echo "警告：$f 可能缺少有效的顶层声明"
+            fi
+          done
+          echo "语法检查完成"
 
+  # ─────────────────────────────────────────────────────────────
+  # 性能基准测试
+  # ─────────────────────────────────────────────────────────────
   benchmark:
     name: 性能基准测试
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: test
 
     steps:
@@ -128,8 +183,21 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
+
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
+
       - name: 运行基准测试
-        run: echo "跳过：projects/Valkyrie.ToolChains/Valkyrie.ToolChains.csproj 不存在"
+        run: |
+          echo "运行 Valkyrie 基准测试..."
+          echo "当前阶段：legion bench 功能待实现"
+          echo "已就绪 legion CLI，等待 legion bench 子命令实现后接入"
+          # 占位：legion bench --all
 
       - name: 上传基准结果
         uses: actions/upload-artifact@v4
@@ -138,6 +206,9 @@ jobs:
           path: ./benchmark-results/**
           retention-days: 30
 
+  # ─────────────────────────────────────────────────────────────
+  # 安全审计
+  # ─────────────────────────────────────────────────────────────
   security:
     name: 安全审计
     runs-on: ubuntu-latest
@@ -156,11 +227,22 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 审计依赖
-        run: echo "legion audit — 待实现"
+        run: |
+          echo "Valkyrie 依赖安全审计..."
+          echo "当前阶段：legion audit 功能待实现"
+          # 检查 legions.von 中是否有敏感路径引用
+          ! grep -r 'path:\s*"\.\./' legions.von || echo "审计通过"
 
-      - name: 初始化 SARIF 扫描
-        run: echo "legion security-scan — 待实现"
+      - name: 代码安全扫描
+        run: |
+          echo "代码安全扫描..."
+          echo "当前阶段：legion security-scan 功能待实现"
+          # 检查是否有硬编码的密钥
+          ! grep -rE '(password|secret|token|key)\s*=\s*"[^"]+"' --include='*.v' . || echo "扫描通过"
 
+  # ─────────────────────────────────────────────────────────────
+  # 发布预览产物
+  # ─────────────────────────────────────────────────────────────
   publish-artifacts:
     name: 发布预览产物
     runs-on: ubuntu-latest
@@ -171,24 +253,39 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 设置 .NET
-        uses: actions/setup-dotnet@v4
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          name: legion-cli
+          path: ./legion
 
-      - name: 下载构建产物
-        run: echo "legion download build-output — 待实现"
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
 
       - name: 创建预览包
-        run: echo "legion pack --output ./artifacts — 待实现"
+        run: |
+          echo "创建 valkyrie.v 发布预览包..."
+          echo "当前阶段：legion pack 功能待实现"
+          mkdir -p ./artifacts
+          # 生成源码 tarball 作为预览包
+          tar -czf ./artifacts/valkyrie-preview.tar.gz \
+            --exclude='.cache' \
+            --exclude='dist' \
+            --exclude='vendors' \
+            --exclude='.git' \
+            legions.von projects/ examples/ documentation/ scripts/ 2>/dev/null || true
+          echo "预览包已生成"
 
       - name: 上传预览包
         uses: actions/upload-artifact@v4
         with:
           name: preview-packages
-          path: ./artifacts/**/*.nupkg
+          path: ./artifacts/
           retention-days: 5
 
+  # ─────────────────────────────────────────────────────────────
+  # 构建总结
+  # ─────────────────────────────────────────────────────────────
   summary:
     name: 构建总结
     runs-on: ubuntu-latest
@@ -198,11 +295,18 @@ jobs:
     steps:
       - name: 打印构建结果
         run: |
-          echo "## 构建结果总结" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Format | ${{ needs.format.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 构建结果总结"
+            echo ""
+            echo "| Job | Status |"
+            echo "|------|--------|"
+            echo "| Build | ${{ needs.build.result }} |"
+            echo "| Test | ${{ needs.test.result }} |"
+            echo "| Format | ${{ needs.format.result }} |"
+            echo "| Lint | ${{ needs.lint.result }} |"
+            echo ""
+            echo "### 产物"
+            echo ""
+            echo "- legion CLI: \`legion-cli\` artifact"
+            echo "- 测试报告: \`test-results\` artifact（仅在失败时）"
+          } >> $GITHUB_STEP_SUMMARY

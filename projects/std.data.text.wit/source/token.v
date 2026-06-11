@@ -4,35 +4,41 @@ namespace std.data.text.wit;
 unite WitTokenKind {
     EndOfFile
 
-    Keyword
+    /// 关键字 -- 数据变体，携带关键词文本
+    Keyword(utf8)
 
-    Identifier
+    /// 标识符 -- 数据变体，携带标识符文本
+    Identifier(utf8)
 
-    Number
+    /// 数字字面量 -- 数据变体，携带数字文本
+    Number(utf8)
 
-    String
+    /// 字符串字面量 -- 数据变体，携带字符串文本
+    String(utf8)
 
-    Comment
+    /// 注释 -- 数据变体，携带注释文本
+    Comment(utf8)
 
-    Punctuation
+    /// 标点符号 -- 数据变体，携带标点文本
+    Punctuation(utf8)
 
-    PackageRef
+    /// 包引用 -- 数据变体，携带包路径文本
+    PackageRef(utf8)
 
-    TypeName
+    /// 类型名称 -- 数据变体，携带类型名文本
+    TypeName(utf8)
 }
 
 structure WitToken {
     kind: WitTokenKind
-    text: utf8
     span: TextSpan
     line: usize
     column: usize
 }
 
-micro new_wit_token(kind: WitTokenKind, text: utf8, start: usize, stop: usize, line: usize, column: usize) -> WitToken {
+micro new_wit_token(kind: WitTokenKind, start: usize, stop: usize, line: usize, column: usize) -> WitToken {
     return WitToken {
         kind: kind,
-        text: text,
         span: TextSpan {
             start: start,
             stop: stop
@@ -43,5 +49,5 @@ micro new_wit_token(kind: WitTokenKind, text: utf8, start: usize, stop: usize, l
 }
 
 micro eof_wit_token(position: usize, line: usize, column: usize) -> WitToken {
-    return new_wit_token(EndOfFile, "", position, position, line, column)
+    return new_wit_token(EndOfFile, position, position, line, column)
 }

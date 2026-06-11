@@ -13,7 +13,7 @@ unite Option<T> {
 imply Option<T> {
     micro is_some(self): bool {
         match self {
-            case Some(_):
+            case Some(value):
                 true
             case None:
                 false
@@ -22,7 +22,7 @@ imply Option<T> {
 
     micro is_none(self): bool {
         match self {
-            case Some(_):
+            case Some(value):
                 false
             case None:
                 true

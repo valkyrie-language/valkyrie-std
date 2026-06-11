@@ -1,8 +1,9 @@
 namespace legion;
 
-use std.command;
-use std.data.text.von;
-use std.io;
+using std.command;
+using std.data.text.von;
+using std.io;
+using std.math.graph_theory;
 
 structure BuildRequest {
     project: utf8
@@ -98,9 +99,29 @@ micro parse_build_request(args: [utf8]) -> BuildRequest {
     return request
 }
 
+// 尝试从项目目录向上查找 workspace legions.von，返回 workspace 级 auto_link 默认值
+micro try_load_workspace_auto_link(project_dir: utf8) -> (bool, bool, bool) {
+    let workspace_path: utf8 = path_join(project_dir, "legions.von")
+    if !std.io.file_exists(workspace_path) {
+        // 向上查找
+        let parent_workspace: utf8 = path_join(path_join(project_dir, ".."), "legions.von")
+        if !std.io.file_exists(parent_workspace) {
+            return (false, false, false)
+        }
+        workspace_path = parent_workspace
+    }
+    match legion_read_von_document(workspace_path) {
+        case Fine(document):
+            return legion_parse_workspace_auto_link(document)
+        case Fail(error):
+            return (false, false, false)
+    }
+}
+
 micro emit_single_project_build(project_dir: utf8, requested_target: utf8, output: utf8, verbose: bool) -> unit {
     let manifest_path: utf8 = path_join(project_dir, "legion.von")
-    match legion_read_project_manifest(manifest_path) {
+    let (ws_auto_core, ws_auto_std, has_ws_default) = try_load_workspace_auto_link(project_dir)
+    match legion_read_project_manifest(manifest_path, ws_auto_core, ws_auto_std, has_ws_default) {
         case Fine(manifest):
             let request: BuildRequest = BuildRequest {
                 project: project_dir,
@@ -120,7 +141,28 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                             std.io.print_line("  包名：" + context.project_name)
                             std.io.print_line("  输出：" + context.output_dir)
                             if len(context.dependency_names) > 0 {
-                                std.io.print_line("  依赖：" + len(context.dependency_names) + " 个")
+                                std.io.print_line("  直接依赖：" + len(context.dependency_names) + " 个")
+                            }
+                            if len(context.dependency_order) > 0 {
+                                std.io.print_line("  编译拓扑序：" + len(context.dependency_order) + " 个包")
+                                let mut j: usize = 0
+                                while j < len(context.dependency_order) {
+                                    std.io.print_line("    " + context.dependency_order[j])
+                                    j = j + 1
+                                }
+                            }
+
+                            // 依赖图诊断
+                            let dep_graph: DirectedGraph = directed_graph_new()
+                            # 添加项目自身
+                            directed_graph_add_node(dep_graph, context.project_name)
+                            let mut k: usize = 0
+                            while k < len(context.dependency_names) {
+                                directed_graph_add_edge(dep_graph, context.project_name, context.dependency_names[k])
+                                k = k + 1
+                            }
+                            if has_cycle(dep_graph) {
+                                std.io.print_line("  警告：依赖图中存在循环！")
                             }
                         }
                         std.io.print_line("  已完成强类型清单解析与构建上下文生成。")
@@ -180,7 +222,7 @@ micro execute_build(args: [utf8]) -> unit {
 }
 
 [main]
-micro main(args: [utf8]) -> unit {
+micro legion(args: [utf8]) -> unit {
     let mut app: CommandApp = command_app_new("legion", "Legion 构建工具")
 
     let build_cmd: CommandModel = CommandModel {
@@ -261,4 +303,18 @@ micro main(args: [utf8]) -> unit {
     }
 
     std.io.error("未知命令：" + cmd_name)
+}
+
+
+// valkyrie 特殊构建工具，暂时保持为空
+[main]
+micro vcc(args: [utf8]) -> unit {
+
+}
+
+
+// valkyrie of asgard 框架构建工具，暂时保持为空
+[main]
+micro voa(args: [utf8]) -> unit {
+
 }

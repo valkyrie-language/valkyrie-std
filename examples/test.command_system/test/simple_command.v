@@ -1,6 +1,6 @@
 namespace command_system::test;
 
-use std.command;
+using std.command;
 
 [test]
 micro parse_build_command() -> unit {

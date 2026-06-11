@@ -1,16 +1,14 @@
 {
     name: "valkyrie-core",
-    version: "0.1.0",
+    version: "workspace",
     description: "Valkyrie 核心库 — 纯语言基础类型与操作，不依赖任何运行时",
     author: "Valkyrie Team",
-    license: "MIT",
     main: "source/primitives.v",
-    dependencies: {
-        # 强制关闭自动 core 依赖
-        "core": false,
-        # 强制关闭自动 std 依赖 
-        "std": false,
+    auto_link: {
+        core: false,
+        std: false
     },
+    dependencies: {},
     build: [
         {
             target: "nyar"

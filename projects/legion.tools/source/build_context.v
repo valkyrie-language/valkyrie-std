@@ -1,5 +1,7 @@
 namespace legion;
 
+using std.math.graph_theory;
+
 structure LegionBuildContext {
     project_dir: utf8
     manifest_path: utf8
@@ -7,6 +9,7 @@ structure LegionBuildContext {
     canonical_target: utf8
     output_dir: utf8
     dependency_names: [utf8]
+    dependency_order: [utf8]
     verbose: bool
 }
 
@@ -90,6 +93,54 @@ micro legion_output_root(project_dir: utf8, output: utf8) -> utf8 {
     return resolve_project_dir(output)
 }
 
+# 构建依赖图：使用图论模块的有向图存储依赖关系
+# 边方向为 A → B 表示 A 依赖 B
+micro legion_build_dependency_graph(manifest: LegionProjectManifest, project_name: utf8) -> DirectedGraph {
+    let mut graph: DirectedGraph = directed_graph_new()
+
+    # 添加项目自身节点
+    directed_graph_add_node(graph, project_name)
+
+    # 根据 auto_link 添加隐式 core/std 依赖
+    if manifest.auto_link_core {
+        directed_graph_add_edge(graph, project_name, "core")
+    }
+    if manifest.auto_link_std {
+        directed_graph_add_edge(graph, project_name, "std")
+    }
+
+    # 添加显式声明的依赖
+    let mut i: usize = 0
+    while i < len(manifest.dependencies) {
+        let dep: LegionDependency = manifest.dependencies[i]
+        directed_graph_add_edge(graph, project_name, dep.name)
+        i = i + 1
+    }
+
+    return graph
+}
+
+# 获取项目的依赖包名称列表（不含自身）
+micro legion_dependency_names(manifest: LegionProjectManifest, project_name: utf8) -> [utf8] {
+    let mut result: [utf8] = []
+
+    if manifest.auto_link_core {
+        push(result, "core")
+    }
+    if manifest.auto_link_std {
+        push(result, "std")
+    }
+
+    let mut i: usize = 0
+    while i < len(manifest.dependencies) {
+        let dep: LegionDependency = manifest.dependencies[i]
+        push(result, dep.name)
+        i = i + 1
+    }
+
+    return result
+}
+
 micro legion_build_contexts(
     project_dir: utf8,
     manifest_path: utf8,
@@ -105,6 +156,19 @@ micro legion_build_contexts(
     let output_root: utf8 = legion_output_root(project_dir, request.output)
     let project_name: utf8 = legion_project_name(project_dir, manifest)
 
+    # 构建依赖图
+    let dep_graph: DirectedGraph = legion_build_dependency_graph(manifest, project_name)
+
+    # 循环依赖检测
+    if has_cycle(dep_graph) {
+        let cycle_path: [utf8] = find_cycle(dep_graph)
+        return Fail(new_von_diagnostic("检测到循环依赖", 0, 0))
+    }
+
+    # 拓扑排序确定编译顺序
+    let build_order: [utf8] = topological_sort(dep_graph)
+    let dep_names: [utf8] = legion_dependency_names(manifest, project_name)
+
     let mut i: usize = 0
     while i < len(targets) {
         let requested: utf8 = targets[i]
@@ -119,7 +183,8 @@ micro legion_build_contexts(
             project_name: project_name,
             canonical_target: canonical,
             output_dir: path_join(output_root, canonical),
-            dependency_names: manifest.dependencies,
+            dependency_names: dep_names,
+            dependency_order: build_order,
             verbose: request.verbose
         })
         i = i + 1

@@ -78,14 +78,14 @@
         "projects/std.adaptor.windows",
         "projects/legion.tools"
     ],
-    dependencies: {
-        std: {
-            path: "."
-        }
-    },
     workspace: {
         author: "Valkyrie Team",
         license: "MIT",
-        version: "0.1.0"
+        version: "0.1.0",
+        auto_link: {
+            core: false,
+            std: false
+        },
+        auto_log: true
     }
 }

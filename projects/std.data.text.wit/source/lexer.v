@@ -40,10 +40,12 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
             let start: usize = pos
             let start_line: usize = line
             let start_col: usize = col
+            let mut comment_text: utf8 = ""
             while pos < length && source[pos] != "\n" {
+                comment_text = comment_text + source[pos]
                 pos = pos + 1
             }
-            push(tokens, new_wit_token(Comment, "", start, pos, start_line, start_col))
+            push(tokens, new_wit_token(Comment(comment_text), start, pos, start_line, start_col))
             continue
         }
 
@@ -51,9 +53,12 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
             let start: usize = pos
             let start_line: usize = line
             let start_col: usize = col
+            let mut comment_text: utf8 = "/*"
             pos = pos + 2
             while pos < length {
+                comment_text = comment_text + source[pos]
                 if source[pos] == "*" && pos + 1 < length && source[pos + 1] == "/" {
+                    comment_text = comment_text + "/"
                     pos = pos + 2
                     break
                 }
@@ -63,7 +68,7 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
                 }
                 pos = pos + 1
             }
-            push(tokens, new_wit_token(Comment, "", start, pos, start_line, start_col))
+            push(tokens, new_wit_token(Comment(comment_text), start, pos, start_line, start_col))
             continue
         }
 
@@ -90,7 +95,7 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
                 text = text + "\""
                 pos = pos + 1
             }
-            push(tokens, new_wit_token(String, text, start, pos, start_line, start_col))
+            push(tokens, new_wit_token(String(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -98,14 +103,14 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
         if pos + 1 < length {
             if source[pos] == "-" && source[pos + 1] == ">" {
                 let start: usize = pos
-                push(tokens, new_wit_token(Punctuation, "->", start, pos + 2, line, col))
+                push(tokens, new_wit_token(Punctuation("->"), start, pos + 2, line, col))
                 pos = pos + 2
                 col = col + 2
                 matched = true
             } else {
                 if source[pos] == ":" && source[pos + 1] == ":" {
                     let start: usize = pos
-                    push(tokens, new_wit_token(Punctuation, "::", start, pos + 2, line, col))
+                    push(tokens, new_wit_token(Punctuation("::"), start, pos + 2, line, col))
                     pos = pos + 2
                     col = col + 2
                     matched = true
@@ -118,7 +123,7 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
                             pkg_text = pkg_text + source[pos]
                             pos = pos + 1
                         }
-                        push(tokens, new_wit_token(PackageRef, pkg_text, start, pos, line, col))
+                        push(tokens, new_wit_token(PackageRef(pkg_text), start, pos, line, col))
                         matched = true
                     }
                 }
@@ -130,7 +135,7 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
                 || ch == "," || ch == ":" || ch == "=" || ch == "<" || ch == ">"
                 || ch == "*" || ch == "_" && !(pos + 1 < length && is_wit_identifier_part(source[pos + 1])) {
                 let start: usize = pos
-                push(tokens, new_wit_token(Punctuation, ch, start, pos + 1, line, col))
+                push(tokens, new_wit_token(Punctuation(ch), start, pos + 1, line, col))
                 pos = pos + 1
                 col = col + 1
                 matched = true
@@ -150,7 +155,7 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
                 text = text + source[pos]
                 pos = pos + 1
             }
-            push(tokens, new_wit_token(Number, text, start, pos, start_line, start_col))
+            push(tokens, new_wit_token(Number(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -165,12 +170,12 @@ micro lex_wit(source: utf8) -> WitParseResult<[WitToken]> {
             }
 
             if is_wit_keyword(text) {
-                push(tokens, new_wit_token(Keyword, text, start, pos, start_line, start_col))
+                push(tokens, new_wit_token(Keyword(text), start, pos, start_line, start_col))
             } else {
                 if is_wit_type_name(text) {
-                    push(tokens, new_wit_token(TypeName, text, start, pos, start_line, start_col))
+                    push(tokens, new_wit_token(TypeName(text), start, pos, start_line, start_col))
                 } else {
-                    push(tokens, new_wit_token(Identifier, text, start, pos, start_line, start_col))
+                    push(tokens, new_wit_token(Identifier(text), start, pos, start_line, start_col))
                 }
             }
             continue

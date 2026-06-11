@@ -1,9 +1,11 @@
 {
     name: "legion.tools",
     description: "Legion 构造工具",
-    dependencies: {
+    auto_link: {
         core: false,
-        std: true,
+        std: true
+    },
+    dependencies: {
         "std.data.text.von": { version: "workspace" }
     },
     build: [
@@ -24,7 +26,7 @@
         {
             target: "clr",
             type: "nuget",
-            package_id: "Sonic.Legion"
+            package_id: "V.Legion"
         }
     ]
 }

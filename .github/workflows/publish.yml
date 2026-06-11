@@ -16,10 +16,13 @@ on:
         type: string
 
 env:
-  DOTNET_VERSION: '11.0'
+  DOTNET_VERSION: '10.0'
   REGISTRY_URL: ${{ vars.VALHALLA_REGISTRY_URL || 'https://valhalla.valkyrie.dev' }}
 
 jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 发布 Valkyrie 包到 Valhalla 注册表
+  # ─────────────────────────────────────────────────────────────
   publish:
     name: 发布 Valkyrie 包
     runs-on: ubuntu-latest
@@ -30,7 +33,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
 
       - name: 设置 .NET
@@ -39,52 +42,102 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 验证包名和版本
+        id: resolve
         run: |
-          echo "包名称: ${{ inputs.package_name || github.ref_name }}"
-          echo "版本: ${{ inputs.version || github.ref_name }}"
+          package_name="${{ inputs.package_name || 'valkyrie-super-workspace' }}"
+          version="${{ inputs.version || github.ref_name }}"
+          version="${version#v}"
+          echo "package_name=$package_name" >> $GITHUB_OUTPUT
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "包名称: $package_name"
+          echo "版本: $version"
           echo "注册表: ${{ env.REGISTRY_URL }}"
 
       - name: 构建项目
-        run: echo "legion build — 待实现"
+        run: |
+          echo "构建 Valkyrie 包..."
+          echo "包名：${{ steps.resolve.outputs.package_name }}"
+          echo "版本：${{ steps.resolve.outputs.version }}"
+          echo "当前阶段：legion build 功能待实现"
+          echo ""
+          echo "构建计划："
+          echo "  1. legion build --release --all"
+          echo "  2. 对每个子 workspace 执行 legion build"
+          echo "  3. 收集所有构建产物到 dist/"
 
       - name: 运行测试
-        run: echo "legion test — 待实现"
+        run: |
+          echo "运行包测试..."
+          echo "当前阶段：legion test --all 功能待实现"
+          echo ""
+          echo "测试计划："
+          echo "  1. legion test --target nyar --all"
+          echo "  2. 验证所有 30+ 个 test.* 测试包通过"
+          echo "  3. 生成 HTML 测试报告"
 
       - name: 创建包清单
         id: manifest
         run: |
-          $version = "${{ inputs.version || github.ref_name }}"
-          $version = $version -replace '^v', ''
-
-          $manifest = @{
-            name = "${{ inputs.package_name }}"
-            version = $version
-            description = "Valkyrie 包"
-            author = @{
-              name = "${{ github.actor }}"
-            }
-            license = "MIT"
-            repository = "${{ github.server_url }}/${{ github.repository }}"
-          } | ConvertTo-Json -Depth 10
-
-          Write-Output "manifest=$manifest" >> $env:GITHUB_OUTPUT
-          echo "manifest=$manifest" >> $env:GITHUB_ENV
+          version="${{ steps.resolve.outputs.version }}"
+          cat > package-manifest.json << EOF
+          {
+            "name": "${{ steps.resolve.outputs.package_name }}",
+            "version": "$version",
+            "description": "Valkyrie 语言发行版",
+            "author": {
+              "name": "${{ github.actor }}"
+            },
+            "license": "MIT",
+            "repository": "${{ github.server_url }}/${{ github.repository }}",
+            "type": "source-distribution",
+            "targets": ["clr", "jvm", "wasm", "nyar"]
+          }
+          EOF
+          cat package-manifest.json
+          echo "manifest_file=package-manifest.json" >> $GITHUB_OUTPUT
 
       - name: 发布到 Valhalla 注册表
         env:
           VALHALLA_TOKEN: ${{ secrets.VALHALLA_TOKEN }}
-        run: echo "legion publish --registry ${{ env.REGISTRY_URL }} — 待实现"
+        run: |
+          echo "发布到 Valhalla 注册表..."
+          echo "注册表地址：${{ env.REGISTRY_URL }}"
+          echo "当前阶段：legion publish --registry ${{ env.REGISTRY_URL }} 功能待实现"
+          echo ""
+          echo "发布流程（待实现）："
+          echo "  1. legion pack --output ./dist/packages"
+          echo "  2. legion publish --registry ${{ env.REGISTRY_URL }}"
+          echo "  3. 上传 package-manifest.json 和 tarball"
 
       - name: 生成发布说明
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
-          echo "## 发布 $version" > release-notes.md
-          echo "" >> release-notes.md
-          echo "包: ${{ inputs.package_name }}" >> release-notes.md
-          echo "发布于: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') UTC" >> release-notes.md
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          {
+            echo "## 发布 $version"
+            echo ""
+            echo "包名: ${{ steps.resolve.outputs.package_name }}"
+            echo "发布于: $(date -u +'%Y-%m-%d %H:%M:%S') UTC"
+            echo ""
+            echo "### 安装"
+            echo ""
+            echo "\`\`\`bash"
+            echo "legion install ${{ steps.resolve.outputs.package_name }}@$version"
+            echo "\`\`\`"
+            echo ""
+            echo "### 目标平台"
+            echo ""
+            echo "- CLR (.NET)"
+            echo "- JVM (Java)"
+            echo "- WASM (Node.js)"
+            echo "- NyarVM (原生)"
+          } > release-notes.md
           cat release-notes.md
 
+  # ─────────────────────────────────────────────────────────────
+  # 生成包证明
+  # ─────────────────────────────────────────────────────────────
   attest:
     name: 生成包证明
     runs-on: ubuntu-latest
@@ -97,8 +150,16 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 下载包产物
-        run: echo "legion download package-tarball — 待实现"
+      - name: 生成源码包快照
+        run: |
+          echo "生成包证明快照..."
+          mkdir -p dist
+          tar -czf package.tar.gz \
+            --exclude='.cache' \
+            --exclude='dist' \
+            --exclude='vendors' \
+            --exclude='.git' \
+            legions.von projects/ examples/ documentation/ scripts/ .github/ 2>/dev/null || true
 
       - name: 生成证明
         uses: actions/attest-build-provenance@v1
@@ -106,6 +167,9 @@ jobs:
           subject-path: 'package.tar.gz'
           provenance-width: 8192
 
+  # ─────────────────────────────────────────────────────────────
+  # 创建 GitHub Release
+  # ─────────────────────────────────────────────────────────────
   release:
     name: 创建 GitHub Release
     runs-on: ubuntu-latest
@@ -120,15 +184,16 @@ jobs:
 
       - name: 创建发布说明
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
-          cat > release-notes.md << 'EOF'
-          # 发布 $version
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          cat > release-notes.md << EOF
+          # 发布 v${version}
 
           ## 安装
 
-          ```bash
-          legion install ${{ inputs.package_name }}@$version
-          ```
+          \`\`\`bash
+          legion install ${{ inputs.package_name || 'valkyrie-super-workspace' }}@${version}
+          \`\`\`
 
           ## 变更日志
 

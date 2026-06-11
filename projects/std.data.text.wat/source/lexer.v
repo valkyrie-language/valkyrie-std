@@ -1,5 +1,79 @@
 namespace std.data.text.wat;
 
+/// 将关键字文本映射为对应的 token kind
+micro wat_keyword_kind(word: utf8) -> WatTokenKind {
+    if word == "module" {
+        return ModuleKeyword
+    }
+    if word == "func" {
+        return FuncKeyword
+    }
+    if word == "import" {
+        return ImportKeyword
+    }
+    if word == "export" {
+        return ExportKeyword
+    }
+    if word == "memory" {
+        return MemoryKeyword
+    }
+    if word == "table" {
+        return TableKeyword
+    }
+    if word == "global" {
+        return GlobalKeyword
+    }
+    if word == "data" {
+        return DataKeyword
+    }
+    if word == "type" {
+        return TypeKeyword
+    }
+    if word == "param" {
+        return ParamKeyword
+    }
+    if word == "result" {
+        return ResultKeyword
+    }
+    if word == "local" {
+        return LocalKeyword
+    }
+    if word == "block" {
+        return BlockKeyword
+    }
+    if word == "loop" {
+        return LoopKeyword
+    }
+    if word == "if" {
+        return IfKeyword
+    }
+    if word == "then" {
+        return ThenKeyword
+    }
+    if word == "else" {
+        return ElseKeyword
+    }
+    if word == "end" {
+        return EndKeyword
+    }
+    if word == "start" {
+        return StartKeyword
+    }
+    if word == "elem" {
+        return ElemKeyword
+    }
+    if word == "offset" {
+        return OffsetKeyword
+    }
+    if word == "item" {
+        return ItemKeyword
+    }
+    if word == "mut" {
+        return MutKeyword
+    }
+    return Identifier(word)
+}
+
 micro is_wat_keyword(word: utf8) -> bool {
     return word == "module" || word == "func" || word == "import" || word == "export"
         || word == "memory" || word == "table" || word == "global" || word == "data"
@@ -7,15 +81,6 @@ micro is_wat_keyword(word: utf8) -> bool {
         || word == "block" || word == "loop" || word == "if" || word == "then"
         || word == "else" || word == "end" || word == "start" || word == "elem"
         || word == "offset" || word == "item" || word == "mut"
-}
-
-micro is_wat_value_type(word: utf8) -> bool {
-    return word == "i32" || word == "i64" || word == "f32" || word == "f64"
-        || word == "funcref" || word == "externref" || word == "v128"
-}
-
-micro is_wat_ref_type(word: utf8) -> bool {
-    return word == "funcref" || word == "externref"
 }
 
 micro is_wat_plain_opcode(word: utf8) -> bool {
@@ -68,7 +133,7 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
             while pos < length && source[pos] != "\n" {
                 pos = pos + 1
             }
-            push(tokens, new_wat_token(Comment, "", start, pos, start_line, start_col))
+            push(tokens, new_wat_token(Comment(""), start, pos, start_line, start_col))
             continue
         }
 
@@ -91,7 +156,7 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
                     }
                 }
             }
-            push(tokens, new_wat_token(Comment, "", start, pos, start_line, start_col))
+            push(tokens, new_wat_token(Comment(""), start, pos, start_line, start_col))
             continue
         }
 
@@ -101,7 +166,7 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
             let start_col: usize = col
             pos = pos + 1
             col = col + 1
-            push(tokens, new_wat_token(Punctuation, ch, start, pos, start_line, start_col))
+            push(tokens, new_wat_token(Punctuation(ch), start, pos, start_line, start_col))
             continue
         }
 
@@ -120,7 +185,7 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
                     break
                 }
             }
-            push(tokens, new_wat_token(Identifier, text, start, pos, start_line, start_col))
+            push(tokens, new_wat_token(Identifier(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -147,7 +212,7 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
                 text = text + "\""
                 pos = pos + 1
             }
-            push(tokens, new_wat_token(String, text, start, pos, start_line, start_col))
+            push(tokens, new_wat_token(String(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -171,7 +236,7 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
                     break
                 }
             }
-            push(tokens, new_wat_token(Number, text, start, pos, start_line, start_col))
+            push(tokens, new_wat_token(Number(text), start, pos, start_line, start_col))
             continue
         }
 
@@ -191,17 +256,14 @@ micro lex_wat(source: utf8) -> WatParseResult<[WatToken]> {
             }
 
             if is_wat_keyword(text) {
-                push(tokens, new_wat_token(Keyword, text, start, pos, start_line, start_col))
+                let kind: WatTokenKind = wat_keyword_kind(text)
+                push(tokens, new_wat_token(kind, start, pos, start_line, start_col))
+            } else if is_wat_value_type(text) {
+                push(tokens, new_wat_token(Identifier(text), start, pos, start_line, start_col))
+            } else if is_wat_plain_opcode(text) || is_wat_dotted_opcode(text) {
+                push(tokens, new_wat_token(Opcode(text), start, pos, start_line, start_col))
             } else {
-                if is_wat_value_type(text) {
-                    push(tokens, new_wat_token(ValueType, text, start, pos, start_line, start_col))
-                } else {
-                    if is_wat_plain_opcode(text) || is_wat_dotted_opcode(text) {
-                        push(tokens, new_wat_token(Opcode, text, start, pos, start_line, start_col))
-                    } else {
-                        push(tokens, new_wat_token(Identifier, text, start, pos, start_line, start_col))
-                    }
-                }
+                push(tokens, new_wat_token(Identifier(text), start, pos, start_line, start_col))
             }
             continue
         }

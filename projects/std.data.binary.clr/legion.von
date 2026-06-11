@@ -1,13 +1,9 @@
 {
     name: "std.data.binary.clr",
-    version: "0.1.0",
+    version: "workspace",
     description: "CLR 程序集二进制解析库 - 解码 .NET PE 字节流为结构化数据",
-    license: "MIT",
     type: "library",
-    dependencies: {
-        core: false,
-        std: false
-    },
+    dependencies: {},
     build: [
         { target: "nyar" },
         { target: "clr" },

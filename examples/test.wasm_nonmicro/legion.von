@@ -1,0 +1,7 @@
+{
+    name: "test.wasm_nonmicro",
+    version: "0.0.0.0",
+    description: "WASM非micro代码生成测试",
+    dependencies: { "std": false },
+    build: [{ target: "wasm32-unknown-web-webassembly" }]
+}

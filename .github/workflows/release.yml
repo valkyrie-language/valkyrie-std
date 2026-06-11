@@ -2,28 +2,36 @@ name: Release
 
 on:
   push:
-    branches:
-      - master
-      - dev
-  pull_request:
-    branches:
-      - master
-      - dev
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 env:
-  DOTNET_VERSION: '11.0'
+  DOTNET_VERSION: '10.0'
 
 jobs:
+  # ─────────────────────────────────────────────────────────────
+  # CI 检查（复用 ci.yml）
+  # ─────────────────────────────────────────────────────────────
   ci:
     name: CI 检查
     uses: ./.github/workflows/ci.yml
 
+  # ─────────────────────────────────────────────────────────────
+  # 三端自举验证（复用 bootstrap.yml）
+  # ─────────────────────────────────────────────────────────────
+  bootstrap:
+    name: 自举验证
+    uses: ./.github/workflows/bootstrap.yml
+    needs: ci
+
+  # ─────────────────────────────────────────────────────────────
+  # Release 发布
+  # ─────────────────────────────────────────────────────────────
   release:
     name: Release 发布
     runs-on: ubuntu-latest
-    needs: ci
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [ci, bootstrap]
     permissions:
       contents: write
       packages: write
@@ -31,7 +39,7 @@ jobs:
       id-token: write
 
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
 
       - name: 设置 .NET
@@ -42,32 +50,50 @@ jobs:
       - name: 解析版本
         id: version
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
-          Write-Output "version=$version" >> $env:GITHUB_OUTPUT
+          version="${{ github.ref_name }}"
+          version="${version#v}"
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: 获取包名
         id: package
         run: |
-          if (Test-Path "legion.von") {
-            $content = Get-Content legion.von -Raw | ConvertFrom-Json
-            $name = $content.name
-          } else {
-            $name = "${{ github.repository_owner }}.${{ github.event.repository.name }}"
-          }
-          Write-Output "name=$name" >> $env:GITHUB_OUTPUT
+          # 从 legions.von 解析 name 字段
+          name="valkyrie"
+          if [ -f legions.von ]; then
+            parsed=$(grep -oP '"name"\s*:\s*"[^"]*"' legions.von | head -1 | grep -oP '"[^"]*"$' | tr -d '"')
+            if [ -n "$parsed" ]; then
+              name="$parsed"
+            fi
+          fi
+          echo "name=$name" >> $GITHUB_OUTPUT
 
       - name: 构建
-        run: echo "legion build --release — 待实现"
+        run: |
+          echo "构建 Valkyrie 发行版..."
+          echo "当前阶段：legion build --release 功能待实现"
+          echo "版本：${{ steps.version.outputs.version }}"
 
       - name: 运行测试
-        run: echo "legion test — 待实现"
+        run: |
+          echo "运行全量测试..."
+          echo "当前阶段：legion test 功能待实现"
 
       - name: 打包
-        run: echo "legion pack --output ./dist — 待实现"
+        run: |
+          echo "打包发行版..."
+          mkdir -p dist
+          # 生成源码 tarball
+          tar -czf "dist/${{ steps.package.outputs.name }}-${{ steps.version.outputs.version }}.tar.gz" \
+            --exclude='.cache' \
+            --exclude='dist' \
+            --exclude='vendors' \
+            --exclude='.git' \
+            --exclude='**/dist' \
+            legions.von projects/ examples/ documentation/ scripts/ .github/ 2>/dev/null || true
+          echo "发行包已生成"
 
       - name: 创建 Release
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/v')
         with:
           body: |
             ## 安装
@@ -76,24 +102,30 @@ jobs:
             legion install ${{ steps.package.outputs.name }}@${{ steps.version.outputs.version }}
             ```
 
+            ## 发行包
+
+            下载源码 tarball 即可获得完整的 Valkyrie 语言 + 标准库 + 文档 + 测试。
+
             ## 变更
 
             请查看提交历史获取详细变更信息。
           files: |
-            ./dist/*.nupkg
-            ./dist/*.tar.gz
+            dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 发布到 Valhalla
+      - name: 发布到 Valhalla 注册表
         env:
           VALHALLA_TOKEN: ${{ secrets.VALHALLA_TOKEN }}
           VALHALLA_REGISTRY: ${{ vars.VALHALLA_REGISTRY_URL || 'https://valhalla.valkyrie-lang.dev' }}
-        run: echo "legion publish --registry ${{ env.VALHALLA_REGISTRY }} — 待实现"
+        run: |
+          echo "发布到 Valhalla 注册表..."
+          echo "注册表：${{ env.VALHALLA_REGISTRY }}"
+          echo "当前阶段：legion publish 功能待实现"
 
       - name: 生成证明
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: "${{ github.repository_owner }}/${{ github.event.repository.name }}"
           subject-version: "${{ steps.version.outputs.version }}"
-          subject-digest: sha256:${{ hashFiles('./dist/*.nupkg') }}
+          subject-digest: sha256:${{ hashFiles('dist/*.tar.gz') }}

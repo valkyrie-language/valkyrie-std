@@ -99,7 +99,7 @@ imply Utf8Iterator: Iterator<char> {
             case Fine(ch):
                 self._index += len;
                 return Fine(ch)
-            case Fail(_):
+            case Fail(error):
                 return None;
         }
     }
@@ -145,7 +145,7 @@ imply Utf8Text {
         let ch = char::from_u32(codepoint);
         match ch {
             case Fine(c): Fine(c),
-            case Fail(_): Fail(InvalidTextError { offset: offset, found: b0 as u8, expected: length }),
+            case Fail(error): Fail(InvalidTextError { offset: offset, found: b0 as u8, expected: length }),
         }
     }
 }

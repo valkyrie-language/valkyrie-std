@@ -81,31 +81,24 @@ micro jvm_read_bytes(data: [i32], offset: usize, count: usize) -> JvmBinaryResul
 }
 
 micro jvm_read_utf8(data: [i32], offset: usize) -> JvmBinaryResult<JvmReadResult<utf8>> {
-    match jvm_read_u16_be(data, offset) {
-        case Fine(len_result):
-            let length: usize = len_result.value as usize
-            let str_offset: usize = offset + 2
-            match jvm_read_bytes(data, str_offset, length) {
-                case Fine(bytes_result):
-                    let mut text: utf8 = ""
-                    let mut i: usize = 0
-                    while i < bytes_result.value.length {
-                        let byte_val: i32 = bytes_result.value[i]
-                        if byte_val >= 32 && byte_val < 127 {
-                            text = text + byte_to_char(byte_val)
-                        }
-                        i = i + 1
-                    }
-                    return Fine(JvmReadResult {
-                        value: text,
-                        consumed: 2 + bytes_result.consumed
-                    })
-                case Fail(error):
-                    return Fail(error)
-            }
-        case Fail(error):
-            return Fail(error)
+    let len_result = jvm_read_u16_be(data, offset)?
+    let length: usize = len_result.value as usize
+    let str_offset: usize = offset + 2
+
+    let bytes_result = jvm_read_bytes(data, str_offset, length)?
+    let mut text: utf8 = ""
+    let mut i: usize = 0
+    while i < bytes_result.value.length {
+        let byte_val: i32 = bytes_result.value[i]
+        if byte_val >= 32 && byte_val < 127 {
+            text = text + byte_to_char(byte_val)
+        }
+        i = i + 1
     }
+    return Fine(JvmReadResult {
+        value: text,
+        consumed: 2 + bytes_result.consumed
+    })
 }
 
 micro byte_to_char(byte: i32) -> utf8 {
