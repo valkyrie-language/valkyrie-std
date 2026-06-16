@@ -50,7 +50,7 @@ micro read_file_text(path: utf8) -> utf8 {
         <% case "clr" %>
         return std.adaptor.clr.io.file_read_all_text(path)
         <% case "jvm" %>
-        let handle: i32 = std.adaptor.jvm.io.jvm_path_of(path)
+        let handle: any = std.adaptor.jvm.io.jvm_path_of(path)
         return std.adaptor.jvm.io.jvm_file_read_all_text(handle)
         <% else %>
         return ""
@@ -63,7 +63,7 @@ micro write_file_text(path: utf8, content: utf8) -> bool {
         std.adaptor.clr.io.file_write_all_text(path, content)
         return true
         <% case "jvm" %>
-        let handle: i32 = std.adaptor.jvm.io.jvm_path_of(path)
+        let handle: any = std.adaptor.jvm.io.jvm_path_of(path)
         std.adaptor.jvm.io.jvm_file_write_all_text(handle, content)
         return true
         <% else %>

@@ -100,13 +100,13 @@ micro parse_build_request(args: [utf8]) -> BuildRequest {
 }
 
 // 尝试从项目目录向上查找 workspace legions.von，返回 workspace 级 auto_link 默认值
-micro try_load_workspace_auto_link(project_dir: utf8) -> (bool, bool, bool) {
+micro try_load_workspace_auto_link(project_dir: utf8) -> WorkspaceAutoLinkResult {
     let workspace_path: utf8 = path_join(project_dir, "legions.von")
     if !std.io.file_exists(workspace_path) {
         // 向上查找
         let parent_workspace: utf8 = path_join(path_join(project_dir, ".."), "legions.von")
         if !std.io.file_exists(parent_workspace) {
-            return (false, false, false)
+            return WorkspaceAutoLinkResult { core: false, std: false, has_default: false }
         }
         workspace_path = parent_workspace
     }
@@ -114,14 +114,14 @@ micro try_load_workspace_auto_link(project_dir: utf8) -> (bool, bool, bool) {
         case Fine(document):
             return legion_parse_workspace_auto_link(document)
         case Fail(error):
-            return (false, false, false)
+            return WorkspaceAutoLinkResult { core: false, std: false, has_default: false }
     }
 }
 
 micro emit_single_project_build(project_dir: utf8, requested_target: utf8, output: utf8, verbose: bool) -> unit {
     let manifest_path: utf8 = path_join(project_dir, "legion.von")
-    let (ws_auto_core, ws_auto_std, has_ws_default) = try_load_workspace_auto_link(project_dir)
-    match legion_read_project_manifest(manifest_path, ws_auto_core, ws_auto_std, has_ws_default) {
+    let auto_link: WorkspaceAutoLinkResult = try_load_workspace_auto_link(project_dir)
+    match legion_read_project_manifest(manifest_path, auto_link.core, auto_link.std, auto_link.has_default) {
         case Fine(manifest):
             let request: BuildRequest = BuildRequest {
                 project: project_dir,

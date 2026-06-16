@@ -1,0 +1,7 @@
+{
+    name: "test.wasm_loop",
+    version: "0.0.0.0",
+    description: "WASM循环代码生成测试",
+    dependencies: { "std": false },
+    build: [{ target: "wasm" }]
+}

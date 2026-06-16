@@ -26,6 +26,19 @@ structure LegionWorkspaceManifest {
     members: [utf8]
 }
 
+/// auto_link 解析结果（core + std）
+structure AutoLinkResult {
+    core: bool
+    std: bool
+}
+
+/// workspace auto_link 解析结果（core + std + has_default）
+structure WorkspaceAutoLinkResult {
+    core: bool
+    std: bool
+    has_default: bool
+}
+
 micro legion_read_von_document(path: utf8) -> VonParseResult<VonValue> {
     if !std.io.file_exists(path) {
         return Fail(new_von_diagnostic("找不到清单文件", 0, 0))
@@ -93,7 +106,7 @@ micro legion_collect_dependencies(deps_value: VonValue) -> [LegionDependency] {
 
 # 从 VON 对象中解析 auto_link 配置
 # 优先级：项目级 auto_link > workspace_auto_link > 默认值 (true, true)
-micro legion_parse_auto_link(value: VonValue, workspace_auto_core: bool, workspace_auto_std: bool, has_workspace_default: bool) -> (bool, bool) {
+micro legion_parse_auto_link(value: VonValue, workspace_auto_core: bool, workspace_auto_std: bool, has_workspace_default: bool) -> AutoLinkResult {
     let auto_link: VonValue = von_find_field(value, "auto_link")
     match auto_link {
         case Object(fields):
@@ -101,18 +114,18 @@ micro legion_parse_auto_link(value: VonValue, workspace_auto_core: bool, workspa
             let std_val: VonValue = von_find_field(auto_link, "std")
             let core: bool = von_as_bool(core_val)
             let std: bool = von_as_bool(std_val)
-            return (core, std)
+            return AutoLinkResult { core: core, std: std }
         default:
             if has_workspace_default {
-                return (workspace_auto_core, workspace_auto_std)
+                return AutoLinkResult { core: workspace_auto_core, std: workspace_auto_std }
             }
             # 无 workspace 时的默认值：自动链接 core 和 std
-            return (true, true)
+            return AutoLinkResult { core: true, std: true }
     }
 }
 
 # 从 workspace legions.von 解析 auto_link 默认值
-micro legion_parse_workspace_auto_link(document: VonValue) -> (bool, bool, bool) {
+micro legion_parse_workspace_auto_link(document: VonValue) -> WorkspaceAutoLinkResult {
     let ws_field: VonValue = von_find_field(document, "workspace")
     match ws_field {
         case Object(fields):
@@ -121,27 +134,27 @@ micro legion_parse_workspace_auto_link(document: VonValue) -> (bool, bool, bool)
                 case Object(fields):
                     let core_val: VonValue = von_find_field(auto_link, "core")
                     let std_val: VonValue = von_find_field(auto_link, "std")
-                    return (von_as_bool(core_val), von_as_bool(std_val), true)
+                    return WorkspaceAutoLinkResult { core: von_as_bool(core_val), std: von_as_bool(std_val), has_default: true }
                 default:
-                    return (true, true, false)
+                    return WorkspaceAutoLinkResult { core: true, std: true, has_default: false }
             }
         default:
-            return (true, true, false)
+            return WorkspaceAutoLinkResult { core: true, std: true, has_default: false }
     }
 }
 
 micro legion_project_manifest_from_von(document: VonValue, workspace_auto_core: bool, workspace_auto_std: bool, has_workspace_default: bool) -> VonParseResult<LegionProjectManifest> {
     match document {
         case Object(fields):
-            let (auto_core, auto_std) = legion_parse_auto_link(document, workspace_auto_core, workspace_auto_std, has_workspace_default)
+            let auto_link_result: AutoLinkResult = legion_parse_auto_link(document, workspace_auto_core, workspace_auto_std, has_workspace_default)
             let deps_value: VonValue = von_find_field(document, "dependencies")
 
             return Fine(LegionProjectManifest {
                 name: von_as_text(von_find_field(document, "name")),
                 description: von_as_text(von_find_field(document, "description")),
                 build_targets: legion_collect_build_targets(von_find_field(document, "build")),
-                auto_link_core: auto_core,
-                auto_link_std: auto_std,
+                auto_link_core: auto_link_result.core,
+                auto_link_std: auto_link_result.std,
                 dependencies: legion_collect_dependencies(deps_value)
             })
         else:

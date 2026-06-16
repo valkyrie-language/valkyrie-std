@@ -187,127 +187,182 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
-  # Level 1：三端自举（CLR 后端）
+  # Level 1：三端自举（CLR 后端）—— 已接线（源码 → v1.clr）
+  #
+  # 源码 → v1.clr：使用上一代编译器（NyarVM.cs legion）编译
+  #                 valkyrie.v/projects/legion.tools → v1
+  # v1.clr → v2.clr：尚未接线（v1 产物未接入编译器后端）
+  #
+  # 当前 Level 1 仅覆盖第一轮编译，第二轮编译待 v1
+  # 产物（valkyrie.v legion）实现编译器后端后启用。
   # ─────────────────────────────────────────────────────────────
   bootstrap-level1-clr:
-    name: 自举验证 L1 — CLR
+    name: 自举验证 L1 — CLR（源码 → v1.clr）
     runs-on: ubuntu-latest
-    needs: bootstrap-deterministic
+    needs: build-legion
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
 
       - name: 设置 .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: 从 NuGet 安装上一代 CLR 编译器
-        run: |
-          dotnet tool install Valkyrie.Compiler.CLR --global --prerelease || \
-          echo "上一代 CLR 编译器尚未发布到 NuGet，跳过 Level 1 自举验证"
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
 
-      - name: 第一轮编译 — 上一代编译器编译当前源码
-        if: success()
-        run: |
-          legion build --target clr-microsoft-unknown-managed --output ./dist/bootstrap/l1/clr/v1
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
 
-      - name: 第二轮编译 — v1 编译器编译当前源码
-        if: success()
+      - name: 运行 CLR 自举验证
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
         run: |
-          legion build --compiler ./dist/bootstrap/l1/clr/v1 --target clr-microsoft-unknown-managed --output ./dist/bootstrap/l1/clr/v2
+          node scripts/bootstrap-clr.mjs --verbose
 
-      - name: 对比 v1 与 v2
-        if: success()
-        run: |
-          echo "对比 CLR 后端产物..."
-          diff -rq ./dist/bootstrap/l1/clr/v1 ./dist/bootstrap/l1/clr/v2 || \
-          echo "产物不完全一致，需检查是否符合预期"
+      - name: 上传自举报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-clr-report
+          path: valkyrie.v/dist/bootstrap-clr/
+          retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
-  # Level 1：三端自举（JVM 后端）
+  # Level 1：三端自举（JVM 后端）—— 已接线（按真实门槛判定）
+  #
+  # 当前脚本会诚实失败：
+  # - 若入口命名仍为 `legion_tools.jar` 而非 `legion.jar`
+  # - 若 `v1 --version` / `v1 --help` 失败
+  # - 若 `v1 -> v2` 尚未接线
   # ─────────────────────────────────────────────────────────────
   bootstrap-level1-jvm:
     name: 自举验证 L1 — JVM
     runs-on: ubuntu-latest
-    needs: bootstrap-deterministic
+    needs: build-legion
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
 
-      - name: 设置 JDK
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
+
+      - name: 设置 .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 设置 Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: 从 Maven Central 安装上一代 JVM 编译器
-        run: |
-          mvn dependency:copy -Dartifact=dev.valkyrie:compiler-jvm:LATEST -DoutputDirectory=./dist/bootstrap/l1/jvm/prev 2>/dev/null || \
-          echo "上一代 JVM 编译器尚未发布到 Maven Central，跳过 Level 1 自举验证"
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
 
-      - name: 第一轮编译 — 上一代编译器编译当前源码
-        if: success()
-        run: |
-          java -cp ./dist/bootstrap/l1/jvm/prev/*.jar dev.valkyrie.compiler.Main build \
-            --target jvm-openjdk-unknown-managed --output ./dist/bootstrap/l1/jvm/v1 \
-            legions.von
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
 
-      - name: 第二轮编译 — v1 编译器编译当前源码
-        if: success()
+      - name: 运行 JVM 自举验证
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
         run: |
-          java -cp ./dist/bootstrap/l1/jvm/v1/*.jar dev.valkyrie.compiler.Main build \
-            --target jvm-openjdk-unknown-managed --output ./dist/bootstrap/l1/jvm/v2 \
-            legions.von
+          node scripts/bootstrap-jvm.mjs --verbose
 
-      - name: 对比 v1 与 v2
-        if: success()
-        run: |
-          echo "对比 JVM 后端产物..."
-          diff -rq ./dist/bootstrap/l1/jvm/v1 ./dist/bootstrap/l1/jvm/v2 || \
-          echo "产物不完全一致，需检查是否符合预期"
+      - name: 上传自举报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-jvm-report
+          path: valkyrie.v/dist/bootstrap-jvm/
+          retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
-  # Level 1：三端自举（WASM 后端）
+  # Level 1：三端自举（WASM 后端）—— 已接线（按真实门槛判定）
+  #
+  # 当前脚本会诚实失败：
+  # - 若入口命名仍为 `legion_tools.mjs/.wasm` 而非 `legion.mjs/.wasm`
+  # - 若 `v1 --version` / `v1 --help` 失败
+  # - 若 `v1 -> v2` 尚未接线
   # ─────────────────────────────────────────────────────────────
   bootstrap-level1-wasm:
     name: 自举验证 L1 — WASM
     runs-on: ubuntu-latest
-    needs: bootstrap-deterministic
+    needs: build-legion
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: 检出代码
+      - name: 检出 valkyrie.v
         uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
+
+      - name: 设置 .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 设置 Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: 从 npm 安装上一代 WASM 编译器
-        run: |
-          npm install -g @valkyrie/compiler-wasm@latest 2>/dev/null || \
-          echo "上一代 WASM 编译器尚未发布到 npm，跳过 Level 1 自举验证"
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
 
-      - name: 第一轮编译 — 上一代编译器编译当前源码
-        if: success()
-        run: |
-          valkyrie-wasm build --target wasm32-unknown-web-webassembly --output ./dist/bootstrap/l1/wasm/v1
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
 
-      - name: 第二轮编译 — v1 编译器编译当前源码
-        if: success()
+      - name: 运行 WASM 自举验证
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
         run: |
-          node ./dist/bootstrap/l1/wasm/v1/compiler.mjs build \
-            --target wasm32-unknown-web-webassembly --output ./dist/bootstrap/l1/wasm/v2
+          node scripts/bootstrap-wasm.mjs --verbose
 
-      - name: 对比 v1 与 v2
-        if: success()
-        run: |
-          echo "对比 WASM 后端产物..."
-          diff -rq ./dist/bootstrap/l1/wasm/v1 ./dist/bootstrap/l1/wasm/v2 || \
-          echo "产物不完全一致，需检查是否符合预期"
+      - name: 上传自举报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-wasm-report
+          path: valkyrie.v/dist/bootstrap-wasm/
+          retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
   # 对角交叉验证（Level 1+）
@@ -409,29 +464,37 @@ jobs:
             echo ""
             echo "### Level 1 — 三端自举"
             echo ""
-            echo "| 后端 | 结果 |"
+            echo "| 后端 | 状态 |"
             echo "|------|------|"
             echo "| CLR | ${{ needs.bootstrap-level1-clr.result }} |"
             echo "| JVM | ${{ needs.bootstrap-level1-jvm.result }} |"
             echo "| WASM | ${{ needs.bootstrap-level1-wasm.result }} |"
-            echo ""
-            echo "### 对角交叉验证"
-            echo ""
-            echo "| 验证方向 | 结果 |"
-            echo "|------|------|"
-            echo "| CLR → JVM | ${{ needs.diagonal-cross-verify.result }} |"
-            echo "| JVM → WASM | ${{ needs.diagonal-cross-verify.result }} |"
-            echo "| WASM → CLR | ${{ needs.diagonal-cross-verify.result }} |"
           } >> $GITHUB_STEP_SUMMARY
 
       - name: 判定
         run: |
           if [ "${{ needs.bootstrap-deterministic.result }}" != "success" ]; then
-            echo "三端确定性验证未全部通过"
+            echo "Level 0 三端确定性验证未全部通过"
             exit 1
           fi
           if [ "${{ needs.cross-verify.result }}" != "success" ]; then
             echo "交叉验证未通过"
             exit 1
           fi
-          echo "三端自举 Level 0 验证全部通过"
+          if [ "${{ startsWith(github.ref, 'refs/tags/v') }}" = "true" ]; then
+            if [ "${{ needs.bootstrap-level1-clr.result }}" != "success" ]; then
+              echo "CLR Level 1 自举未通过"
+              exit 1
+            fi
+            if [ "${{ needs.bootstrap-level1-jvm.result }}" != "success" ]; then
+              echo "JVM Level 1 自举未通过"
+              exit 1
+            fi
+            if [ "${{ needs.bootstrap-level1-wasm.result }}" != "success" ]; then
+              echo "WASM Level 1 自举未通过"
+              exit 1
+            fi
+            echo "Level 0 三端确定性验证通过，且 Level 1 三端自举已通过"
+            exit 0
+          fi
+          echo "Level 0 三端确定性验证通过（不等于 Level 1 自举完成）"

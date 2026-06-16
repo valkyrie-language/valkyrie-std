@@ -34,7 +34,7 @@ micro parse_wat_tokens(tokens: [WatToken]) -> WatParseResult<WatModule> {
                         case String(name):
                             module_name = name
                             i = i + 1
-                        ...
+                        else: @unimplemented
                     }
 
                     let mut imports: [WatImport] = []
@@ -103,9 +103,9 @@ micro parse_wat_tokens(tokens: [WatToken]) -> WatParseResult<WatModule> {
                                             case Number(text):
                                                 start_function = text
                                                 i = i + 1
-                                            ...
+                                            else: @unimplemented
                                         }
-                                    ...
+                                    else: @unimplemented
                                 }
                                 i = wat_expect(tokens, i, Punctuation(")"))?
                             else:
@@ -151,7 +151,7 @@ micro parse_wat_func(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
         case String(text):
             name = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut export_name: utf8 = ""
@@ -173,7 +173,7 @@ micro parse_wat_func(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
                             case String(text):
                                 export_name = text
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         i = wat_expect(tokens, i, Punctuation(")"))?
                     case ImportKeyword:
@@ -182,50 +182,34 @@ micro parse_wat_func(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
                             case String(text):
                                 import_module = text
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         match wat_peek(tokens, i).kind {
                             case String(text):
                                 import_name = text
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         i = wat_expect(tokens, i, Punctuation(")"))?
                     case ParamKeyword:
-                        match parse_wat_param(tokens, i) {
-                            case Fine(result):
-                                push(parameters, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_param(tokens, i)?
+                        push(parameters, result.value)
+                        i = result.next_index
                     case ResultKeyword:
-                        match parse_wat_result(tokens, i) {
-                            case Fine(result):
-                                push(results, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_result(tokens, i)?
+                        push(results, result.value)
+                        i = result.next_index
                     case LocalKeyword:
-                        match parse_wat_local(tokens, i) {
-                            case Fine(result):
-                                push(locals, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_local(tokens, i)?
+                        push(locals, result.value)
+                        i = result.next_index
                     case TypeKeyword:
                         i = i + 1
                         i = wat_expect(tokens, i, Punctuation(")"))?
                     else:
-                        match parse_wat_instruction_folded(tokens, i) {
-                            case Fine(result):
-                                push(instructions, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_instruction_folded(tokens, i)?
+                        push(instructions, result.value)
+                        i = result.next_index
                 }
             else:
                 break
@@ -253,14 +237,14 @@ micro parse_wat_param(tokens: [WatToken], index: usize) -> WatParseResult<WatPar
         case Identifier(text):
             name = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wat_peek(tokens, i).kind {
         case Identifier(id) if is_wat_value_type(id):
             value_type = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     i = wat_expect(tokens, i, Punctuation(")"))?
@@ -279,7 +263,7 @@ micro parse_wat_result(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
         case Identifier(id) if is_wat_value_type(id):
             result_type = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     i = wat_expect(tokens, i, Punctuation(")"))?
@@ -296,14 +280,14 @@ micro parse_wat_local(tokens: [WatToken], index: usize) -> WatParseResult<WatPar
         case Identifier(text):
             name = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wat_peek(tokens, i).kind {
         case Identifier(id) if is_wat_value_type(id):
             value_type = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     i = wat_expect(tokens, i, Punctuation(")"))?
@@ -320,7 +304,7 @@ micro parse_wat_type_def(tokens: [WatToken], index: usize) -> WatParseResult<Wat
     match wat_peek(tokens, i).kind {
         case Identifier(text):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut parameters: [utf8] = []
@@ -353,7 +337,7 @@ micro parse_wat_type_def(tokens: [WatToken], index: usize) -> WatParseResult<Wat
                                     break
                             }
                         }
-                    ...
+                    else: @unimplemented
                 }
                 i = wat_expect(tokens, i, Punctuation(")"))?
             else:
@@ -377,13 +361,13 @@ micro parse_wat_import(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
         case String(text):
             module = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
     match wat_peek(tokens, i).kind {
         case String(text):
             field = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut descriptor: WatImportDescriptor = Func(WatFuncImportDescriptor {
@@ -393,19 +377,10 @@ micro parse_wat_import(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
         results: []
     })
 
-    match wat_expect(tokens, i, Punctuation("(")) {
-        case Fine(idx2):
-            i = idx2
-            match parse_wat_import_descriptor(tokens, i) {
-                case Fine(result):
-                    descriptor = result.value
-                    i = result.next_index
-                case Fail(error):
-                    return Fail(error)
-            }
-        case Fail(error):
-            return Fail(error)
-    }
+    i = wat_expect(tokens, i, Punctuation("("))?
+    let result = parse_wat_import_descriptor(tokens, i)?
+    descriptor = result.value
+    i = result.next_index
 
     i = wat_expect(tokens, i, Punctuation(")"))?
 
@@ -426,7 +401,7 @@ micro parse_wat_import_descriptor(tokens: [WatToken], index: usize) -> WatParseR
             return parse_wat_table_import_desc(tokens, index)
         case GlobalKeyword:
             return parse_wat_global_import_desc(tokens, index)
-        ...
+        else: @unimplemented
     }
     return Fail(new_wat_diagnostic("未知的导入描述符类型", wat_peek(tokens, index).span.start, wat_peek(tokens, index).span.stop))
 }
@@ -439,7 +414,7 @@ micro parse_wat_func_import_desc(tokens: [WatToken], index: usize) -> WatParseRe
         case Identifier(text):
             id = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut type_ref: utf8 = ""
@@ -447,7 +422,7 @@ micro parse_wat_func_import_desc(tokens: [WatToken], index: usize) -> WatParseRe
         case Identifier(text):
             type_ref = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut parameters: [WatParameter] = []
@@ -459,21 +434,13 @@ micro parse_wat_func_import_desc(tokens: [WatToken], index: usize) -> WatParseRe
                 i = i + 1
                 match wat_peek(tokens, i).kind {
                     case ParamKeyword:
-                        match parse_wat_param(tokens, i) {
-                            case Fine(result):
-                                push(parameters, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_param(tokens, i)?
+                        push(parameters, result.value)
+                        i = result.next_index
                     case ResultKeyword:
-                        match parse_wat_result(tokens, i) {
-                            case Fine(result):
-                                push(results, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_result(tokens, i)?
+                        push(results, result.value)
+                        i = result.next_index
                     else:
                         i = wat_expect(tokens, i, Punctuation(")"))?
                 }
@@ -500,21 +467,21 @@ micro parse_wat_memory_import_desc(tokens: [WatToken], index: usize) -> WatParse
         case Identifier(text):
             id = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut min_pages: u32 = 0
     match wat_peek(tokens, i).kind {
         case Number(text):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut max_pages: u32 = 0
     match wat_peek(tokens, i).kind {
         case Number(text):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     i = wat_expect(tokens, i, Punctuation(")"))?
@@ -534,7 +501,7 @@ micro parse_wat_table_import_desc(tokens: [WatToken], index: usize) -> WatParseR
         case Identifier(text):
             id = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut element_type: utf8 = "funcref"
@@ -542,21 +509,21 @@ micro parse_wat_table_import_desc(tokens: [WatToken], index: usize) -> WatParseR
         case Identifier(id) if is_wat_value_type(id):
             element_type = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut min_size: u32 = 0
     match wat_peek(tokens, i).kind {
         case Number(text):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut max_size: u32 = 0
     match wat_peek(tokens, i).kind {
         case Number(text):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     i = wat_expect(tokens, i, Punctuation(")"))?
@@ -577,7 +544,7 @@ micro parse_wat_global_import_desc(tokens: [WatToken], index: usize) -> WatParse
         case Identifier(text):
             id = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut is_mutable: bool = false
@@ -590,22 +557,19 @@ micro parse_wat_global_import_desc(tokens: [WatToken], index: usize) -> WatParse
                 case MutKeyword:
                     i = i + 1
                     is_mutable = true
-                ...
+                else: @unimplemented
             }
             match wat_peek(tokens, i).kind {
                 case Identifier(id) if is_wat_value_type(id):
                     value_type = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
         case Identifier(id) if is_wat_value_type(id):
             value_type = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     i = wat_expect(tokens, i, Punctuation(")"))?
@@ -625,7 +589,7 @@ micro parse_wat_export(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
         case String(text):
             name = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut kind: utf8 = "func"
@@ -647,20 +611,17 @@ micro parse_wat_export(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
                 case GlobalKeyword:
                     kind = "global"
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             match wat_peek(tokens, i).kind {
                 case Identifier(text):
                     i = i + 1
                 case Number(text):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
-        ...
+            i = wat_expect(tokens, i, Punctuation(")"))?
+        else: @unimplemented
     }
 
     return Fine(wat_parsed(WatExport {
@@ -678,7 +639,7 @@ micro parse_wat_memory(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
         case Identifier(text):
             name = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     while true {
@@ -691,14 +652,14 @@ micro parse_wat_memory(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
                         match wat_peek(tokens, i).kind {
                             case String(text):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         match wat_peek(tokens, i).kind {
                             case String(text):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
-                    ...
+                    else: @unimplemented
                 }
                 i = wat_expect(tokens, i, Punctuation(")"))?
             else:
@@ -715,9 +676,9 @@ micro parse_wat_memory(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
             match wat_peek(tokens, i).kind {
                 case Number(text):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     return Fine(wat_parsed(WatMemory {
@@ -740,14 +701,14 @@ micro parse_wat_table(tokens: [WatToken], index: usize) -> WatParseResult<WatPar
                         match wat_peek(tokens, i).kind {
                             case String(text):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         match wat_peek(tokens, i).kind {
                             case String(text):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
-                    ...
+                    else: @unimplemented
                 }
                 i = wat_expect(tokens, i, Punctuation(")"))?
             else:
@@ -760,7 +721,7 @@ micro parse_wat_table(tokens: [WatToken], index: usize) -> WatParseResult<WatPar
         case Identifier(id) if is_wat_value_type(id):
             element_type = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut initial_size: u32 = 0
@@ -772,9 +733,9 @@ micro parse_wat_table(tokens: [WatToken], index: usize) -> WatParseResult<WatPar
             match wat_peek(tokens, i).kind {
                 case Number(text):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     return Fine(wat_parsed(WatTable {
@@ -792,7 +753,7 @@ micro parse_wat_global(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
         case Identifier(text):
             name = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut value_type: utf8 = "i32"
@@ -809,7 +770,7 @@ micro parse_wat_global(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
                         match wat_peek(tokens, i).kind {
                             case String(text):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         i = wat_expect(tokens, i, Punctuation(")"))?
                     case MutKeyword:
@@ -819,17 +780,13 @@ micro parse_wat_global(tokens: [WatToken], index: usize) -> WatParseResult<WatPa
                             case Identifier(id) if is_wat_value_type(id):
                                 value_type = id
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         i = wat_expect(tokens, i, Punctuation(")"))?
                     else:
-                        match parse_wat_instruction_folded(tokens, i) {
-                            case Fine(result):
-                                push(init_instructions, result.value)
-                                i = result.next_index
-                            case Fail(error):
-                                return Fail(error)
-                        }
+                        let result = parse_wat_instruction_folded(tokens, i)?
+                        push(init_instructions, result.value)
+                        i = result.next_index
                 }
             else:
                 break
@@ -850,7 +807,7 @@ micro parse_wat_data(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
     match wat_peek(tokens, i).kind {
         case Identifier(text):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     while true {
@@ -878,7 +835,7 @@ micro parse_wat_data(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
         case String(text):
             data = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     return Fine(wat_parsed(WatDataSegment {
@@ -896,7 +853,7 @@ micro parse_wat_elem(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
         case Identifier(text):
             table = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut offset: utf8 = ""
@@ -930,7 +887,7 @@ micro parse_wat_elem(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
                         match wat_peek(tokens, i).kind {
                             case Opcode(text):
                                 offset = text
-                            ...
+                            else: @unimplemented
                         }
                         i = i + 1
                         while true {
@@ -943,7 +900,7 @@ micro parse_wat_elem(tokens: [WatToken], index: usize) -> WatParseResult<WatPars
                                     i = i + 1
                             }
                         }
-                    ...
+                    else: @unimplemented
                 }
                 i = wat_expect(tokens, i, Punctuation(")"))?
             else:
@@ -975,12 +932,9 @@ micro parse_wat_instruction_folded(tokens: [WatToken], index: usize) -> WatParse
                 case Number(text):
                     value = text
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
             let mut vt: utf8 = opcode[0 .. opcode.length - 6]
             return Fine(wat_parsed(Const(WatConstInstruction {
                 opcode: opcode,
@@ -1003,12 +957,9 @@ micro parse_wat_instruction_folded(tokens: [WatToken], index: usize) -> WatParse
                 case Number(text):
                     variable = text
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
             return Fine(wat_parsed(Variable(WatVariableInstruction {
                 opcode: opcode,
                 variable: variable
@@ -1021,19 +972,13 @@ micro parse_wat_instruction_folded(tokens: [WatToken], index: usize) -> WatParse
                     ""
             }
             i = i + 1
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
             return Fine(wat_parsed(Simple(WatSimpleInstruction {
                 opcode: opcode
             }), i))
         case Opcode(opcode):
             i = i + 1
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
             return Fine(wat_parsed(Generic(WatGenericInstruction {
                 opcode: opcode,
                 operands: []
@@ -1051,10 +996,7 @@ micro parse_wat_instruction_folded(tokens: [WatToken], index: usize) -> WatParse
                     ""
             }
             i = i + 1
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
             return Fine(wat_parsed(Control(WatControlInstruction {
                 opcode: opcode,
                 label: "",
@@ -1065,10 +1007,7 @@ micro parse_wat_instruction_folded(tokens: [WatToken], index: usize) -> WatParse
             }), i))
 
         else:
-            match wat_expect(tokens, i, Punctuation(")")) {
-                case Fine(new_i): i = new_i
-                case Fail(error): return Fail(error)
-            }
+            i = wat_expect(tokens, i, Punctuation(")"))?
             return Fine(wat_parsed(Simple(WatSimpleInstruction {
                 opcode: "nop"
             }), i))

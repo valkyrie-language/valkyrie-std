@@ -178,7 +178,7 @@ micro parse_msil_assembly(tokens: [MsilToken], index: usize) -> MsilParseResult<
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut custom_attrs: [MsilCustomAttribute] = []
@@ -201,7 +201,7 @@ micro parse_msil_assembly(tokens: [MsilToken], index: usize) -> MsilParseResult<
                 match msil_peek(tokens, i).kind {
                     case Number(text):
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case VerDirective:
                 i = i + 1
@@ -209,7 +209,7 @@ micro parse_msil_assembly(tokens: [MsilToken], index: usize) -> MsilParseResult<
                     case String(v):
                         version = v
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case LocaleDirective:
                 i = i + 1
@@ -217,7 +217,7 @@ micro parse_msil_assembly(tokens: [MsilToken], index: usize) -> MsilParseResult<
                     case String(l):
                         locale = l
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case PublicKeyDirective:
                 i = i + 1
@@ -264,7 +264,7 @@ micro parse_msil_module(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut custom_attrs: [MsilCustomAttribute] = []
@@ -343,7 +343,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut extends: utf8 = ""
@@ -355,9 +355,9 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     extends = text
                     i = i + 1
                 case None():
-                    ...
+                    else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     let mut implements: [utf8] = []
@@ -372,13 +372,13 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                         match msil_peek(tokens, i).kind {
                             case Punctuation(","):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                     else:
                         break
                 }
             }
-        ...
+        else: @unimplemented
     }
 
     let mut class_attrs: [MsilClassAttr] = []
@@ -406,7 +406,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     case Number(text):
                         attr_value = text
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
                 push(class_attrs, MsilClassAttr {
                     name: ".pack",
@@ -419,7 +419,7 @@ micro parse_msil_type(tokens: [MsilToken], index: usize) -> MsilParseResult<Msil
                     case Number(text):
                         attr_value = text
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
                 push(class_attrs, MsilClassAttr {
                     name: ".size",
@@ -505,7 +505,7 @@ micro parse_msil_field(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
         case TypeReference(text) | Identifier(text):
             field_type = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut name: utf8 = ""
@@ -513,7 +513,7 @@ micro parse_msil_field(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut data_offset: utf8 = ""
@@ -524,9 +524,9 @@ micro parse_msil_field(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
                 case Number(text):
                     data_offset = text
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     let mut init_value: utf8 = ""
@@ -546,7 +546,7 @@ micro parse_msil_field(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
                         i = i + 1
                 }
             }
-        ...
+        else: @unimplemented
     }
 
     let mut marshal_info: utf8 = ""
@@ -576,7 +576,7 @@ micro parse_msil_inline_field(tokens: [MsilToken], index: usize) -> MsilParseRes
         case TypeReference(text) | Identifier(text):
             field_type = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut name: utf8 = ""
@@ -614,7 +614,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         case VarArgKeyword:
             call_conv = "vararg"
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut return_type: utf8 = ""
@@ -622,7 +622,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         case TypeReference(text) | Identifier(text):
             return_type = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut name: utf8 = ""
@@ -630,7 +630,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut parameters: [MsilMethodParam] = []
@@ -655,7 +655,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
                     case Identifier(n):
                         param_name = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
                 push(parameters, MsilMethodParam {
                     name: param_name,
@@ -672,13 +672,13 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
         case CilKeyword:
             push(impl_attrs, "cil")
             i = i + 1
-        ...
+        else: @unimplemented
     }
     match msil_peek(tokens, i).kind {
         case ManagedKeyword:
             push(impl_attrs, "managed")
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut pinvoke_info: MsilPInvokeInfo = MsilPInvokeInfo {
@@ -697,7 +697,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
                 case String(text):
                     dll_name = text
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             match msil_peek(tokens, i).kind {
                 case AsKeyword:
@@ -706,9 +706,9 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
                         case String(text):
                             entry_point = text
                             i = i + 1
-                        ...
+                        else: @unimplemented
                     }
-                ...
+                else: @unimplemented
             }
 
             pinvoke_info = MsilPInvokeInfo {
@@ -716,7 +716,7 @@ micro parse_msil_method(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
                 entry_point: entry_point,
                 attrs: attrs
             }
-        ...
+        else: @unimplemented
     }
 
     let mut body: MsilMethodBody = MsilMethodBody {
@@ -784,7 +784,7 @@ micro parse_msil_method_body(tokens: [MsilToken], index: usize) -> MsilParseResu
                 match msil_peek(tokens, i).kind {
                     case Number(text):
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case LocalsDirective:
                 match parse_msil_locals(tokens, i) {
@@ -818,7 +818,7 @@ micro parse_msil_method_body(tokens: [MsilToken], index: usize) -> MsilParseResu
                         case Identifier(text) | TypeReference(text) | Number(text) | String(text):
                             operand = text
                             i = i + 1
-                        ...
+                        else: @unimplemented
                     }
                 }
 
@@ -847,7 +847,7 @@ micro parse_msil_locals(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
     match msil_peek(tokens, i).kind {
         case InitKeyword:
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut locals: [MsilLocalDecl] = []
@@ -873,7 +873,7 @@ micro parse_msil_locals(tokens: [MsilToken], index: usize) -> MsilParseResult<Ms
                     case Identifier(n):
                         local_name = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
                 push(locals, MsilLocalDecl {
                     local_type: local_type,
@@ -924,7 +924,7 @@ micro parse_msil_exception_clause(tokens: [MsilToken], index: usize) -> MsilPars
                 case TypeReference(text) | Identifier(text):
                     exception_type = text
                     i = i + 1
-                ...
+                else: @unimplemented
             }
         case FilterKeyword:
             clause_type = "filter"
@@ -935,7 +935,7 @@ micro parse_msil_exception_clause(tokens: [MsilToken], index: usize) -> MsilPars
         case FaultKeyword:
             clause_type = "fault"
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     while i < tokens.length {
@@ -981,7 +981,7 @@ micro parse_msil_property(tokens: [MsilToken], index: usize) -> MsilParseResult<
         case TypeReference(text) | Identifier(text):
             property_type = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut name: utf8 = ""
@@ -989,7 +989,7 @@ micro parse_msil_property(tokens: [MsilToken], index: usize) -> MsilParseResult<
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut getter: utf8 = ""
@@ -1010,7 +1010,7 @@ micro parse_msil_property(tokens: [MsilToken], index: usize) -> MsilParseResult<
                     case Identifier(n):
                         getter = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case SetDirective:
                 i = i + 1
@@ -1018,7 +1018,7 @@ micro parse_msil_property(tokens: [MsilToken], index: usize) -> MsilParseResult<
                     case Identifier(n):
                         setter = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             else:
                 i = i + 1
@@ -1042,7 +1042,7 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
         case TypeReference(text) | Identifier(text):
             event_type = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut name: utf8 = ""
@@ -1050,7 +1050,7 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
         case Identifier(n):
             name = n
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut add_on: utf8 = ""
@@ -1072,7 +1072,7 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
                     case Identifier(n):
                         add_on = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case RemoveOnDirective:
                 i = i + 1
@@ -1080,7 +1080,7 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
                     case Identifier(n):
                         remove_on = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case FireDirective:
                 i = i + 1
@@ -1088,7 +1088,7 @@ micro parse_msil_event(tokens: [MsilToken], index: usize) -> MsilParseResult<Msi
                     case Identifier(n):
                         fire = n
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             else:
                 i = i + 1
@@ -1121,13 +1121,13 @@ micro parse_msil_method_impl(tokens: [MsilToken], index: usize) -> MsilParseResu
                 } else if implementation_method == "" {
                     implementation_method = text
                 }
-            ...
+            else: @unimplemented
         }
         i = i + 1
         match msil_peek(tokens, i).kind {
             case EndOfFile:
                 break
-            ...
+            else: @unimplemented
         }
     }
 
@@ -1148,7 +1148,7 @@ micro parse_msil_security(tokens: [MsilToken], index: usize) -> MsilParseResult<
         case Identifier(text):
             action = text
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     return Fine(msil_parsed(MsilSecurityDecl {

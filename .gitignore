@@ -10,9 +10,14 @@ BenchmarkDotNet.Artifacts/
 TestResults/
 obj/
 bin/
+tools/
 *.trx
 *.log
 *.txt
+
+# Java
+*.class
+*.jar
 
 # V
 .legion/

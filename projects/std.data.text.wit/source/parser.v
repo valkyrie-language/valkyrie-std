@@ -39,14 +39,14 @@ micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
                 case Identifier(id):
                     package = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             match wit_peek(tokens, i).kind {
                 case Punctuation(";"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     let mut definitions: [WitDefinition] = []
@@ -92,7 +92,7 @@ micro parse_wit_tokens(tokens: [WitToken]) -> WitParseResult<WitDocument> {
                     case Identifier(id):
                         path = id
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
                 push(definitions, Include(WitIncludeDef { path: path }))
             else:
@@ -114,13 +114,13 @@ micro parse_wit_interface(tokens: [WitToken], index: usize) -> WitParseResult<Wi
         case Identifier(id):
             name = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
         case Punctuation("{"):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut types: [WitTypeDef] = []
@@ -146,7 +146,7 @@ micro parse_wit_interface(tokens: [WitToken], index: usize) -> WitParseResult<Wi
                     case Identifier(id):
                         res_name = id
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
                 push(resources, WitResourceDef { name: res_name })
             case Identifier(id):
@@ -165,7 +165,7 @@ micro parse_wit_interface(tokens: [WitToken], index: usize) -> WitParseResult<Wi
     match wit_peek(tokens, i).kind {
         case Punctuation("}"):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     return Fine(wit_parsed(WitInterfaceDef {
@@ -184,13 +184,13 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
         case Identifier(id):
             name = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
         case Punctuation("{"):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut imports: [WitWorldItem] = []
@@ -208,7 +208,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
                     case Identifier(id):
                         item_name = id
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
 
                 let mut target: utf8 = ""
@@ -219,7 +219,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
                     case Identifier(id):
                         target = id
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
 
                 push(imports, WitWorldItem { name: item_name, target: target })
@@ -227,7 +227,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
                 match wit_peek(tokens, i).kind {
                     case Punctuation(";"):
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             case Keyword("export"):
                 i = i + 1
@@ -237,7 +237,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
                     case Identifier(id):
                         item_name = id
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
 
                 let mut target: utf8 = ""
@@ -248,7 +248,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
                     case Identifier(id):
                         target = id
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
 
                 push(exports, WitWorldItem { name: item_name, target: target })
@@ -256,7 +256,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
                 match wit_peek(tokens, i).kind {
                     case Punctuation(";"):
                         i = i + 1
-                    ...
+                    else: @unimplemented
                 }
             else:
                 i = i + 1
@@ -266,7 +266,7 @@ micro parse_wit_world(tokens: [WitToken], index: usize) -> WitParseResult<WitPar
     match wit_peek(tokens, i).kind {
         case Punctuation("}"):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     return Fine(wit_parsed(WitWorldDef {
@@ -287,12 +287,12 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case Identifier(id):
                     type_name = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             match wit_peek(tokens, i).kind {
                 case Punctuation("="):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             let mut target: utf8 = ""
             match wit_peek(tokens, i).kind {
@@ -302,12 +302,12 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case TypeName(id):
                     target = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             match wit_peek(tokens, i).kind {
                 case Punctuation(";"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             return Fine(wit_parsed(TypeAlias(type_name, target), i))
 
@@ -318,13 +318,13 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case Identifier(id):
                     name = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             match wit_peek(tokens, i).kind {
                 case Punctuation("{"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             let mut fields: [WitField] = []
@@ -338,7 +338,7 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                         match wit_peek(tokens, i).kind {
                             case Punctuation(":"):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         match wit_peek(tokens, i).kind {
                             case Identifier(id):
@@ -350,13 +350,13 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                             case Punctuation(id):
                                 field_type = id
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         push(fields, WitField { name: field_name, type_ref: field_type })
                         match wit_peek(tokens, i).kind {
                             case Punctuation(","):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                     else:
                         i = i + 1
@@ -366,7 +366,7 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
             match wit_peek(tokens, i).kind {
                 case Punctuation("}"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             return Fine(wit_parsed(Record(name, fields), i))
 
@@ -377,13 +377,13 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case Identifier(id):
                     name = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             match wit_peek(tokens, i).kind {
                 case Punctuation("{"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             let mut cases: [WitCase] = []
@@ -404,20 +404,20 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                                     case TypeName(id):
                                         case_type = id
                                         i = i + 1
-                                    ...
+                                    else: @unimplemented
                                 }
                                 match wit_peek(tokens, i).kind {
                                     case Punctuation(")"):
                                         i = i + 1
-                                    ...
+                                    else: @unimplemented
                                 }
-                            ...
+                            else: @unimplemented
                         }
                         push(cases, WitCase { name: case_name, type_ref: case_type })
                         match wit_peek(tokens, i).kind {
                             case Punctuation(","):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                     else:
                         i = i + 1
@@ -427,7 +427,7 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
             match wit_peek(tokens, i).kind {
                 case Punctuation("}"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             return Fine(wit_parsed(Variant(name, cases), i))
 
@@ -444,13 +444,13 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case Identifier(id):
                     name = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             match wit_peek(tokens, i).kind {
                 case Punctuation("{"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             let mut case_names: [utf8] = []
@@ -464,7 +464,7 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                         match wit_peek(tokens, i).kind {
                             case Punctuation(","):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                     else:
                         i = i + 1
@@ -474,7 +474,7 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
             match wit_peek(tokens, i).kind {
                 case Punctuation("}"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
 
             if is_enum {
@@ -490,7 +490,7 @@ micro parse_wit_type_def(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case Identifier(id):
                     name = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
             return Fine(wit_parsed(Resource(name), i))
 
@@ -510,21 +510,21 @@ micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<Wit
         case Keyword("constructor"):
             is_constructor = true
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
         case Keyword("static"):
             is_static = true
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
         case Identifier(id):
             name = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     let mut parameters: [WitParam] = []
@@ -543,7 +543,7 @@ micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                         match wit_peek(tokens, i).kind {
                             case Punctuation(":"):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         match wit_peek(tokens, i).kind {
                             case Identifier(id):
@@ -555,13 +555,13 @@ micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                             case PackageRef(id):
                                 param_type = id
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                         push(parameters, WitParam { name: param_name, type_ref: param_type })
                         match wit_peek(tokens, i).kind {
                             case Punctuation(","):
                                 i = i + 1
-                            ...
+                            else: @unimplemented
                         }
                     else:
                         i = i + 1
@@ -570,9 +570,9 @@ micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<Wit
             match wit_peek(tokens, i).kind {
                 case Punctuation(")"):
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
@@ -588,15 +588,15 @@ micro parse_wit_function(tokens: [WitToken], index: usize) -> WitParseResult<Wit
                 case PackageRef(id):
                     i = i + 1
                     push(results, WitResult { name: "", type_ref: id })
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
         case Punctuation(";"):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     return Fine(wit_parsed(WitFunctionDef {
@@ -621,7 +621,7 @@ micro parse_wit_use(tokens: [WitToken], index: usize) -> WitParseResult<WitParse
         case Identifier(id):
             path = id
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
@@ -631,15 +631,15 @@ micro parse_wit_use(tokens: [WitToken], index: usize) -> WitParseResult<WitParse
                 case Identifier(id):
                     alias = id
                     i = i + 1
-                ...
+                else: @unimplemented
             }
-        ...
+        else: @unimplemented
     }
 
     match wit_peek(tokens, i).kind {
         case Punctuation(";"):
             i = i + 1
-        ...
+        else: @unimplemented
     }
 
     return Fine(wit_parsed(WitUseDef {
