@@ -12,6 +12,28 @@ EGraph<IKun> → ⑥ Nyar.Optimizer → IKunTree → ⑦ IkunTreeToLirLowerer �
 
 LIR 消费优化后的线性 `IKunTree`，输出平台无关的 `GenerateModule`。不做 ABI 决策——对象布局和调用约定由各后端独立决定。
 
+## 文本类型纪律
+
+`Valkyrie` 是多后端语言，因此 `LIR` 禁止继续使用宽泛 `string`。
+
+- `CLR` 常把文本落到宿主 `string`
+- `JVM` 常把文本落到 `java.lang.String`
+- `WASM` 往往更接近线性内存中的字节序列、句柄或偏移
+
+这些都只是目标表示，不是语言级统一语义。若在 `LIR` 里继续保留笼统 `string`，后端就会各自按自己的宿主习惯补语义，最终把编码、布局、默认值和调用约定搞乱。
+
+因此从 `LIR` 视角看，文本类型必须已经完全确定，只允许出现 `char`、`utf8`、`utf16`、`utf32`、`c_str` 这类正式类型名。
+
+`literal_text` 与 `literal_char` 只是 `HIR` 之前的字面量占位概念：
+
+- `literal_char` 在信息不足时默认收敛为 `char`
+- `literal_text` 在信息不足时默认收敛为 `utf8`
+- 若目标类型明确为 `char`，则 `"x"`、`"😀"` 这类单个文本元素的 `literal_text` 允许隐式收敛为 `char`
+
+如果上游没有额外语义信息可供选择，默认文本类型应收敛为 `utf8`。这是 `Valkyrie` 的优选文本类型。
+
+所有文本类型都按不可变值处理。`LIR` 不支持把文本上的 `+=` 解释成原地修改；如果语言层允许文本拼接，也只能表现为“读取旧值并构造一个新文本值”，而不能伪装成可变缓冲区。
+
 ## 类型映射
 
 `LirBuilder.MapTypeNameToValueType` 将类型名映射为 `GenerateValueType`：
@@ -26,12 +48,14 @@ LIR 消费优化后的线性 `IKunTree`，输出平台无关的 `GenerateModule`
 | `i64` | I64 | 有符号 64 位 |
 | `f32` | F32 | 单精度浮点 |
 | `f64` | F64 | 双精度浮点 |
-| `string` / `utf8` / `utf16` / `utf32` | String | 字符串 |
+| `char` / `utf8` / `utf16` / `utf32` / `c_str` | 确定文本或字符表示 | 只接受确定文本类型，不接受宽泛 `string`，也不接受 `literal_*` |
 | 枚举 / 标志 | 底层整数类型 | 判值作为常量比较 |
 | 结构体 / unite | Struct | 值类型内联布局 |
 | 类 / union / trait | ExternRef | 引用类型 |
 
 非基元类型（class、union、trait）映射为 `ExternRef`，其具体布局信息由 `LirTypeDef` 表提供。
+
+如果上游仍把 legacy `string` 传入 `LIR`，应立即报错，而不是在这里默认归一化为某个编码。
 
 ## LirTypeDef
 
@@ -121,3 +145,5 @@ LIR 是平台无关的低级 IR，不做 ABI 决策：
 | 调用约定统一表达 | `.wasm`/`.class`/`.dll` 编码 |
 | 控制流结构 | 宿主入口包装 |
 | GC 位图标记 | sidecar 资产生成 |
+
+对文本类型也遵循同一条边界：`LIR` 负责携带确定文本语义，后端只负责把它映射到目标平台表示，不能在后端重新发明宽泛 `string`。

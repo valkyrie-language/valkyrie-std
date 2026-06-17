@@ -1,5 +1,184 @@
 namespace std.text;
 
+type utf8 = Utf8Text
+
+structure InvalidTextError {
+    offset: usize,
+    found: u8,
+    expected: usize
+}
+
+micro utf8_eq(a: utf8, b: utf8) -> bool {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_equals(a, b)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_equals(a, b)
+        <% else %>
+        return a == b
+    <% end match %>
+}
+
+micro utf8_ne(a: utf8, b: utf8) -> bool {
+    return !utf8_eq(a, b)
+}
+
+micro utf8_concat(a: utf8, b: utf8) -> utf8 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_concat(a, b)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_concat(a, b)
+        <% else %>
+        return a + b
+    <% end match %>
+}
+
+micro utf8_len_bytes(s: utf8) -> i32 {
+    return utf8_len_chars(s)
+}
+
+micro utf8_len_chars(s: utf8) -> i32 {
+    return text_length(s)
+}
+
+micro utf8_substr(s: utf8, start: i32, len: i32) -> utf8 {
+    return text_slice(s, start, len)
+}
+
+micro text_length(self: utf8) -> i32 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_length(self)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_length(self)
+        <% else %>
+        return i32(self.count_char())
+    <% end match %>
+}
+
+micro text_slice(self: utf8, start: i32, count: i32) -> utf8 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_substring(self, start, count)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_substring(self, start, start + count)
+        <% else %>
+        return ""
+    <% end match %>
+}
+
+micro trim(self: utf8) -> utf8 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_trim(self)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_trim(self)
+        <% else %>
+        return self
+    <% end match %>
+}
+
+micro to_lower(self: utf8) -> utf8 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_to_lower(self)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_to_lower(self)
+        <% else %>
+        return self
+    <% end match %>
+}
+
+micro to_upper(self: utf8) -> utf8 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_to_upper(self)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_to_upper(self)
+        <% else %>
+        return self
+    <% end match %>
+}
+
+micro replace(self: utf8, old_value: utf8, new_value: utf8) -> utf8 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_replace(self, old_value, new_value)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_replace(self, old_value, new_value)
+        <% else %>
+        return self
+    <% end match %>
+}
+
+micro text_index_of(self: utf8, value: utf8) -> i32 {
+    <% match arch %>
+        <% case "clr" %>
+        return std.adaptor.clr.string.utf8_index_of(self, value)
+        <% case "jvm" %>
+        return std.adaptor.jvm.utf8.jvm_utf8_index_of(self, value)
+        <% else %>
+        return -1
+    <% end match %>
+}
+
+micro contains(self: utf8, value: utf8) -> bool {
+    return text_index_of(self, value) >= 0
+}
+
+micro starts_with(self: utf8, prefix: utf8) -> bool {
+    let prefix_length: i32 = text_length(prefix)
+    let self_length: i32 = text_length(self)
+    if prefix_length > self_length {
+        return false
+    }
+
+    return text_slice(self, 0, prefix_length) == prefix
+}
+
+micro ends_with(self: utf8, suffix: utf8) -> bool {
+    let suffix_length: i32 = text_length(suffix)
+    let self_length: i32 = text_length(self)
+    if suffix_length > self_length {
+        return false
+    }
+
+    return text_slice(self, self_length - suffix_length, suffix_length) == suffix
+}
+
+micro split(self: utf8, separator: utf8) -> [utf8] {
+    let mut result: [utf8] = []
+    let separator_length: i32 = text_length(separator)
+
+    if separator_length <= 0 {
+        push(result, self)
+        return result
+    }
+
+    let mut remaining: utf8 = self
+    while true {
+        let index: i32 = text_index_of(remaining, separator)
+        if index < 0 {
+            push(result, remaining)
+            return result
+        }
+
+        push(result, text_slice(remaining, 0, index))
+
+        let remaining_length: i32 = text_length(remaining)
+        let next_start: i32 = index + separator_length
+        let next_length: i32 = remaining_length - next_start
+        if next_length <= 0 {
+            push(result, "")
+            return result
+        }
+
+        remaining = text_slice(remaining, next_start, next_length)
+    }
+}
+
+
 ⍝ ────────── 不可变 UTF‑8 文本 ──────────
 ⍝ 本体采用引用语义（class），数据一旦创建便不可修改。
 ⍝ 这使得赋值、传参仅复制引用，成本极低，且视图永无失效风险。
@@ -106,6 +285,62 @@ imply Utf8Iterator: Iterator<char> {
 }
 
 imply Utf8Text {
+    ⍝ 返回字符长度。
+    ⍝ 在 Valkyrie 中，`.length` 与 `.length()` 等价，因此这里补一个零参数方法入口。
+    micro length(self) -> usize {
+        return self.count_char();
+    }
+
+    ⍝ 判断当前文本是否与目标文本内容相等
+    micro equals(self, other: Utf8Text) -> bool {
+        return utf8_eq(self, other);
+    }
+
+    ⍝ 拼接两个 UTF‑8 文本并返回新的文本
+    micro concat(self, other: Utf8Text) -> Utf8Text {
+        return utf8_concat(self, other);
+    }
+
+    ⍝ 判断当前文本是否包含目标子串
+    micro contains(self, value: Utf8Text) -> bool {
+        return std.text.contains(self, value);
+    }
+
+    ⍝ 判断当前文本是否以指定前缀开头
+    micro starts_with(self, prefix: Utf8Text) -> bool {
+        return std.text.starts_with(self, prefix);
+    }
+
+    ⍝ 判断当前文本是否以指定后缀结尾
+    micro ends_with(self, suffix: Utf8Text) -> bool {
+        return std.text.ends_with(self, suffix);
+    }
+
+    ⍝ 返回目标子串在当前文本中的起始位置
+    micro index_of(self, value: Utf8Text) -> i32 {
+        return text_index_of(self, value);
+    }
+
+    ⍝ 去除当前文本首尾空白
+    micro trim(self) -> Utf8Text {
+        return std.text.trim(self);
+    }
+
+    ⍝ 将当前文本转换为小写
+    micro to_lower(self) -> Utf8Text {
+        return std.text.to_lower(self);
+    }
+
+    ⍝ 将当前文本转换为大写
+    micro to_upper(self) -> Utf8Text {
+        return std.text.to_upper(self);
+    }
+
+    ⍝ 替换当前文本中的指定子串
+    micro replace(self, old_value: Utf8Text, new_value: Utf8Text) -> Utf8Text {
+        return std.text.replace(self, old_value, new_value);
+    }
+
     micro chars(self) -> Utf8Iterator {
         return Utf8Iterator { _text: self, _index: 0 };
     }

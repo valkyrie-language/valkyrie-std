@@ -27,24 +27,57 @@
 | 类型 | 说明 |
 |:---|:---|
 | `bool` | 布尔类型，值为 `true` 或 `false` |
-| `string` | UTF-8 字符串 |
+| `char` | 单个 Unicode 文本元素 |
+| `utf8` | UTF-8 文本 |
+| `utf16` | UTF-16 文本 |
+| `utf32` | UTF-32 文本 |
+| `c_str` | 面向 C ABI 的文本表示 |
 | `void` | 空类型，函数无返回值时使用 |
 | `auto` | 类型推断，由编译器推导实际类型 |
+
+### 文本类型纪律
+
+`Valkyrie` 不提供宽泛的 `string` 类型，就像它也不提供宽泛的 `number` 类型一样。文本类型必须写成确定语义的正式类型。
+
+- 当你关心 UTF-8 文本时，写 `utf8`
+- 当你关心 UTF-16 文本时，写 `utf16`
+- 当你关心单个 Unicode 文本元素时，写 `char`
+- 如果你不确定该选哪一种，默认使用 `utf8`
+
+这样设计的根本原因是 `Valkyrie` 是多后端语言，`CLR`、`JVM`、`WASM`、Native 对文本的宿主表示完全不同。若在语言和 IR 层继续使用宽泛 `string`，编译器就会把“文本语义”与“目标平台表示”混在一起，进而滋生编码、布局和 ABI 相关 bug。
+
+字符串字面量在进入类型系统前会先以 `literal_text` / `literal_char` 参与推断，但这两个名字都不是正式类型。
+
+- `literal_char` 由单引号字面量产生，信息不足时默认收敛为 `char`
+- `literal_text` 由双引号字面量产生，信息不足时默认收敛为 `utf8`
+- 若目标类型明确为 `char`，则 `"x"`、`"😀"` 这类单个文本元素允许从 `literal_text` 隐式收敛为 `char`
+
+一旦进入类型系统与编译主链，类型必须已经确定。
+
+### 文本不可变性
+
+所有文本类型都是不可变的，包括 `char`、`utf8`、`utf16`、`utf32`、`c_str`。
+
+- 文本值一旦创建，其内容不可原地修改
+- 语言层故意不支持针对文本类型的 `+=`
+- 需要拼接时，应显式构造新文本值，而不是依赖“看起来像原地追加”的语法糖
+
+这是一个有意的性能与可维护性约束：禁止文本 `+=` 可以避免隐藏分配、减少意料之外的临时对象，从而防止意料之外的 GC 压力。
 
 ## 泛型类型
 
 | 类型 | 说明 | 示例 |
 |:---|:---|:---|
 | `list<T>` | 动态长度列表 | `list<i32>` |
-| `map<K, V>` | 键值映射 | `map<string, i32>` |
+| `map<K, V>` | 键值映射 | `map<utf8, i32>` |
 | `Option<T>` | 可选值（可嵌套） | `Option<i32>` |
-| `future<T>` | 异步值 | `future<string>` |
+| `future<T>` | 异步值 | `future<utf8>` |
 
 嵌套泛型：
 
 ```valkyrie
 let nested: list<list<i32>> = [[1, 2], [3, 4]]
-let mapping: map<string, list<i32>> = {"a": [1, 2]}
+let mapping: map<utf8, list<i32>> = {"a": [1, 2]}
 ```
 
 ## 自定义类型
@@ -66,7 +99,7 @@ let callback: micro(event: Event) -> void = on_click
 
 ```valkyrie
 structure Point(i32, i32)
-structure UserSnapshot { id: i32, name: string }
+structure UserSnapshot { id: i32, name: utf8 }
 ```
 
 详见 [声明](../declarations.md)。
@@ -77,15 +110,15 @@ structure UserSnapshot { id: i32, name: string }
 
 ```valkyrie
 trait Display {
-    to_string(self) -> string
+    to_utf8(self) -> utf8
 }
 
 micro display(value: Display) {
-    println(value.to_string())
+    println(value.to_utf8())
 }
 ```
 
-任何定义了 `to_string(self) -> string` 的类型自动满足 `Display`，无需显式声明实现。
+任何定义了 `to_utf8(self) -> utf8` 的类型自动满足 `Display`，无需显式声明实现。
 
 ### 类类型
 
@@ -93,7 +126,7 @@ micro display(value: Display) {
 
 ```valkyrie
 class Animal
-    name: string
+    name: utf8
     age: i32
 ```
 
@@ -131,7 +164,7 @@ flags Permission {
 ```valkyrie
 union Result {
     Ok(i32),
-    Err(string),
+    Err(utf8),
 }
 ```
 
@@ -142,7 +175,7 @@ union Result {
 ```valkyrie
 unite CompactResult {
     Ok(i32),
-    Err(string),
+    Err(utf8),
 }
 ```
 
@@ -151,7 +184,7 @@ unite CompactResult {
 使用 `|` 运算符组合类型：
 
 ```valkyrie
-let value: i32 | f32 | string = 42
+let value: i32 | f32 | utf8 = 42
 ```
 
 详见 [复合类型](compound-types.md)。

@@ -4,7 +4,7 @@ namespace std.data.text.msil;
 unite MsilTokenKind {
     EndOfFile
 
-    // 指令 -- 纯分派标记，不携带数据
+    # 指令 -- 纯分派标记，不携带数据
     AssemblyDirective
     ModuleDirective
     ClassDirective
@@ -35,7 +35,7 @@ unite MsilTokenKind {
     FireDirective
     PInvokeImplDirective
 
-    // 关键字 -- 纯分派标记，不携带数据
+    # 关键字 -- 纯分派标记，不携带数据
     ExtendsKeyword
     ImplementsKeyword
     CatchKeyword
@@ -50,7 +50,7 @@ unite MsilTokenKind {
     CilKeyword
     ManagedKeyword
 
-    // 带数据变体 -- 值嵌入 kind 内部，无需外部 text 字段
+    # 带数据变体 -- 值嵌入 kind 内部，无需外部 text 字段
     Opcode(utf8)
     Identifier(utf8)
     TypeReference(utf8)
@@ -84,7 +84,7 @@ micro eof_msil_token(position: usize, line: usize, column: usize) -> MsilToken {
     return new_msil_token(EndOfFile, position, position, line, column)
 }
 
-/// 判断 token 文本是否为 MSIL 修饰符 -- 仅 lexer 分类用
+⍝ 判断 token 文本是否为 MSIL 修饰符 -- 仅 lexer 分类用
 micro is_msil_modifier_text(word: utf8) -> bool {
     return word == "public" || word == "private" || word == "family" || word == "assembly"
         || word == "famandassem" || word == "famorassem" || word == "privatescope"

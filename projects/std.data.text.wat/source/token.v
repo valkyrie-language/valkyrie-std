@@ -4,7 +4,7 @@ namespace std.data.text.wat;
 unite WatTokenKind {
     EndOfFile
 
-    // 关键字 —— 纯分派标记，不携带数据
+    # 关键字 —— 纯分派标记，不携带数据
     ModuleKeyword
     FuncKeyword
     ImportKeyword
@@ -29,7 +29,7 @@ unite WatTokenKind {
     ItemKeyword
     MutKeyword
 
-    // 带数据变体 —— 值嵌入 kind 内部，无需外部 text 字段
+    # 带数据变体 —— 值嵌入 kind 内部，无需外部 text 字段
     Opcode(utf8)
     Identifier(utf8)
     Number(utf8)
@@ -38,7 +38,7 @@ unite WatTokenKind {
     Punctuation(utf8)
 }
 
-/// 判断文本是否为值类型关键词 -- 仅 lexer 分类用
+⍝ 判断文本是否为值类型关键词 -- 仅 lexer 分类用
 micro is_wat_value_type(word: utf8) -> bool {
     return word == "i32" || word == "i64" || word == "f32" || word == "f64"
         || word == "funcref" || word == "externref" || word == "v128"

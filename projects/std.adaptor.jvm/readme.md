@@ -1,61 +1,46 @@
-# `std.adaptor.jvm`
+﻿# `std.adaptor.jvm`
 
-Valkyrie JVM 平台 SDK — 提供 Java 运行时 API 绑定，编译为 JVM 字节码（`.class`）。
-
-## 📋 目标三元组
-
-| 目标三元组                 | 架构 | 供应商  | OS      | ABI  | 说明                            |
+Valkyrie JVM 骞冲彴 SDK 鈥?鎻愪緵 Java 杩愯鏃?API 缁戝畾锛岀紪璇戜负 JVM 瀛楄妭鐮侊紙`.class`锛夈€?
+## 馃搵 鐩爣涓夊厓缁?
+| 鐩爣涓夊厓缁?                | 鏋舵瀯 | 渚涘簲鍟? | OS      | ABI  | 璇存槑                            |
 |:---------------------------|:-----|:--------|:--------|:-----|:--------------------------------|
-| `jvm-unknown-linux-gnu`    | jvm  | unknown | linux   | gnu  | Linux x64 JVM（OpenJDK/Oracle） |
-| `jvm-unknown-darwin`       | jvm  | unknown | darwin  | —    | macOS JVM                       |
+| `jvm-unknown-linux-gnu`    | jvm  | unknown | linux   | gnu  | Linux x64 JVM锛圤penJDK/Oracle锛?|
+| `jvm-unknown-darwin`       | jvm  | unknown | darwin  | 鈥?   | macOS JVM                       |
 | `jvm-unknown-windows-msvc` | jvm  | unknown | windows | msvc | Windows JVM                     |
-| `jvm-unknown-android`      | jvm  | unknown | android | —    | Android Dalvik/ART              |
+| `jvm-unknown-android`      | jvm  | unknown | android | 鈥?   | Android Dalvik/ART              |
 
-> **三元组格式**：`<arch>-<implementation>-<specification>-<abi>`（遵循 LLVM/Rust 标准）
-> JVM 是跨平台运行时，同一字节码可在所有平台运行，三元组主要影响 JNI 调用约定。
-> JVM 目标的三元组中 `arch` 固定为 `jvm`，因为 JVM 字节码与物理架构无关。
+> **涓夊厓缁勬牸寮?*锛歚<arch>-<implementation>-<specification>-<abi>`锛堥伒寰?LLVM/Rust 鏍囧噯锛?> JVM 鏄法骞冲彴杩愯鏃讹紝鍚屼竴瀛楄妭鐮佸彲鍦ㄦ墍鏈夊钩鍙拌繍琛岋紝涓夊厓缁勪富瑕佸奖鍝?JNI 璋冪敤绾﹀畾銆?> JVM 鐩爣鐨勪笁鍏冪粍涓?`arch` 鍥哄畾涓?`jvm`锛屽洜涓?JVM 瀛楄妭鐮佷笌鐗╃悊鏋舵瀯鏃犲叧銆?
+### 鏄犲皠鍒?Nyar CompilationTarget
 
-### 映射到 Nyar CompilationTarget
-
-| 三元组                     | Arch | ABI | API  | OS      | Environment |
+| 涓夊厓缁?                    | Arch | ABI | API  | OS      | Environment |
 |:---------------------------|:-----|:----|:-----|:--------|:------------|
 | `jvm-unknown-linux-gnu`    | Jvm  | JVM | Java | Linux   | Native      |
 | `jvm-unknown-darwin`       | Jvm  | JVM | Java | macOS   | Native      |
 | `jvm-unknown-windows-msvc` | Jvm  | JVM | Java | Windows | Native      |
 
-### 与其他目标的区别
+### 涓庡叾浠栫洰鏍囩殑鍖哄埆
 
-| 特性        | CLR             | JVM                       | WASI         |
+| 鐗规€?       | CLR             | JVM                       | WASI         |
 |:------------|:----------------|:--------------------------|:-------------|
-| 📦 产出格式 | `.dll` / `.exe` | `.class`                  | `.wasm`      |
-| 🏗️ 运行时   | .NET Runtime    | JVM (OpenJDK)             | Wasmtime     |
-| 📁 文件系统 | ✅ `System.IO`  | ✅ `java.io` / `java.nio` | ✅ WASI fd   |
-| 🌍 网络     | ✅ `System.Net` | ✅ `java.net`             | ✅ WASI sock |
-| 📊 反射     | ✅              | ✅                        | ❌           |
-| 🔗 互操作   | P/Invoke        | JNI                       | WASI imports |
-| 🧵 多线程   | ✅              | ✅                        | ❌           |
-| 📚 标准库   | BCL             | JDK                       | WASI minimal |
+| 馃摝 浜у嚭鏍煎紡 | `.dll` / `.exe` | `.class`                  | `.wasm`      |
+| 馃彈锔?杩愯鏃?  | .NET Runtime    | JVM (OpenJDK)             | Wasmtime     |
+| 馃搧 鏂囦欢绯荤粺 | 鉁?`System.IO`  | 鉁?`java.io` / `java.nio` | 鉁?WASI fd   |
+| 馃實 缃戠粶     | 鉁?`System.Net` | 鉁?`java.net`             | 鉁?WASI sock |
+| 馃搳 鍙嶅皠     | 鉁?             | 鉁?                       | 鉂?          |
+| 馃敆 浜掓搷浣?  | P/Invoke        | JNI                       | WASI imports |
+| 馃У 澶氱嚎绋?  | 鉁?             | 鉁?                       | 鉂?          |
+| 馃摎 鏍囧噯搴?  | BCL             | JDK                       | WASI minimal |
 
-## 📦 包内容
-
+## 馃摝 鍖呭唴瀹?
 ```
 std.adaptor.jvm/
-├── legion.von              # 包清单
-├── README.md               # 本文件
-└── source/
-    ├── console.v           # 控制台 API（System.out/in）
-    ├── io.v                # 文件系统 API（java.io.File）
-    ├── net.v               # 网络 API（java.net.URL/HttpURLConnection）
-    ├── math.v              # 数学 API（java.lang.Math）
-    ├── string.v            # 字符串 API（java.lang.String）
-    └── thread.v            # 线程 API（java.lang.Thread）
-```
+鈹溾攢鈹€ legion.von              # 鍖呮竻鍗?鈹溾攢鈹€ README.md               # 鏈枃浠?鈹斺攢鈹€ source/
+    鈹溾攢鈹€ console.v           # 鎺у埗鍙?API锛圫ystem.out/in锛?    鈹溾攢鈹€ io.v                # 鏂囦欢绯荤粺 API锛坖ava.io.File锛?    鈹溾攢鈹€ net.v               # 缃戠粶 API锛坖ava.net.URL/HttpURLConnection锛?    鈹溾攢鈹€ math.v              # 鏁板 API锛坖ava.lang.Math锛?    鈹溾攢鈹€ utf8.v            # 瀛楃涓?API锛坖ava.lang.String锛?    鈹斺攢鈹€ thread.v            # 绾跨▼ API锛坖ava.lang.Thread锛?```
 
-## 🔧 绑定概览
+## 馃敡 缁戝畾姒傝
 
-### `[jvm("fully.qualified.Class", "methodName")]` 属性
-
-Java 方法通过 `[jvm]` 属性声明，编译时映射为 JVM 常量池方法引用（Methodref）：
+### `[jvm("fully.qualified.Class", "methodName")]` 灞炴€?
+Java 鏂规硶閫氳繃 `[jvm]` 灞炴€у０鏄庯紝缂栬瘧鏃舵槧灏勪负 JVM 甯搁噺姹犳柟娉曞紩鐢紙Methodref锛夛細
 
 ```v
 [jvm("java.lang.System", "out.println")]
@@ -68,36 +53,29 @@ micro jvm_math_abs(value: f64): f64
 micro jvm_file_exists(path: string): bool
 ```
 
-### 文件说明
+### 鏂囦欢璇存槑
 
-| 文件        | 绑定类型 | 副作用    | 覆盖 API       |
+| 鏂囦欢        | 缁戝畾绫诲瀷 | 鍓綔鐢?   | 瑕嗙洊 API       |
 |:------------|:---------|:----------|:---------------|
-| `console.v` | `[jvm]`  | ✅ 有     | 控制台输入输出 |
-| `io.v`      | `[jvm]`  | ✅ 有     | 文件/目录操作  |
-| `net.v`     | `[jvm]`  | ✅ 有     | HTTP 请求      |
-| `math.v`    | `[jvm]`  | ❌ 纯函数 | 数学函数       |
-| `string.v`  | `[jvm]`  | ❌ 纯函数 | 字符串操作     |
-| `thread.v`  | `[jvm]`  | ✅ 有     | 线程操作       |
+| `console.v` | `[jvm]`  | 鉁?鏈?    | 鎺у埗鍙拌緭鍏ヨ緭鍑?|
+| `io.v`      | `[jvm]`  | 鉁?鏈?    | 鏂囦欢/鐩綍鎿嶄綔  |
+| `net.v`     | `[jvm]`  | 鉁?鏈?    | HTTP 璇锋眰      |
+| `math.v`    | `[jvm]`  | 鉂?绾嚱鏁?| 鏁板鍑芥暟       |
+| `utf8.v`  | `[jvm]`  | 鉂?绾嚱鏁?| 瀛楃涓叉搷浣?    |
+| `thread.v`  | `[jvm]`  | 鉁?鏈?    | 绾跨▼鎿嶄綔       |
 
-## 🎯 使用场景
+## 馃幆 浣跨敤鍦烘櫙
 
-- 🖥️ 服务端 Java 应用（Spring Boot 后端逻辑）
-- 📱 Android 游戏脚本
-- 🔧 大数据处理（Hadoop/Spark UDF）
-- 🎮 Minecraft 插件（Bukkit/Spigot）
-
-## ⚙️ 编译命令
+- 馃枼锔?鏈嶅姟绔?Java 搴旂敤锛圫pring Boot 鍚庣閫昏緫锛?- 馃摫 Android 娓告垙鑴氭湰
+- 馃敡 澶ф暟鎹鐞嗭紙Hadoop/Spark UDF锛?- 馃幃 Minecraft 鎻掍欢锛圔ukkit/Spigot锛?
+## 鈿欙笍 缂栬瘧鍛戒护
 
 ```bash
-# 编译为 JVM 字节码
-vcc build --target jvm
+# 缂栬瘧涓?JVM 瀛楄妭鐮?vcc build --target jvm
 
-# 运行产出
+# 杩愯浜у嚭
 java Module
 ```
 
-## 📌 状态
-
-🚧 占坑阶段，JDK API 绑定待实现完整覆盖。 ⚠️ JvmBackend 的 `EmitCallFromInstruction` 写入 methodref 索引为
-0（占位符），跨函数调用尚未实现常量池解析。 ⚠️ JvmBackend 的 `EmitJumpFromInstruction` 写入跳转偏移为 0（占位符），分支偏移尚未计算。
-⚠️ Acorn.Jvm.Decode 的属性解码为 stub（始终返回 null），无法完整 round-trip。
+## 馃搶 鐘舵€?
+馃毀 鍗犲潙闃舵锛孞DK API 缁戝畾寰呭疄鐜板畬鏁磋鐩栥€?鈿狅笍 JvmBackend 鐨?`EmitCallFromInstruction` 鍐欏叆 methodref 绱㈠紩涓?0锛堝崰浣嶇锛夛紝璺ㄥ嚱鏁拌皟鐢ㄥ皻鏈疄鐜板父閲忔睜瑙ｆ瀽銆?鈿狅笍 JvmBackend 鐨?`EmitJumpFromInstruction` 鍐欏叆璺宠浆鍋忕Щ涓?0锛堝崰浣嶇锛夛紝鍒嗘敮鍋忕Щ灏氭湭璁＄畻銆?鈿狅笍 Acorn.Jvm.Decode 鐨勫睘鎬цВ鐮佷负 stub锛堝缁堣繑鍥?null锛夛紝鏃犳硶瀹屾暣 round-trip銆?

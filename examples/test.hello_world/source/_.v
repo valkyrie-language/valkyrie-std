@@ -2,14 +2,14 @@ namespace hello_world;
 
 let shared = 42;
 
-#? ./hello_world.exe
+⍝ ./hello_world.exe
 [main]
 micro hello_world() {
     print("Hello World!")
     ExitCode(add_one(shared) as i32)
 }
 
-#? ./hello_world_utf8.exe 
+⍝ ./hello_world_utf8.exe 
 [main]
 micro hello_world_utf8() -> ExitCode {
     print("你好，世界！")

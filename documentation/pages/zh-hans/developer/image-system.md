@@ -116,12 +116,12 @@ Acorn.Image 本身不实现任何格式的编解码逻辑，而是将请求委�
 ### 自动检测解码
 
 ```csharp
-/// <summary>
-/// 自动检测格式并解码图像数据
-/// </summary>
-/// <param name="data">图像二进制数据</param>
-/// <returns>解码后的 RgbaImage</returns>
-/// <exception cref="FormatException">无法识别的图像格式</exception>
+⍝ <summary>
+⍝ 自动检测格式并解码图像数据
+⍝ </summary>
+⍝ <param name="data">图像二进制数据</param>
+⍝ <returns>解码后的 RgbaImage</returns>
+⍝ <exception cref="FormatException">无法识别的图像格式</exception>
 public static RgbaImage Decode(ReadOnlySpan<byte> data)
 ```
 
@@ -130,11 +130,11 @@ public static RgbaImage Decode(ReadOnlySpan<byte> data)
 ### 格式检测
 
 ```csharp
-/// <summary>
-/// 从魔数检测图像格式
-/// </summary>
-/// <param name="data">图像二进制数据</param>
-/// <returns>检测到的格式，无法识别时返回 null</returns>
+⍝ <summary>
+⍝ 从魔数检测图像格式
+⍝ </summary>
+⍝ <param name="data">图像二进制数据</param>
+⍝ <returns>检测到的格式，无法识别时返回 null</returns>
 public static ImageFormat? DetectFormat(ReadOnlySpan<byte> data)
 ```
 
@@ -162,13 +162,13 @@ public static ImageFormat? DetectFormat(ReadOnlySpan<byte> data)
 ### 通用编码
 
 ```csharp
-/// <summary>
-/// 将图像编码为指定格式
-/// </summary>
-/// <param name="image">待编码的图像</param>
-/// <param name="format">目标格式</param>
-/// <param name="quality">编码质量（1-100），仅对有损格式有效，默认 85</param>
-/// <returns>编码后的二进制数据</returns>
+⍝ <summary>
+⍝ 将图像编码为指定格式
+⍝ </summary>
+⍝ <param name="image">待编码的图像</param>
+⍝ <param name="format">目标格式</param>
+⍝ <param name="quality">编码质量（1-100），仅对有损格式有效，默认 85</param>
+⍝ <returns>编码后的二进制数据</returns>
 public static byte[] Encode(RgbaImage image, ImageFormat format, int quality = 85)
 ```
 
@@ -192,14 +192,14 @@ public static byte[] Encode(RgbaImage image, ImageFormat format, int quality = 8
 ### 缩放
 
 ```csharp
-/// <summary>
-/// 缩放图像到指定尺寸
-/// </summary>
-/// <param name="image">源图像</param>
-/// <param name="width">目标宽度</param>
-/// <param name="height">目标高度</param>
-/// <param name="filter">缩放滤波器</param>
-/// <returns>缩放后的新图像</returns>
+⍝ <summary>
+⍝ 缩放图像到指定尺寸
+⍝ </summary>
+⍝ <param name="image">源图像</param>
+⍝ <param name="width">目标宽度</param>
+⍝ <param name="height">目标高度</param>
+⍝ <param name="filter">缩放滤波器</param>
+⍝ <returns>缩放后的新图像</returns>
 public static RgbaImage Resize(RgbaImage image, int width, int height, ResizeFilter filter)
 ```
 
@@ -212,13 +212,13 @@ public static RgbaImage Resize(RgbaImage image, int width, int height, ResizeFil
 ### Mipmap 生成
 
 ```csharp
-/// <summary>
-/// 生成 Mipmap 链
-/// </summary>
-/// <param name="image">源图像（第 0 级）</param>
-/// <param name="filter">缩放滤波器</param>
-/// <param name="maxLevels">最大级数，0 表示自动计算</param>
-/// <returns>Mipmap 链，索引 0 为原始图像</returns>
+⍝ <summary>
+⍝ 生成 Mipmap 链
+⍝ </summary>
+⍝ <param name="image">源图像（第 0 级）</param>
+⍝ <param name="filter">缩放滤波器</param>
+⍝ <param name="maxLevels">最大级数，0 表示自动计算</param>
+⍝ <returns>Mipmap 链，索引 0 为原始图像</returns>
 public static RgbaImage[] GenerateMipmaps(RgbaImage image, ResizeFilter filter, int maxLevels = 0)
 ```
 
@@ -227,12 +227,12 @@ public static RgbaImage[] GenerateMipmaps(RgbaImage image, ResizeFilter filter, 
 ### Mip 级数计算
 
 ```csharp
-/// <summary>
-/// 计算给定尺寸下的最大 Mip 级数
-/// </summary>
-/// <param name="width">图像宽度</param>
-/// <param name="height">图像高度</param>
-/// <returns>最大 Mip 级数（含第 0 级）</returns>
+⍝ <summary>
+⍝ 计算给定尺寸下的最大 Mip 级数
+⍝ </summary>
+⍝ <param name="width">图像宽度</param>
+⍝ <param name="height">图像高度</param>
+⍝ <returns>最大 Mip 级数（含第 0 级）</returns>
 public static int CalculateMipLevels(int width, int height)
 ```
 
@@ -241,11 +241,11 @@ public static int CalculateMipLevels(int width, int height)
 ### Alpha 通道检测
 
 ```csharp
-/// <summary>
-/// 检测像素数据中是否存在非不透明的 Alpha 值
-/// </summary>
-/// <param name="data">RGBA 交织像素数据</param>
-/// <returns>存在非不透明像素时返回 true</returns>
+⍝ <summary>
+⍝ 检测像素数据中是否存在非不透明的 Alpha 值
+⍝ </summary>
+⍝ <param name="data">RGBA 交织像素数据</param>
+⍝ <returns>存在非不透明像素时返回 true</returns>
 public static bool HasAlphaChannel(byte[] data)
 ```
 

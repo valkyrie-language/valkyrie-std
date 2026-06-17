@@ -22,10 +22,76 @@
         },
         {
             target: "clr-microsoft-unknown-managed",
-            msil: true
+            msil: true,
+            exclude_directories: [
+                "source/command",
+                "source/math/graph_theory",
+                "source/types"
+            ],
+            exclude_files: [
+                "source/collection/b_tree_map.v",
+                "source/collection/b_tree_set.v",
+                "source/collection/bitset.v",
+                "source/collection/deque.v",
+                "source/collection/hash.v",
+                "source/collection/hash_map.v",
+                "source/collection/hash_primitives.v",
+                "source/collection/hash_set.v",
+                "source/collection/index_map.v",
+                "source/collection/index_set.v",
+                "source/collection/linked_list.v",
+                "source/collection/map.v",
+                "source/collection/priority_queue.v",
+                "source/collection/queue.v",
+                "source/collection/ring_buffer.v",
+                "source/collection/set.v",
+                "source/collection/sort.v",
+                "source/collection/stack.v",
+                "source/io/read.v",
+                "source/text/_.v",
+                "source/text/AsciiText.v",
+                "source/text/c_str.v",
+                "source/text/Utf8Builder.v",
+                "source/text/Utf8Text.v",
+                "source/text/Utf8View.v",
+                "source/text/utf8.v"
+            ]
         },
         {
-            target: "jvm-openjdk-unknown-managed"
+            target: "jvm-openjdk-unknown-managed",
+            exclude_directories: [
+                "source/command",
+                "source/math/graph_theory",
+                "source/types"
+            ],
+            exclude_files: [
+                "source/collection/b_tree_map.v",
+                "source/collection/b_tree_set.v",
+                "source/collection/bitset.v",
+                "source/collection/deque.v",
+                "source/collection/hash.v",
+                "source/collection/hash_map.v",
+                "source/collection/hash_primitives.v",
+                "source/collection/hash_set.v",
+                "source/collection/index_map.v",
+                "source/collection/index_set.v",
+                "source/collection/linked_list.v",
+                "source/collection/map.v",
+                "source/collection/priority_queue.v",
+                "source/collection/queue.v",
+                "source/collection/ring_buffer.v",
+                "source/collection/set.v",
+                "source/collection/sort.v",
+                "source/collection/stack.v",
+                "source/io/read.v",
+                "source/text/_.v",
+                "source/text/AsciiText.v",
+                "source/text/c_str.v",
+                "source/text/Utf8Builder.v",
+                "source/text/Utf8Text.v",
+                "source/text/Utf8View.v",
+                "source/text/utf8.v"
+            ]
         },
         {
             target: "wasm32-unknown-browser-wasm",

@@ -46,7 +46,7 @@ micro c_str_to_utf16(s: c_str): utf16
 
 #endregion
 
-#region 字符串长度
+#region UTF-8 文本长度
 
 [vm("utf16_len")]
 micro utf16_len(s: utf16): i32

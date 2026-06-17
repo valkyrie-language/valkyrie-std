@@ -22,7 +22,7 @@ micro new_token(kind: TokenKind, start: usize, stop: usize) -> Token {
     }
 }
 
-/// 从 data-carrying kind 变体中提取文本 -- 仅调试/工具用，parser 不得调用
+⍝ 从 data-carrying kind 变体中提取文本 -- 仅调试/工具用，parser 不得调用
 micro token_text(token: Token) -> utf8 {
     match token.kind {
         case Identifier(text):

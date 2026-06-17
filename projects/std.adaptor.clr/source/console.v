@@ -9,7 +9,7 @@ micro console_write(value: utf8): unit
 micro console_write_line(value: utf8): unit
 
 [clr("System.Console", "ReadLine")]
-micro console_read_line(): string
+micro console_read_line(): utf8
 
 [clr("System.Console", "ReadKey")]
 micro console_read_key(): i32

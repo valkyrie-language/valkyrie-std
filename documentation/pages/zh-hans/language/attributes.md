@@ -198,7 +198,7 @@ micro jvm_current_time_millis(): i64
 micro jvm_math_sin(x: f64): f64
 
 [jvm("java/lang/String", "length"), pure]
-micro jvm_string_length(handle: i32): i32
+micro jvm_utf8_length(handle: i32): i32
 
 [jvm("java/lang/StringBuilder", "<init>")]
 micro jvm_sb_new(): i32

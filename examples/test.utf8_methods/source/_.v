@@ -1,7 +1,7 @@
-namespace string_methods;
+namespace utf8_methods;
 
 [main]
-micro string_methods_main() -> ExitCode {
+micro utf8_methods_main() -> ExitCode {
     let s = "Hello, World!"
     print("len={s.length}")
     print("upper={s.to_upper()}")

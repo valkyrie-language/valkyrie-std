@@ -57,7 +57,7 @@ micro darwin_cf_string_create(alloc: i32, str: c_str, encoding: i32): i32
 micro darwin_cf_release(cf: i32)
 
 [c("CoreFoundation", "CFStringGetLength")]
-micro darwin_cf_string_length(cf: i32): i32
+micro darwin_cf_utf8_length(cf: i32): i32
 
 [c("CoreFoundation", "CFDataCreate")]
 micro darwin_cf_data_create(alloc: i32, bytes: i32, length: i32): i32

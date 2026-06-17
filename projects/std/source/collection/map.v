@@ -1,6 +1,6 @@
 namespace std.collections;
 
-#? std.collections: Map trait
+⍝ std.collections: Map trait
 trait Map<K, V> {
     micro get(self, key: K) -> Option<V>;
     micro set(mut self, key: V, value: V) -> Option<V>;

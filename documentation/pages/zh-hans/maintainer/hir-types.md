@@ -12,6 +12,20 @@ Stage 0 AST → ③ TypeChecker → SemanticModel → ④ HirBuilder → HIR →
 
 HIR 消费 SemanticModel（已解析的符号和类型），不接触原始 AST。向下游 MIR 降级层提供类型定义和分派决策。
 
+## 文本类型边界
+
+`HIR` 从这一层开始必须只承接确定性的文本类型，不能再保留宽泛 `string`。
+
+- 字符串字面量在进入 `HIR` 前可以尚未固定编码
+- 但类型注解、推断结果和符号绑定一旦写入 `HIR`，就必须已经是 `char`、`utf8`、`utf16`、`utf32`、`c_str` 这类正式类型
+- `literal_char` 与 `literal_text` 只是 `HIR` 前的字面量占位概念，不能作为正式 `HIR` 类型继续向后传播
+- 如果语义绑定仍然把某个类型注解解释成历史遗留的 `string`，应直接报错，而不是继续向 `MIR/LIR` 传递
+- 如果上游无法提供更强的文本语义信息，`literal_char` 默认收敛为 `char`，`literal_text` 默认收敛为 `utf8`
+
+这样做不是语法洁癖，而是为了避免多后端实现把 `CLR` / `JVM` / `WASM` 的宿主字符串表示误当成语言级统一语义。
+
+此外，所有文本类型在语义上都视为不可变值。`HIR` 不应把文本上的 `+=` 当作“原地追加”降级，因为这会制造隐藏分配并掩盖 GC 压力来源。
+
 ## HirTypeKind
 
 `HirTypeKind` 枚举定义了 Valkyrie 语言的全部七种类型声明：
@@ -88,7 +102,7 @@ HIR：`Kind = Structure`，`Variants = null`，字段通过 `Methods` 中的 get
 引用类型，GC 堆分配：
 
 ```valkyrie
-class Animal { name: string, age: i32 }
+class Animal { name: utf8, age: i32 }
 ```
 
 HIR：`Kind = Class`，`BaseType` 可指定父类。
@@ -144,7 +158,7 @@ HIR：`Kind = Unite`。与 Union 的区别：
 结构类型约束：
 
 ```valkyrie
-trait Display { to_string(self) -> string }
+trait Display { to_utf8(self) -> utf8 }
 ```
 
 trait 的实际定义数据由独立的 `HirTraitDef` 承载。`HirTypeKind.Trait` 仅用于类型引用场景（如 `HirTypeRef` 指向 trait 时）。
@@ -204,6 +218,8 @@ public enum HirDispatchKind
 | `Union` | ExternRef 或 Struct | 取决于布局策略 |
 | `Unite` | Struct | 紧凑内联布局 |
 | `Trait` | ExternRef | trait object 胖指针 |
+
+文本类型在这条链路上同样必须保持确定性。`HIR` 不得把宽泛 `string` 交给 `LIR` 再猜编码，否则后端之间会出现不一致的文本布局和调用约定。
 
 ## HIR 的边界
 

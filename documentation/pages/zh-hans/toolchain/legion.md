@@ -144,13 +144,13 @@ tag = "latest"
 源代码中标记 `[main]` 的 `micro` 函数被视为入口函数，每个函数编译为独立二进制：
 
 ```v
-#? ./hello_world.exe
+⍝ ./hello_world.exe
 [main]
 micro hello_world() {
     print("Hello, World!")
 }
 
-#? ./hello_world_utf8.exe
+⍝ ./hello_world_utf8.exe
 [main]
 micro hello_world_utf8() {
     print("你好，世界！")

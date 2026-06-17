@@ -16,7 +16,7 @@ micro msil_peek(tokens: [MsilToken], index: usize) -> MsilToken {
     return tokens[index]
 }
 
-/// 仅用于特定值比较（如 Punctuation("{"))，非数据变体比较也安全
+⍝ 仅用于特定值比较（如 Punctuation("{"))，非数据变体比较也安全
 micro msil_expect(tokens: [MsilToken], index: usize, expected: MsilTokenKind) -> MsilParseResult<usize> {
     let token: MsilToken = msil_peek(tokens, index)
     if token.kind == expected {
@@ -37,7 +37,7 @@ micro msil_parsed<T>(value: T, next_index: usize) -> MsilParsed<T> {
     }
 }
 
-/// 判断指令类 kind（纯分派标记）
+⍝ 判断指令类 kind（纯分派标记）
 micro is_msil_directive(kind: MsilTokenKind) -> bool {
     match kind {
         case AssemblyDirective | ModuleDirective | ClassDirective | OverrideDirective
@@ -54,7 +54,7 @@ micro is_msil_directive(kind: MsilTokenKind) -> bool {
     }
 }
 
-/// 从 Identifier kind 中收集修饰符，跳过非修饰符
+⍝ 从 Identifier kind 中收集修饰符，跳过非修饰符
 micro collect_msil_modifiers(tokens: [MsilToken], index: usize) -> MsilParsed<[utf8]> {
     let mut i: usize = index
     let mut modifiers: [utf8] = []
@@ -70,7 +70,7 @@ micro collect_msil_modifiers(tokens: [MsilToken], index: usize) -> MsilParsed<[u
     return msil_parsed(modifiers, i)
 }
 
-/// 尝试从携带数据的 kind 变体中提取文本 —— 用于消除 mega OR-pattern
+⍝ 尝试从携带数据的 kind 变体中提取文本 —— 用于消除 mega OR-pattern
 micro try_extract_msil_token_text(kind: MsilTokenKind) -> utf8? {
     match kind {
         case Identifier(text): return Some(text)
@@ -85,7 +85,7 @@ micro try_extract_msil_token_text(kind: MsilTokenKind) -> utf8? {
     }
 }
 
-/// 尝试获取类型引用或标识符文本 —— 替代 TypeReference | Identifier OR-pattern
+⍝ 尝试获取类型引用或标识符文本 —— 替代 TypeReference | Identifier OR-pattern
 micro try_get_msil_type_or_id(kind: MsilTokenKind) -> utf8? {
     match kind {
         case TypeReference(text): return Some(text)

@@ -1,6 +1,6 @@
 namespace std.data.text.msil;
 
-/// 将指令文本映射为对应的 token kind
+⍝ 将指令文本映射为对应的 token kind
 micro msil_directive_kind(text: utf8) -> MsilTokenKind {
     if text == ".assembly" {
         return AssemblyDirective
@@ -92,7 +92,7 @@ micro msil_directive_kind(text: utf8) -> MsilTokenKind {
     return Opcode(text)
 }
 
-/// 将关键字文本映射为对应的 token kind
+⍝ 将关键字文本映射为对应的 token kind
 micro msil_keyword_kind(word: utf8) -> MsilTokenKind {
     if word == "extends" {
         return ExtendsKeyword

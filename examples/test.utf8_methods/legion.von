@@ -1,7 +1,7 @@
 {
-    name: "test.string_methods",
+    name: "test.utf8_methods",
     version: "0.0.0.0",
-    description: "字符串常用方法测试",
+    description: "UTF-8 文本常用方法测试",
     license: "MIT",
     dependencies: {},
     build: [

@@ -1,0 +1,6 @@
+
+
+[clr(...)]
+class List<T> {
+
+}

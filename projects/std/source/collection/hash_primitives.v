@@ -16,7 +16,7 @@ imply i32: Hash {
 
 imply u32: Hash {
     micro hash(self) -> usize {
-        return self as usize
+        return std.collections.hash_utf8(stringify(self))
     }
 }
 
@@ -28,7 +28,7 @@ imply i64: Hash {
 
 imply u64: Hash {
     micro hash(self) -> usize {
-        return self as usize
+        return std.collections.hash_utf8(stringify(self))
     }
 }
 

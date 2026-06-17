@@ -1,6 +1,6 @@
 namespace std.data.text.wat;
 
-/// 将关键字文本映射为对应的 token kind
+⍝ 将关键字文本映射为对应的 token kind
 micro wat_keyword_kind(word: utf8) -> WatTokenKind {
     if word == "module" {
         return ModuleKeyword
