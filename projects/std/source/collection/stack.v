@@ -7,7 +7,7 @@ class Stack<T> {
 
 imply Stack<T> {
     micro new(): Self {
-        return Self { data: ArrayList.new(0) }
+        return Self { data: ArrayList::new(0) }
     }
     micro push(mut self, value: T): unit {
         self.data.push(value)

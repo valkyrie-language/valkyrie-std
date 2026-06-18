@@ -12,7 +12,7 @@ structure RingBuffer<T> {
 
 imply RingBuffer<T> {
     micro new(capacity: usize): Self {
-        let mut data: List<T> = ArrayList.new(capacity)
+        let mut data: List<T> = ArrayList::new(capacity)
         let mut i: usize = 0
         while i < capacity {
             data.push(T.default)

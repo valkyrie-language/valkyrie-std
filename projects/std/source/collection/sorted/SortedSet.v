@@ -87,7 +87,7 @@ imply SortedSet<T>: Set<T> {
     }
 
     micro from_list(list: List<T>): Self {
-        let mut result: Self = Self.new()
+        let mut result: Self = Self::new()
         list.iter(micro(value: T) -> unit { result.insert(value) })
         return result
     }

@@ -16,7 +16,7 @@ imply BitSet {
             <% case "jvm" %>
         return __bit_set_jvm_new()
             <% else %>
-        return Self { words: ArrayList.new(0) }
+        return Self { words: ArrayList::new(0) }
         <% end match %>
     }
 
@@ -28,7 +28,7 @@ imply BitSet {
         return __bit_set_jvm_new_with_capacity(bits)
             <% else %>
         let words_needed: usize = (bits + 63) / 64
-        let mut words: List<u64> = ArrayList.new(0)
+        let mut words: List<u64> = ArrayList::new(0)
         let mut i: usize = 0
         while i < words_needed {
             words.push(0u64)
@@ -349,7 +349,6 @@ private micro __bit_set_jvm_is_empty(bits: BitSet): bool { }
 
 [jvm("java.util.BitSet", "clear")]
 private micro __bit_set_jvm_clear_all(bits: BitSet): unit { }
-
 
 
 

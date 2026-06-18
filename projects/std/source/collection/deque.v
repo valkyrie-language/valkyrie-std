@@ -16,7 +16,7 @@ imply Deque<T> {
             <% case "jvm" %>
         return __deque_jvm_new::<T>()
             <% else %>
-        return Self { data: ArrayList.new(0) }
+        return Self { data: ArrayList::new(0) }
         <% end match %>
     }
 
@@ -202,6 +202,5 @@ private micro __deque_jvm_length<T>(deque: Deque<T>): usize { }
 
 [jvm("java.util.ArrayDeque", "clear")]
 private micro __deque_jvm_clear<T>(deque: Deque<T>): unit { }
-
 
 

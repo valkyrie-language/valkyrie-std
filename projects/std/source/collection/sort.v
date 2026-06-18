@@ -60,8 +60,8 @@ micro merge_sort_range(list: List<T>, left: usize, right: usize, cmp: micro(T, T
 }
 
 micro merge(list: List<T>, left: usize, mid: usize, right: usize, cmp: micro(T, T) -> i32): unit {
-    let mut left_arr: List<T> = ArrayList.new(0)
-    let mut right_arr: List<T> = ArrayList.new(0)
+    let mut left_arr: List<T> = ArrayList::new(0)
+    let mut right_arr: List<T> = ArrayList::new(0)
     let mut i: usize = left
     while i <= mid {
         left_arr.push(list.get(i).unwrap())

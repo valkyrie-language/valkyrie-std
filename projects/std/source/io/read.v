@@ -50,7 +50,7 @@ micro read_f64(): Option<f64> {
 }
 
 micro stdin_lines(): List<utf8> {
-    let lines: List<utf8> = List.new()
+    let lines: List<utf8> = List::new()
     let mut line: utf8 = std.io.read_line()
     while line != "" {
         List.push(lines, line)

@@ -79,7 +79,7 @@ imply OrderedSet<T>: Set<T> {
     }
 
     micro from_list(list: List<T>): Self {
-        let mut result: Self = Self.new()
+        let mut result: Self = Self::new()
         list.iter(micro(value: T) -> unit { result.insert(value) })
         return result
     }
@@ -91,7 +91,7 @@ imply OrderedSet<T> {
             <% case "jvm" %>
             return __ordered_set_jvm_new::<T>()
             <% else %>
-        return Self { map: OrderedMap.new(16) }
+        return Self { map: OrderedMap::new(16) }
         <% end match %>
     }
 }
