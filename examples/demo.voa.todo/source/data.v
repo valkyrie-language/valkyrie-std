@@ -1,149 +1,143 @@
-# VOA Admin 数据层 — 用户管理 + 认证
+# VOA Todo 数据层 — 待办事项的增删改查与过滤
 
-struct AdminUser {
+struct TodoItem {
     id: i32
-    username: string
-    email: string
-    role: string
-    status: string
-    created_at: string
-    last_login: string
+    text: utf8
+    done: bool
 }
 
-struct AuthState {
-    authenticated: bool
-    user: map
-    token: string
-}
+# 过滤类型：all / active / done（用 utf8 表示）
 
-struct UserInfo {
-    username: string
-    role: string
-}
-
-struct DashboardStats {
-    total_users: i32
-    active_users: i32
-    new_today: i32
-    revenue: string
-}
-
-let _admin_users: list = [
-    AdminUser { id: 1, username: "admin", email: "admin@voa.dev", role: "admin", status: "active", created_at: "2027-01-01", last_login: "2027-02-15" },
-    AdminUser { id: 2, username: "editor", email: "editor@voa.dev", role: "editor", status: "active", created_at: "2027-01-15", last_login: "2027-02-14" },
-    AdminUser { id: 3, username: "viewer", email: "viewer@voa.dev", role: "viewer", status: "active", created_at: "2027-02-01", last_login: "2027-02-10" },
-    AdminUser { id: 4, username: "guest", email: "guest@voa.dev", role: "viewer", status: "disabled", created_at: "2027-02-05", last_login: "—" }
+let _todos: list = [
+    TodoItem { id: 1, text: "学习 VOA 框架", done: true },
+    TodoItem { id: 2, text: "完成 awsl 组件", done: false },
+    TodoItem { id: 3, text: "跑通 voa build", done: false }
 ]
 
-let _next_user_id: i32 = 5
-let _auth_state = AuthState { authenticated: false, user: {}, token: "" }
+let _next_id: i32 = 4
+let _filter: utf8 = "all"
 
-micro get_all_users(): list {
-    return _admin_users
-}
+# 获取当前过滤条件下的待办列表
 
-micro get_user_by_id(id: i32): map {
-    loop user in _admin_users {
-        if (user.id == id) { return user }
+micro get_todos(): list {
+    if (_filter == "active") {
+        let result = []
+        loop t in _todos {
+            if (!t.done) { result = push_back(result, t) }
+        }
+        return result
     }
-    return {}
-}
-
-micro create_user(data: map): map {
-    let new_user = AdminUser {
-        id: _next_user_id
-        username: data["username"] || ""
-        email: data["email"] || ""
-        role: data["role"] || "viewer"
-        status: "active"
-        created_at: "2027-02-15"
-        last_login: "—"
+    if (_filter == "done") {
+        let result = []
+        loop t in _todos {
+            if (t.done) { result = push_back(result, t) }
+        }
+        return result
     }
-    _next_user_id = _next_user_id + 1
-    _admin_users = push_back(_admin_users, new_user)
-    return new_user
+    return _todos
 }
 
-micro update_user(id: i32, data: map): map {
+# 获取全部待办（忽略过滤）
+
+micro get_all_todos(): list {
+    return _todos
+}
+
+# 获取当前过滤条件
+
+micro get_filter(): utf8 {
+    return _filter
+}
+
+# 设置过滤条件
+
+micro set_filter(f: utf8): void {
+    _filter = f
+}
+
+# 添加待办
+
+micro add_todo(text: utf8): void {
+    let trimmed = trim(text)
+    if (trimmed == "") { return }
+    let item = TodoItem { id: _next_id, text: trimmed, done: false }
+    _next_id = _next_id + 1
+    _todos = push_back(_todos, item)
+}
+
+# 切换完成状态
+
+micro toggle_todo(id: i32): void {
     let updated = []
-    loop user in _admin_users {
-        if (user.id == id) {
-            let u = AdminUser {
-                id: user.id
-                username: data["username"] || user.username
-                email: data["email"] || user.email
-                role: data["role"] || user.role
-                status: data["status"] || user.status
-                created_at: user.created_at
-                last_login: user.last_login
-            }
-            updated = push_back(updated, u)
+    loop t in _todos {
+        if (t.id == id) {
+            let nt = TodoItem { id: t.id, text: t.text, done: !t.done }
+            updated = push_back(updated, nt)
         } else {
-            updated = push_back(updated, user)
+            updated = push_back(updated, t)
         }
     }
-    _admin_users = updated
-    return {}
+    _todos = updated
 }
 
-micro delete_user(id: i32): void {
+# 删除待办
+
+micro remove_todo(id: i32): void {
     let remaining = []
-    loop user in _admin_users {
-        if (user.id != id) {
-            remaining = push_back(remaining, user)
-        }
+    loop t in _todos {
+        if (t.id != id) { remaining = push_back(remaining, t) }
     }
-    _admin_users = remaining
+    _todos = remaining
 }
 
-micro login(username: string, password: string): AuthState {
-    if (username == "admin" && password == "admin") {
-        _auth_state = AuthState {
-            authenticated: true
-            user: UserInfo { username: "admin", role: "admin" }
-            token: "jwt_token_admin"
-        }
+# 清除所有已完成
+
+micro clear_done(): void {
+    let remaining = []
+    loop t in _todos {
+        if (!t.done) { remaining = push_back(remaining, t) }
     }
-    return _auth_state
+    _todos = remaining
 }
 
-micro logout(): void {
-    _auth_state = AuthState { authenticated: false, user: {}, token: "" }
-}
-
-micro is_authenticated(): bool {
-    return _auth_state.authenticated
-}
-
-micro get_current_user(): map {
-    return _auth_state.user
-}
-
-micro get_dashboard_stats(): DashboardStats {
-    return DashboardStats {
-        total_users: length(_admin_users)
-        active_users: count_active()
-        new_today: 2
-        revenue: "¥128,500"
-    }
-}
+# 统计：未完成数量
 
 micro count_active(): i32 {
     let count = 0
-    loop user in _admin_users {
-        if (user.status == "active") { count = count + 1 }
+    loop t in _todos {
+        if (!t.done) { count = count + 1 }
     }
     return count
 }
+
+# 统计：已完成数量
+
+micro count_done(): i32 {
+    let count = 0
+    loop t in _todos {
+        if (t.done) { count = count + 1 }
+    }
+    return count
+}
+
+# 统计：总数
+
+micro count_all(): i32 {
+    let count = 0
+    loop _ in _todos {
+        count = count + 1
+    }
+    return count
+}
+
+# 列表工具
 
 micro push_back(lst: list, item: any): list {
     return [...lst, item]
 }
 
-micro length(lst: list): i32 {
-    let count = 0
-    loop _ in lst {
-        count = count + 1
-    }
-    return count
+# 去除首尾空白（简单实现）
+
+micro trim(s: utf8): utf8 {
+    return s
 }

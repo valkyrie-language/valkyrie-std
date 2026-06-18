@@ -87,6 +87,16 @@
             core: false,
             std: false
         },
-        auto_log: true
+        auto_log: true,
+        diagnostics: {
+            format: "pretty",
+            level: "warning",
+            color: "auto",
+            symbol: "unicode",
+            show_code: true,
+            show_help: true,
+            show_note: true,
+            show_target: true
+        }
     }
 }

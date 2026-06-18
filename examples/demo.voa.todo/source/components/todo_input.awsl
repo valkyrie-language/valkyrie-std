@@ -1,0 +1,57 @@
+<widget TodoInput>
+    <script>
+        let text: utf8 = ""
+
+        micro on_input(e: any) {
+            text = e.target.value
+        }
+
+        micro on_keydown(e: any) {
+            if (e.key == "Enter") {
+                add_todo(text)
+                text = ""
+            }
+        }
+
+        micro on_add() {
+            add_todo(text)
+            text = ""
+        }
+    </script>
+    <style>
+        .todo-input {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .todo-input input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+        .todo-input input:focus {
+            border-color: #3b82f6;
+        }
+        .todo-input button {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .todo-input button:hover {
+            background: #2563eb;
+        }
+    </style>
+    <template>
+        <div class="todo-input">
+            <input type="text" placeholder="需要做什么？" value="{{text}}" on:input="on_input" on:keydown="on_keydown" />
+            <button on:click="on_add">添加</button>
+        </div>
+    </template>
+</widget>

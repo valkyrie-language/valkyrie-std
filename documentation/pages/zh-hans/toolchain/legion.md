@@ -168,6 +168,43 @@ micro hello_world_utf8() {
 | 对等依赖 | `peerDependencies` | 宿主项目提供的依赖 |
 | 可选依赖 | `optionalDependencies` | 可选功能依赖 |
 
+### 诊断输出配置
+
+`legion check` 与 `legion lint` 共用同一套诊断渲染配置。项目模式从 `legion.von.diagnostics` 读取，workspace 模式从 `legions.von.workspace.diagnostics` 读取。
+
+```von
+diagnostics: {
+    format: "pretty",
+    level: "warning",
+    color: "auto",
+    symbol: "unicode",
+    show_code: true,
+    show_help: true,
+    show_note: true,
+    show_target: true
+}
+```
+
+| 字段 | 可选值 | 说明 |
+|:---|:---|:---|
+| `format` | `pretty` / `short` / `detail` / `json` | 输出格式。`short`、`detail`、`json` 都保持单行，只有 `pretty` 输出完整多行片段 |
+| `level` | `error` / `warning` / `info` / `hint` | 最小诊断级别 |
+| `color` | `auto` / `always` / `never` | 控制终端颜色，`auto` 会在重定向或设置 `NO_COLOR` 时自动关闭 |
+| `symbol` | `unicode` / `ascii` | 控制诊断符号字符集，仅支持通过清单配置 |
+| `show_code` | `true` / `false` | 是否显示诊断代码，仅支持通过清单配置 |
+| `show_help` | `true` / `false` | 是否显示帮助信息，仅支持通过清单配置 |
+| `show_note` | `true` / `false` | 是否显示备注信息，仅支持通过清单配置 |
+| `show_target` | `true` / `false` | 是否显示目标三元组，仅支持通过清单配置 |
+
+只有 `format`、`level`、`color` 可以通过命令行参数覆盖，其他诊断项都只能在 `diagnostics` 配置中设置。
+
+命令行可以覆盖这些配置，例如：
+
+```bash
+legion check --format short --level error --color never
+legion lint --format pretty --color always
+```
+
 ## 命令参考
 
 > **状态说明**：当前实现为渐进式。新版 CLI（`tools/legion/`）已实现 `build`、`clean`。旧版 CLI（`projects/Legion/Program.cs`）额外支持 `run`、`smoke`、`install`、`add`、`search`。以下各子章节中的命令为完整规划，标记 ✅ 的为已实现。

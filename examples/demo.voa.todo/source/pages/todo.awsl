@@ -1,0 +1,129 @@
+<widget Todo>
+    <script>
+        let filter: utf8 = "all"
+
+        micro on_filter_all() {
+            set_filter("all")
+            filter = "all"
+        }
+
+        micro on_filter_active() {
+            set_filter("active")
+            filter = "active"
+        }
+
+        micro on_filter_done() {
+            set_filter("done")
+            filter = "done"
+        }
+
+        micro on_clear_done() {
+            clear_done()
+        }
+
+        micro active_count(): i32 {
+            return count_active()
+        }
+
+        micro done_count(): i32 {
+            return count_done()
+        }
+
+        micro todos(): list {
+            return get_todos()
+        }
+    </script>
+    <style>
+        .todo-app {
+            max-width: 520px;
+            margin: 40px auto;
+            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: #1f2937;
+        }
+        .todo-app h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 4px;
+        }
+        .todo-app .subtitle {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        .todo-list {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .todo-empty {
+            padding: 24px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+        .todo-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .todo-filters {
+            display: flex;
+            gap: 4px;
+        }
+        .todo-filters button {
+            padding: 4px 10px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .todo-filters button.active {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .todo-clear {
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .todo-clear:hover {
+            color: #ef4444;
+        }
+    </style>
+    <template>
+        <div class="todo-app">
+            <h1>待办事项</h1>
+            <div class="subtitle">VOA + AWSL + WASM 演示</div>
+
+            <TodoInput />
+
+            <div class="todo-list">
+                <loop item in todos()>
+                    <TodoItem id="{{item.id}}" text="{{item.text}}" done="{{item.done}}" />
+                </loop>
+                <if !todos() || count_all() == 0>
+                    <div class="todo-empty">还没有待办，添加一个吧</div>
+                </if>
+            </div>
+
+            <div class="todo-footer">
+                <span>{{active_count()}} 项未完成</span>
+                <div class="todo-filters">
+                    <button class="{{filter == 'all' ? 'active' : ''}}" on:click="on_filter_all">全部</button>
+                    <button class="{{filter == 'active' ? 'active' : ''}}" on:click="on_filter_active">未完成</button>
+                    <button class="{{filter == 'done' ? 'active' : ''}}" on:click="on_filter_done">已完成</button>
+                </div>
+                <button class="todo-clear" on:click="on_clear_done">清除已完成 ({{done_count()}})</button>
+            </div>
+        </div>
+    </template>
+</widget>
