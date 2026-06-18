@@ -19,7 +19,7 @@
             </Card>
         </div>
 
-        <Card variant="bordered" title="最近活动" style="margin-top: 24px">
+        <Card variant="bordered" title="最近活动">
             <List items={recentActivities} />
         </Card>
     </div>

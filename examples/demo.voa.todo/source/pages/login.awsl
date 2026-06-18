@@ -13,7 +13,7 @@
                 <else/>
                 </if>
 
-                <Button variant="primary" block={true} label={loading ? "登录中..." : "登录"} loading={loading} on:click={handleLogin} />
+                <Button variant="primary" label={loading ? "登录中..." : "登录"} on:click={handleLogin} />
 
                 <p class="login-hint">演示账号：admin / admin</p>
             </div>
@@ -22,9 +22,9 @@
 </widget>
 
 <script>
-    let username: string = ""
-    let password: string = ""
-    let error: string = ""
+    let username: utf8 = ""
+    let password: utf8 = ""
+    let error: utf8 = ""
     let loading: bool = false
 
     micro handleLogin() {

@@ -137,9 +137,13 @@ micro count_active(): i32 {
 }
 
 micro push_back(lst: list, item: any): list {
-    return lst
+    return [...lst, item]
 }
 
 micro length(lst: list): i32 {
-    return 0
+    let count = 0
+    loop _ in lst {
+        count = count + 1
+    }
+    return count
 }

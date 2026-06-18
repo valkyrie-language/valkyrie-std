@@ -14,7 +14,7 @@
                     <Avatar name="A" size="small" />
                     <span>admin</span>
                 </div>
-                <Button variant="ghost" size="small" label="退出" on:click={handleLogout} />
+                <Button variant="ghost" label="退出" on:click={handleLogout} />
             </div>
         </aside>
 
@@ -34,7 +34,7 @@
 </widget>
 
 <script>
-    let pageTitle: string = "仪表盘"
+    let pageTitle: utf8 = "仪表盘"
 
     micro handleLogout() {
         logout()

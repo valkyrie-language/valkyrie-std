@@ -16,16 +16,10 @@
     build: {
         mode: "prod",
         output: "dist",
+        entry: "source/app.v",
+        html_template: "static/index.html",
+        runtime: "voa-runtime.js",
         minify: true,
         sourcemap: false
-    },
-    api: {
-        directory: "source/api",
-        cors: { origin: "*" },
-        middleware: {
-            logger: true,
-            security_headers: true,
-            auth: { scheme: "jwt", secret: "dev-secret-key" }
-        }
     }
 }

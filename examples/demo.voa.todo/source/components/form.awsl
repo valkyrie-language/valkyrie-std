@@ -1,0 +1,98 @@
+<widget>
+    <form class="voa-form" on:submit={handleSubmit}>
+        <loop field in {fields}>
+            <div class="voa-form-field">
+                <label class="voa-form-label">
+                    {field.label}
+                    <if condition={field.required}>
+                        <span class="voa-form-required">*</span>
+                    <else/>
+                    </if>
+                </label>
+                <if condition={field.type == "select"}>
+                    <select
+                        class="voa-form-select"
+                        on:change={(e) => updateField(field.name, e.target.value)}
+                    >
+                        <loop option in {field.options}>
+                            <option value={option.value}>{option.label}</option>
+                        </loop>
+                    </select>
+                <else/>
+                    <input
+                        class="voa-form-input"
+                        type={field.type}
+                        placeholder={field.placeholder}
+                        on:input={(e) => updateField(field.name, e.target.value)}
+                    />
+                </if>
+            </div>
+        </loop>
+        <button type="submit" class="voa-form-submit">{submitText}</button>
+    </form>
+</widget>
+
+<script>
+    let fields: list = []
+    let submitText: utf8 = "提交"
+    let formData: map = {}
+
+    micro updateField(name: utf8, value: utf8) {
+        formData[name] = value
+    }
+
+    micro handleSubmit(e) {
+        e.preventDefault()
+        emit("submit", formData)
+    }
+</script>
+
+<style>
+.voa-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.voa-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.voa-form-label {
+    font-size: 13px;
+    color: var(--voa-text2, #8b949e);
+}
+.voa-form-required {
+    color: #da3633;
+    margin-left: 2px;
+}
+.voa-form-input,
+.voa-form-select {
+    padding: 8px 12px;
+    border: 1px solid var(--voa-border, #333);
+    border-radius: 6px;
+    background: var(--voa-bg, #0d1117);
+    color: var(--voa-text, #e0e0e0);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.voa-form-input:focus,
+.voa-form-select:focus {
+    border-color: var(--voa-accent, #58a6ff);
+}
+.voa-form-submit {
+    padding: 8px 16px;
+    border: 1px solid var(--voa-accent, #58a6ff);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    background: var(--voa-accent, #58a6ff);
+    color: #fff;
+    transition: opacity 0.2s;
+    align-self: flex-start;
+}
+.voa-form-submit:hover {
+    opacity: 0.9;
+}
+</style>

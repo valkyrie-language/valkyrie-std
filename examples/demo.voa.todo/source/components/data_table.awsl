@@ -1,0 +1,74 @@
+<widget>
+    <div class="voa-table-wrapper">
+        <table class="voa-table {striped ? 'striped' : ''} {bordered ? 'bordered' : ''}">
+            <thead>
+                <tr>
+                    <loop column in {columns}>
+                        <th style="width: {column.width}">
+                            {column.title}
+                        </th>
+                    </loop>
+                </tr>
+            </thead>
+            <tbody>
+                <loop row in {rows}>
+                    <tr>
+                        <loop column in {columns}>
+                            <td>{row[column.key]}</td>
+                        </loop>
+                    </tr>
+                </loop>
+            </tbody>
+        </table>
+    </div>
+</widget>
+
+<script>
+    let columns: list = []
+    let rows: list = []
+    let striped: bool = false
+    let bordered: bool = false
+</script>
+
+<style>
+.voa-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+.voa-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    background: var(--voa-card, #161b22);
+    color: var(--voa-text, #e6edf3);
+}
+.voa-table.bordered {
+    border: 1px solid var(--voa-border, #21262d);
+}
+.voa-table th,
+.voa-table td {
+    padding: 10px 12px;
+    text-align: left;
+}
+.voa-table th {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--voa-text2, #8b949e);
+    border-bottom: 1px solid var(--voa-border, #21262d);
+    background: rgba(0, 0, 0, 0.1);
+}
+.voa-table.bordered th,
+.voa-table.bordered td {
+    border: 1px solid var(--voa-border, #21262d);
+}
+.voa-table td {
+    border-bottom: 1px solid var(--voa-border, #21262d);
+}
+.voa-table.striped tbody tr:nth-child(even) {
+    background: var(--voa-hover, #161b22);
+}
+.voa-table tbody tr:hover {
+    background: var(--voa-hover, #2a2a3e);
+}
+</style>
