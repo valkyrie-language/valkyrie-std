@@ -5,31 +5,31 @@ namespace std.io;
 micro read_line(): utf8 {
     <% match arch %>
         <% case "clr" %>
-        return std.adaptor.dotnet.console.console_read_line()
+    return std.console.read_line()
         <% case "jvm" %>
-        return std.adaptor.jvm.console.jvm_read_line(0)
+    return std.console.read_line()
         <% else %>
-        return ""
+    return ""
     <% end match %>
 }
 
 micro read_all(): utf8 {
     <% match arch %>
         <% case "clr" %>
-        return std.adaptor.dotnet.io.file_read_all_text("")
+    return std.adaptor.dotnet.io.file_read_all_text("")
         <% else %>
-        return ""
+    return ""
     <% end match %>
 }
 
 micro read_char(): i32 {
     <% match arch %>
         <% case "clr" %>
-        return std.adaptor.dotnet.console.console_read_key()
+    return std.console.read_char()
         <% case "jvm" %>
-        return std.adaptor.jvm.console.jvm_read()
+    return std.console.read_char()
         <% else %>
-        return 0
+    return 0
     <% end match %>
 }
 

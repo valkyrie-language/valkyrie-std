@@ -107,7 +107,7 @@ tag = "latest"
 
 | 短别名 | 展开为 | 说明 |
 |:---|:---|:---|
-| `nyar` | `nyar-unknown-native` | NyarVM 字节码（默认） |
+| `nyar` | `nyar-unknown-unknown-managed` | NyarVM 字节码（默认） |
 | `gnosis` | `gnosis-unknown-native` | GnosisVM 字节码 |
 | `wasm` | `wasm32-unknown-browser` | WebAssembly（浏览器） |
 | `node` | `wasm32-unknown-node` | WebAssembly（Node.js） |

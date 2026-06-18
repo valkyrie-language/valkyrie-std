@@ -1,10 +1,10 @@
-﻿# `std.adaptor.nyar`
+# `std.adaptor.nyar`
 
 Valkyrie NyarVM 骞冲彴 SDK 鈥?鎻愪緵 NyarVM 鎸囦护闆嗙粦瀹氾紝缂栬瘧涓?`.nyar` 瀛楄妭鐮併€?
 ## 鐩爣涓夊厓缁?
 | 鐩爣涓夊厓缁?            | 鏋舵瀯   | 璇存槑              |
 |:-----------------------|:-------|:------------------|
-| `nyar-unknown-unknown` | nyar32 | NyarVM 閫氱敤杩愯鏃?|
+| `nyar-unknown-unknown-managed` | nyar32 | NyarVM 閫氱敤杩愯鏃?|
 
 ## 鍖呭唴瀹?
 ```

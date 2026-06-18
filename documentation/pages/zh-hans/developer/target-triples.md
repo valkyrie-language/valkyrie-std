@@ -1,4 +1,4 @@
-﻿# Valkyrie Canonical Target 规范
+# Valkyrie Canonical Target 规范
 
 ## 1. 目的
 
@@ -157,9 +157,9 @@ arch-impl-spec[-abi]
 | `clr-microsoft-unknown` | `clr-microsoft-unknown-managed` |
 | `jvm-openjdk-unknown` | `jvm-openjdk-unknown-managed` |
 
-以下目标无 ABI 维度，四段式直接定形：
+以下目标使用固定 ABI 约定，四段式直接定形：
 
-- `nyar-unknown-native`
+- `nyar-unknown-unknown-managed`
 - `gnosis-unknown-native`
 - `spirv-unknown-vulkan` （`vulkan` 是规范，而非实现）
 
@@ -171,7 +171,7 @@ arch-impl-spec[-abi]
 
 | CanonicalTarget | 含义 | 常用运行约定 |
 |:---|:---|:---|
-| `nyar-unknown-native` | NyarVM 字节码 | 由 NyarVM 直接加载执行 |
+| `nyar-unknown-unknown-managed` | NyarVM 字节码 | 由 NyarVM 直接加载执行 |
 | `gnosis-unknown-native` | GnosisVM 字节码 | 由 GnosisVM 直接加载执行 |
 
 ### 6.2 JVM
@@ -265,7 +265,7 @@ arch-impl-spec[-abi]
 
 | 短别名 | 展开为 CanonicalTarget |
 |:---|:---|
-| `nyar` | `nyar-unknown-native` |
+| `nyar` | `nyar-unknown-unknown-managed` |
 | `gnosis` | `gnosis-unknown-native` |
 | `wasm` | `wasm32-unknown-browser-wasm` |
 | `node` | `wasm32-node-unknown-wasm` |
