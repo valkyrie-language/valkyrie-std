@@ -24,7 +24,7 @@ micro is_von_identifier_continue(ch: utf8) -> bool {
 micro lex_von(source: utf8) -> VonParseResult<[VonToken]> {
     let mut tokens: [VonToken] = []
     let mut index: usize = 0
-    let length: usize = len(source)
+    let length: usize = source.length()
 
     while index < length {
         let ch: utf8 = source[index]
@@ -118,7 +118,7 @@ micro lex_von(source: utf8) -> VonParseResult<[VonToken]> {
                 index = index + 1
             }
 
-            if len(text) > 0 && (len(tokens) == 0 || tokens[len(tokens) - 1].span.start != start) {
+            if text.length() > 0 && (tokens.length() == 0 || tokens[tokens.length() - 1].span.start != start) {
                 return Fail(new_von_diagnostic("字符串缺少结束引号", start, length))
             }
             continue

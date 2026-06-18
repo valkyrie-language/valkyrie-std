@@ -7,14 +7,14 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
     let mut result: [utf8] = []
     let nodes: [utf8] = directed_graph_nodes(graph)
 
-    if len(nodes) == 0 {
+    if nodes.length() == 0 {
         return result
     }
 
     # 计算所有节点的初始入度
     let mut in_degree: [usize] = []
     let mut i: usize = 0
-    while i < len(nodes) {
+    while i < nodes.length() {
         push(in_degree, directed_graph_in_degree(graph, nodes[i]))
         i = i + 1
     }
@@ -22,7 +22,7 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
     # 入度为 0 的节点入队
     let mut queue: [utf8] = []
     i = 0
-    while i < len(nodes) {
+    while i < nodes.length() {
         if in_degree[i] == 0 {
             push(queue, nodes[i])
         }
@@ -30,18 +30,18 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
     }
 
     # Kahn 算法主循环
-    while len(queue) > 0 {
+    while queue.length() > 0 {
         let current: utf8 = queue[0]
         queue = array_remove_first(queue)
         push(result, current)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
         let mut j: usize = 0
-        while j < len(successors) {
+        while j < successors.length() {
             let succ: utf8 = successors[j]
             # 找到后继节点在 nodes 中的索引，减少入度
             let mut k: usize = 0
-            while k < len(nodes) {
+            while k < nodes.length() {
                 if nodes[k] == succ {
                     in_degree[k] = in_degree[k] - 1
                     if in_degree[k] == 0 {
@@ -55,7 +55,7 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
     }
 
     # 如果有环，结果长度小于节点数
-    if len(result) < len(nodes) {
+    if result.length() < nodes.length() {
         return []
     }
 
@@ -64,12 +64,12 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
 
 # 移除数组第一个元素的辅助函数
 micro array_remove_first(arr: [utf8]) -> [utf8] {
-    if len(arr) <= 1 {
+    if arr.length() <= 1 {
         return []
     }
     let mut result: [utf8] = []
     let mut i: usize = 1
-    while i < len(arr) {
+    while i < arr.length() {
         push(result, arr[i])
         i = i + 1
     }

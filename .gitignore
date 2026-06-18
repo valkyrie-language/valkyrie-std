@@ -22,4 +22,5 @@ tools/
 # V
 .legion/
 .cache/
+library/
 dist/

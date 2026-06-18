@@ -1,7 +1,7 @@
-﻿namespace std.async;
+namespace std.async;
 
-# std.async: task �?异步任务
-# 编译时根�?arch 委托 adaptor 实现
+# std.async: task - 异步任务
+# 编译时根据 arch 委托 adaptor 实现
 
 micro spawn(task: micro() -> unit): unit {
     <% match arch %>

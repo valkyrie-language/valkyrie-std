@@ -14,13 +14,57 @@ structure Utf8View {
 imply Utf8View: TextView {
     type Text = Utf8Text;
 
+    micro new(text: &Utf8Text) -> Self {
+        return Self {
+            text: text,
+            span: TextSpan {
+                offset: 0,
+                length: text.byte_length() as usize,
+            }
+        }
+    }
+
+    micro new(text: &Utf8Text, span: TextSpan) -> Self {
+        let full_length: usize = text.byte_length() as usize
+        if span.offset >= full_length {
+            return Self {
+                text: text,
+                span: TextSpan {
+                    offset: full_length,
+                    length: 0,
+                }
+            }
+        }
+
+        let mut length: usize = span.length
+        if span.offset + length > full_length {
+            length = full_length - span.offset
+        }
+
+        return Self {
+            text: text,
+            span: TextSpan {
+                offset: span.offset,
+                length: length,
+            }
+        }
+    }
+
     micro span(self) -> TextSpan {
-        return self.span;
+        return self.span
     }
 
     ⍝ 转为不可变文本（有开销，不消耗视图）
     micro to_text(self) -> Utf8Text {
-        return self.text.slice(self.span);
+        let mut bytes: [u8] = []
+        let end: usize = self.end_offset()
+        let mut index: usize = self.span.offset
+        while index < end {
+            push(bytes, self.text._repr[index])
+            index = index + 1
+        }
+
+        return Utf8Text::from_bytes(bytes)
     }
 }
 
@@ -29,24 +73,41 @@ imply Utf8View: Text {
     type View = Utf8View;
 
     micro is_empty(self) -> bool {
-        return self.span.is_empty();
+        return self.span.length == 0
     }
 
     micro view(self, span: TextSpan) -> Utf8View {
-        # 将 span 转换为相对于底层文本的绝对区间
-        let abs_start = self.span.offset + span.offset;
-        let abs_end = abs_start + span.length;
-        # 边界检查省略，可信任调用方或内部附加检查
-        return Utf8View {
-            text: self.text,
-            span: TextSpan {
-                offset: abs_start,
-                length: abs_end - abs_start
-            }
-        };
+        let view_end: usize = self.end_offset()
+        let start: usize = self.span.offset + span.offset
+        if start >= view_end {
+            return Utf8View::new(self.text, TextSpan {
+                offset: view_end,
+                length: 0,
+            })
+        }
+
+        let mut length: usize = span.length
+        if start + length > view_end {
+            length = view_end - start
+        }
+
+        return Utf8View::new(self.text, TextSpan {
+            offset: start,
+            length: length,
+        })
     }
 
     micro slice(self, span: TextSpan) -> Utf8Text {
-        return self.view(span).as_text();
+        return self.view(span).to_text()
+    }
+}
+
+imply Utf8View {
+    micro byte_length(self) -> usize {
+        return self.span.length
+    }
+
+    private micro end_offset(self) -> usize {
+        return self.span.offset + self.span.length
     }
 }

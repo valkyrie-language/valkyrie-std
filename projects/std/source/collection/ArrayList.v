@@ -1,6 +1,6 @@
-namespace std.collections;
+namespace std.collection;
 
-[clr("System.Collections.Generic.List`1")]
+[clr("System.Collections", "System.Collections.Generic.List`1")]
 [jvm("java.util.ArrayList")]
 class ArrayList<T> {
     _items: [T]
@@ -26,7 +26,7 @@ imply ArrayList<T> {
             <% case "jvm" %>
             return __array_list_jvm_length(self)
             <% else %>
-            return len(self._items)
+            return self._items.length
         <% end match %>
     }
 
@@ -101,7 +101,7 @@ imply ArrayList<T> {
             <% case "jvm" %>
             return __array_list_jvm_length(self)
             <% else %>
-            return len(self._items)
+            return self._items.length
         <% end match %>
     }
 
@@ -160,7 +160,7 @@ imply ArrayList<T> {
             return __array_list_jvm_contains(self, value)
             <% else %>
             let mut i: usize = 0
-            while i < len(self._items) {
+            while i < self._items.length {
                 if self._items[i] == value {
                     return true
                 }
@@ -173,34 +173,68 @@ imply ArrayList<T> {
     }
 }
 
-[clr("System.Collections.Generic.List`1", ".ctor")]
+structure ArrayListIterator<T> {
+    _list: ArrayList<T>
+    _index: usize
+}
+
+imply ArrayList<T>: IntoIterator {
+    type Item = T;
+
+    micro into_iterator(self): ArrayListIterator<T> {
+        return ArrayListIterator<T> {
+            _list: self,
+            _index: 0,
+        }
+    }
+}
+
+imply ArrayListIterator<T>: Iterator {
+    type Item = T;
+
+    micro has_next(self): bool {
+        return self._index < self._list.length()
+    }
+
+    micro next(mut self): Option<T> {
+        if !self.has_next() {
+            return None
+        }
+
+        let value: T = self._list.get(self._index).unwrap()
+        self._index = self._index + 1
+        return Some(value)
+    }
+}
+
+[clr("System.Collections", "System.Collections.Generic.List`1", ".ctor")]
 private micro __array_list_clr_new<T>(capacity: usize): ArrayList<T> { }
 
-[clr("System.Collections.Generic.List`1", "get_Count"), pure]
+[clr("System.Collections", "System.Collections.Generic.List`1", "get_Count"), pure]
 private micro __array_list_clr_length<T>(list: ArrayList<T>): usize { }
 
-[clr("System.Collections.Generic.List`1", "get_Capacity"), pure]
+[clr("System.Collections", "System.Collections.Generic.List`1", "get_Capacity"), pure]
 private micro __array_list_clr_capacity<T>(list: ArrayList<T>): usize { }
 
-[clr("System.Collections.Generic.List`1", "Add")]
+[clr("System.Collections", "System.Collections.Generic.List`1", "Add")]
 private micro __array_list_clr_add<T>(list: ArrayList<T>, value: T): unit { }
 
-[clr("System.Collections.Generic.List`1", "Insert")]
+[clr("System.Collections", "System.Collections.Generic.List`1", "Insert")]
 private micro __array_list_clr_insert<T>(list: ArrayList<T>, index: usize, value: T): unit { }
 
-[clr("System.Collections.Generic.List`1", "get_Item"), pure]
+[clr("System.Collections", "System.Collections.Generic.List`1", "get_Item"), pure]
 private micro __array_list_clr_get<T>(list: ArrayList<T>, index: usize): T { }
 
-[clr("System.Collections.Generic.List`1", "set_Item")]
+[clr("System.Collections", "System.Collections.Generic.List`1", "set_Item")]
 private micro __array_list_clr_set<T>(list: ArrayList<T>, index: usize, value: T): unit { }
 
-[clr("System.Collections.Generic.List`1", "RemoveAt")]
+[clr("System.Collections", "System.Collections.Generic.List`1", "RemoveAt")]
 private micro __array_list_clr_remove_at<T>(list: ArrayList<T>, index: usize): unit { }
 
-[clr("System.Collections.Generic.List`1", "Clear")]
+[clr("System.Collections", "System.Collections.Generic.List`1", "Clear")]
 private micro __array_list_clr_clear<T>(list: ArrayList<T>): unit { }
 
-[clr("System.Collections.Generic.List`1", "Contains"), pure]
+[clr("System.Collections", "System.Collections.Generic.List`1", "Contains"), pure]
 private micro __array_list_clr_contains<T>(list: ArrayList<T>, value: T): bool { }
 
 [jvm("java.util.ArrayList", "<init>")]

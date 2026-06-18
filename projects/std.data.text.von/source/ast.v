@@ -27,7 +27,7 @@ micro von_find_field(value: VonValue, field_name: utf8) -> VonValue {
     match value {
         case Object(fields):
             let mut i: usize = 0
-            while i < len(fields) {
+            while i < fields.length() {
                 let field: VonField = fields[i]
                 if field.name == field_name {
                     return field.value

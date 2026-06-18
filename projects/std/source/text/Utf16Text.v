@@ -3,10 +3,10 @@ namespace std.text;
 type utf16 = Utf16Text
 
 ⍝ UTF-16 编码的字符串
-[clr("System.String")]
+[clr("System.Runtime", "System.String")]
 [jvm("java.lang.String")]
 class Utf16Text {
-    _bytes: Vector<u16>
+    _repr: [u16]
 }
 
 imply Utf16Text {
@@ -17,7 +17,7 @@ imply Utf16Text {
             <% case "jvm" %>
             return __utf16_jvm_length(self)
             <% else %>
-            return self._bytes.length
+            return self._repr.length
         <% end match %>
     }
 
@@ -153,62 +153,62 @@ imply Utf16Text {
 
 ⍝ 返回当前 UTF-16 文本的长度。
 ⍝ 在 CLR 下直接映射到 `System.String.Length` getter。
-[clr("System.String", "get_Length"), pure]
+[clr("System.Runtime", "System.String", "get_Length"), pure]
 private micro __utf16_clr_length(value: utf16): isize { }
 
 ⍝ 截取从 `start` 开始、长度为 `count` 的 UTF-16 子串。
 ⍝ 在 CLR 下直接映射到 `System.String.Substring(start, count)`。
-[clr("System.String", "Substring"), pure]
+[clr("System.Runtime", "System.String", "Substring"), pure]
 private micro __utf16_clr_substring(value: utf16, start: isize, count: isize): utf16 { }
 
 ⍝ 拼接两个 UTF-16 文本。
 ⍝ 在 CLR 下直接映射到 `System.String.Concat(lhs, rhs)`。
-[clr("System.String", "Concat"), pure]
+[clr("System.Runtime", "System.String", "Concat"), pure]
 private micro __utf16_clr_concat(lhs: utf16, rhs: utf16): utf16 { }
 
 ⍝ 判断当前 UTF-16 文本是否包含目标子串。
 ⍝ 在 CLR 下直接映射到 `System.String.Contains(value)`。
-[clr("System.String", "Contains"), pure]
+[clr("System.Runtime", "System.String", "Contains"), pure]
 private micro __utf16_clr_contains(value: utf16, other: utf16): bool { }
 
 ⍝ 判断当前 UTF-16 文本是否以指定前缀开头。
 ⍝ 在 CLR 下直接映射到 `System.String.StartsWith(prefix)`。
-[clr("System.String", "StartsWith"), pure]
+[clr("System.Runtime", "System.String", "StartsWith"), pure]
 private micro __utf16_clr_starts_with(value: utf16, prefix: utf16): bool { }
 
 ⍝ 判断当前 UTF-16 文本是否以指定后缀结尾。
 ⍝ 在 CLR 下直接映射到 `System.String.EndsWith(suffix)`。
-[clr("System.String", "EndsWith"), pure]
+[clr("System.Runtime", "System.String", "EndsWith"), pure]
 private micro __utf16_clr_ends_with(value: utf16, suffix: utf16): bool { }
 
 ⍝ 返回目标子串在当前 UTF-16 文本中的起始位置。
 ⍝ 在 CLR 下直接映射到 `System.String.IndexOf(value)`。
-[clr("System.String", "IndexOf"), pure]
+[clr("System.Runtime", "System.String", "IndexOf"), pure]
 private micro __utf16_clr_index_of(value: utf16, other: utf16): isize { }
 
 ⍝ 去除当前 UTF-16 文本首尾空白。
 ⍝ 在 CLR 下直接映射到 `System.String.Trim()`。
-[clr("System.String", "Trim"), pure]
+[clr("System.Runtime", "System.String", "Trim"), pure]
 private micro __utf16_clr_trim(value: utf16): utf16 { }
 
 ⍝ 将当前 UTF-16 文本转换为小写。
 ⍝ 在 CLR 下直接映射到 `System.String.ToLower()`。
-[clr("System.String", "ToLower"), pure]
+[clr("System.Runtime", "System.String", "ToLower"), pure]
 private micro __utf16_clr_to_lower(value: utf16): utf16 { }
 
 ⍝ 将当前 UTF-16 文本转换为大写。
 ⍝ 在 CLR 下直接映射到 `System.String.ToUpper()`。
-[clr("System.String", "ToUpper"), pure]
+[clr("System.Runtime", "System.String", "ToUpper"), pure]
 private micro __utf16_clr_to_upper(value: utf16): utf16 { }
 
 ⍝ 替换当前 UTF-16 文本中的指定子串。
 ⍝ 在 CLR 下直接映射到 `System.String.Replace(oldValue, newValue)`。
-[clr("System.String", "Replace"), pure]
+[clr("System.Runtime", "System.String", "Replace"), pure]
 private micro __utf16_clr_replace(value: utf16, old_value: utf16, new_value: utf16): utf16 { }
 
 ⍝ 判断当前 UTF-16 文本是否与目标文本内容相等。
 ⍝ 在 CLR 下直接映射到 `System.String.Equals(value)`。
-[clr("System.String", "Equals"), pure]
+[clr("System.Runtime", "System.String", "Equals"), pure]
 private micro __utf16_clr_equals(value: utf16, other: utf16): bool { }
 
 ⍝ 返回当前 UTF-16 文本的长度。

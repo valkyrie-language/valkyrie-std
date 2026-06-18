@@ -17,7 +17,7 @@ imply c_str {
         return self._address == 0
     }
 
-    micro len(self) -> i32 {
+    micro length(self) -> i32 {
         return c_str_len(self)
     }
 

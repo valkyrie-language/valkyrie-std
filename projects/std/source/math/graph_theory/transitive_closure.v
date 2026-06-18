@@ -10,19 +10,19 @@ micro transitive_successors(graph: DirectedGraph, start: utf8) -> [utf8] {
     let mut queue: [utf8] = []
     push(queue, start)
 
-    while len(queue) > 0 {
+    while queue.length() > 0 {
         let current: utf8 = queue[0]
         queue = array_remove_first(queue)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
         let mut i: usize = 0
-        while i < len(successors) {
+        while i < successors.length() {
             let succ: utf8 = successors[i]
 
             # 检查是否已访问
             let mut is_visited: bool = false
             let mut j: usize = 0
-            while j < len(visited) {
+            while j < visited.length() {
                 if visited[j] == succ {
                     is_visited = true
                 }
@@ -40,7 +40,7 @@ micro transitive_successors(graph: DirectedGraph, start: utf8) -> [utf8] {
     # 移除 start 自身
     let mut result: [utf8] = []
     let mut i: usize = 1
-    while i < len(visited) {
+    while i < visited.length() {
         push(result, visited[i])
         i = i + 1
     }
@@ -56,18 +56,18 @@ micro transitive_predecessors(graph: DirectedGraph, start: utf8) -> [utf8] {
     let mut queue: [utf8] = []
     push(queue, start)
 
-    while len(queue) > 0 {
+    while queue.length() > 0 {
         let current: utf8 = queue[0]
         queue = array_remove_first(queue)
 
         let predecessors: [utf8] = directed_graph_predecessors(graph, current)
         let mut i: usize = 0
-        while i < len(predecessors) {
+        while i < predecessors.length() {
             let pred: utf8 = predecessors[i]
 
             let mut is_visited: bool = false
             let mut j: usize = 0
-            while j < len(visited) {
+            while j < visited.length() {
                 if visited[j] == pred {
                     is_visited = true
                 }
@@ -85,7 +85,7 @@ micro transitive_predecessors(graph: DirectedGraph, start: utf8) -> [utf8] {
     # 移除 start 自身
     let mut result: [utf8] = []
     let mut i: usize = 1
-    while i < len(visited) {
+    while i < visited.length() {
         push(result, visited[i])
         i = i + 1
     }

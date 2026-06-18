@@ -36,7 +36,7 @@ micro directed_graph_add_edge(mut graph: DirectedGraph, from: utf8, to: utf8) ->
 # 检查节点是否存在
 micro directed_graph_has_node(graph: DirectedGraph, node: utf8) -> bool {
     let mut i: usize = 0
-    while i < len(graph._nodes) {
+    while i < graph._nodes.length() {
         if graph._nodes[i] == node {
             return true
         }
@@ -48,7 +48,7 @@ micro directed_graph_has_node(graph: DirectedGraph, node: utf8) -> bool {
 # 检查边是否存在
 micro directed_graph_has_edge(graph: DirectedGraph, from: utf8, to: utf8) -> bool {
     let mut i: usize = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_sources[i] == from && graph._edge_targets[i] == to {
             return true
         }
@@ -61,7 +61,7 @@ micro directed_graph_has_edge(graph: DirectedGraph, from: utf8, to: utf8) -> boo
 micro directed_graph_remove_node(mut graph: DirectedGraph, node: utf8) -> unit {
     let mut new_nodes: [utf8] = []
     let mut i: usize = 0
-    while i < len(graph._nodes) {
+    while i < graph._nodes.length() {
         if graph._nodes[i] != node {
             push(new_nodes, graph._nodes[i])
         }
@@ -72,7 +72,7 @@ micro directed_graph_remove_node(mut graph: DirectedGraph, node: utf8) -> unit {
     let mut new_sources: [utf8] = []
     let mut new_targets: [utf8] = []
     i = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_sources[i] != node && graph._edge_targets[i] != node {
             push(new_sources, graph._edge_sources[i])
             push(new_targets, graph._edge_targets[i])
@@ -88,7 +88,7 @@ micro directed_graph_remove_edge(mut graph: DirectedGraph, from: utf8, to: utf8)
     let mut new_sources: [utf8] = []
     let mut new_targets: [utf8] = []
     let mut i: usize = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_sources[i] != from || graph._edge_targets[i] != to {
             push(new_sources, graph._edge_sources[i])
             push(new_targets, graph._edge_targets[i])
@@ -103,7 +103,7 @@ micro directed_graph_remove_edge(mut graph: DirectedGraph, from: utf8, to: utf8)
 micro directed_graph_successors(graph: DirectedGraph, node: utf8) -> [utf8] {
     let mut result: [utf8] = []
     let mut i: usize = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_sources[i] == node {
             push(result, graph._edge_targets[i])
         }
@@ -116,7 +116,7 @@ micro directed_graph_successors(graph: DirectedGraph, node: utf8) -> [utf8] {
 micro directed_graph_predecessors(graph: DirectedGraph, node: utf8) -> [utf8] {
     let mut result: [utf8] = []
     let mut i: usize = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_targets[i] == node {
             push(result, graph._edge_sources[i])
         }
@@ -127,12 +127,12 @@ micro directed_graph_predecessors(graph: DirectedGraph, node: utf8) -> [utf8] {
 
 # 获取节点数量
 micro directed_graph_node_count(graph: DirectedGraph) -> usize {
-    return len(graph._nodes)
+    return graph._nodes.length()
 }
 
 # 获取边数量
 micro directed_graph_edge_count(graph: DirectedGraph) -> usize {
-    return len(graph._edge_sources)
+    return graph._edge_sources.length()
 }
 
 # 获取所有节点列表
@@ -144,7 +144,7 @@ micro directed_graph_nodes(graph: DirectedGraph) -> [utf8] {
 micro directed_graph_out_degree(graph: DirectedGraph, node: utf8) -> usize {
     let mut count: usize = 0
     let mut i: usize = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_sources[i] == node {
             count = count + 1
         }
@@ -157,7 +157,7 @@ micro directed_graph_out_degree(graph: DirectedGraph, node: utf8) -> usize {
 micro directed_graph_in_degree(graph: DirectedGraph, node: utf8) -> usize {
     let mut count: usize = 0
     let mut i: usize = 0
-    while i < len(graph._edge_sources) {
+    while i < graph._edge_sources.length() {
         if graph._edge_targets[i] == node {
             count = count + 1
         }

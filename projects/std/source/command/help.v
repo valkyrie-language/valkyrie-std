@@ -9,11 +9,11 @@ micro generate_root_help(app_name: utf8, app_description: utf8, commands: [Comma
     result = result + "commands:\n"
 
     let mut i: usize = 0
-    while i < len(commands) {
+    while i < commands.length() {
         let cmd: CommandModel = commands[i]
         result = result + "  "
         result = result + cmd.name
-        if len(cmd.description) > 0 {
+        if cmd.description.length() > 0 {
             result = result + "  - "
             result = result + cmd.description
         }
@@ -36,25 +36,25 @@ micro generate_command_help(app_name: utf8, cmd: CommandModel) -> utf8 {
     result = result + cmd.name
     result = result + "\n"
 
-    if len(cmd.description) > 0 {
+    if cmd.description.length() > 0 {
         result = result + "\n"
         result = result + cmd.description
         result = result + "\n"
     }
 
     let cmd_args: [ArgumentDef] = cmd.arguments
-    if len(cmd_args) > 0 {
+    if cmd_args.length() > 0 {
         result = result + "\n"
         result = result + "arguments:\n"
         let mut i: usize = 0
-        while i < len(cmd_args) {
+        while i < cmd_args.length() {
             let arg: ArgumentDef = cmd_args[i]
             result = result + "  "
             result = result + arg.name
             if arg.required {
                 result = result + " (required)"
             }
-            if len(arg.description) > 0 {
+            if arg.description.length() > 0 {
                 result = result + "  - "
                 result = result + arg.description
             }
@@ -64,19 +64,19 @@ micro generate_command_help(app_name: utf8, cmd: CommandModel) -> utf8 {
     }
 
     let cmd_opts: [OptionDef] = cmd.options
-    if len(cmd_opts) > 0 {
+    if cmd_opts.length() > 0 {
         result = result + "\n"
         result = result + "options:\n"
         let mut i: usize = 0
-        while i < len(cmd_opts) {
+        while i < cmd_opts.length() {
             let opt: OptionDef = cmd_opts[i]
             result = result + "  --"
             result = result + opt.name
-            if len(opt.short_name) > 0 {
+            if opt.short_name.length() > 0 {
                 result = result + ", -"
                 result = result + opt.short_name
             }
-            if len(opt.description) > 0 {
+            if opt.description.length() > 0 {
                 result = result + "  - "
                 result = result + opt.description
             }
@@ -92,13 +92,13 @@ micro generate_usage(app_name: utf8, commands: [CommandModel]) -> utf8 {
     let mut result: utf8 = "usage: "
     result = result + app_name
 
-    if len(commands) == 0 {
+    if commands.length() == 0 {
         return result
     }
 
     result = result + " <"
     let mut i: usize = 0
-    while i < len(commands) {
+    while i < commands.length() {
         if i > 0 {
             result = result + "|"
         }

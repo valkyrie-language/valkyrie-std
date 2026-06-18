@@ -1,6 +1,7 @@
 namespace std.net;
 
-# std.net: http �?HTTP 客户�?# 编译时根�?arch 委托 adaptor 实现
+# std.net: http - HTTP 客户端
+# 编译时根据 arch 委托 adaptor 实现
 
 micro get(url: utf8): utf8 {
     <% match arch %>

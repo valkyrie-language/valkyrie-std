@@ -77,7 +77,7 @@ micro parse_von_object(tokens: [VonToken], index: usize) -> VonParseResult<VonPa
                 return Fail(new_von_diagnostic("对象缺少结束大括号", token.span.start, token.span.stop))
             else:
                 let key: utf8 = parse_von_field_name(tokens, current)
-                if len(key) == 0 {
+                if key.length() == 0 {
                     return Fail(new_von_diagnostic("对象字段名必须是标识符或字符串", token.span.start, token.span.stop))
                 }
 
@@ -158,7 +158,7 @@ micro parse_von_field_name(tokens: [VonToken], index: usize) -> utf8 {
 }
 
 micro peek_von_token(tokens: [VonToken], index: usize) -> VonToken {
-    if index >= len(tokens) {
+    if index >= tokens.length() {
         return eof_von_token(index)
     }
     return tokens[index]

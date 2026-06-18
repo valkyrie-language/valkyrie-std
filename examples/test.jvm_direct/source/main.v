@@ -9,7 +9,7 @@ micro jvm_nano_time(): i64
 micro jvm_abs(value: i64): i64
 
 # 跨后端外部函数：仅用于让语义分析器推断返回 unit，JVM 编译时跳过
-[clr("System.Console", "WriteLine")]
+[clr("System.Console", "System.Console", "WriteLine")]
 micro clr_print(value: utf8): unit
 
 [main]

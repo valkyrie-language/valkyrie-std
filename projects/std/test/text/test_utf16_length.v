@@ -5,5 +5,7 @@ micro `test string length`() {
     let value: utf16 = "xxx"
     let actual: isize = value.length()
 
-    @assert(actual == 3, "clr string length test failed")
+    if actual != 3 {
+        panic("clr string length test failed")
+    }
 }

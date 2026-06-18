@@ -44,7 +44,7 @@ imply RingBuffer<T> {
         }
         return self.data.get(self.head)
     }
-    micro len(self): usize {
+    micro length(self): usize {
         return self.count
     }
     micro is_empty(self): bool {

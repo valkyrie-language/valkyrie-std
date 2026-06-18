@@ -1,6 +1,6 @@
 namespace test;
 
-[clr("System.Console", "WriteLine")]
+[clr("System.Console", "System.Console", "WriteLine")]
 micro console_write_line(value: utf8): unit
 
 [main]

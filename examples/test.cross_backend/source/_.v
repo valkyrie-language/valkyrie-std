@@ -1,7 +1,7 @@
 namespace test;
 
 # CLR 外部函数：调用 System.Console.WriteLine
-[clr("System.Console", "WriteLine")]
+[clr("System.Console", "System.Console", "WriteLine")]
 micro clr_print(value: utf8): unit
 
 # JVM 外部函数：调用 java.lang.System.nanoTime

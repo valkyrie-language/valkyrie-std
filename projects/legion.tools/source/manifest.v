@@ -15,24 +15,33 @@ structure LegionDependency {
 
 structure LegionProjectManifest {
     name: utf8
+    version: utf8
     description: utf8
     build_targets: [LegionBuildTarget]
+    publish_targets: [LegionPublishTarget]
     auto_link_core: bool
     auto_link_std: bool
     dependencies: [LegionDependency]
+}
+
+structure LegionPublishTarget {
+    target: utf8
+    type: utf8
+    package_id: utf8
+    version: utf8
 }
 
 structure LegionWorkspaceManifest {
     members: [utf8]
 }
 
-/// auto_link 解析结果（core + std）
+⍝ auto_link 解析结果（core + std）
 structure AutoLinkResult {
     core: bool
     std: bool
 }
 
-/// workspace auto_link 解析结果（core + std + has_default）
+⍝ workspace auto_link 解析结果（core + std + has_default）
 structure WorkspaceAutoLinkResult {
     core: bool
     std: bool
@@ -52,12 +61,36 @@ micro legion_collect_build_targets(value: VonValue) -> [LegionBuildTarget] {
     let mut result: [LegionBuildTarget] = []
     let items: [VonValue] = von_as_array(value)
     let mut i: usize = 0
-    while i < len(items) {
+    while i < items.length() {
         let item: VonValue = items[i]
         let target_name: utf8 = von_as_text(von_find_field(item, "target"))
-        if len(target_name) > 0 {
+        if target_name.length() > 0 {
             push(result, LegionBuildTarget {
                 name: target_name
+            })
+        }
+        i = i + 1
+    }
+    return result
+}
+
+micro legion_collect_publish_targets(value: VonValue, default_version: utf8) -> [LegionPublishTarget] {
+    let mut result: [LegionPublishTarget] = []
+    let items: [VonValue] = von_as_array(value)
+    let mut i: usize = 0
+    while i < items.length() {
+        let item: VonValue = items[i]
+        let target_name: utf8 = von_as_text(von_find_field(item, "target"))
+        let publish_type: utf8 = von_as_text(von_find_field(item, "type"))
+        let package_id: utf8 = von_as_text(von_find_field(item, "package_id"))
+        let publish_version_raw: utf8 = von_as_text(von_find_field(item, "version"))
+        let publish_version: utf8 = if publish_version_raw.length() > 0 { publish_version_raw } else { default_version }
+        if target_name.length() > 0 && publish_type.length() > 0 {
+            push(result, LegionPublishTarget {
+                target: target_name,
+                type: publish_type,
+                package_id: package_id,
+                version: publish_version
             })
         }
         i = i + 1
@@ -70,7 +103,7 @@ micro legion_collect_dependencies(deps_value: VonValue) -> [LegionDependency] {
     let mut result: [LegionDependency] = []
     let fields: [VonField] = von_as_object(deps_value)
     let mut i: usize = 0
-    while i < len(fields) {
+    while i < fields.length() {
         let field: VonField = fields[i]
 
         # 跳过 core/std 布尔控制标志（兼容旧 schema）
@@ -79,7 +112,7 @@ micro legion_collect_dependencies(deps_value: VonValue) -> [LegionDependency] {
             continue
         }
 
-        if len(field.name) > 0 {
+        if field.name.length() > 0 {
             let version: utf8 = ""
             let abi: utf8 = ""
 
@@ -148,11 +181,14 @@ micro legion_project_manifest_from_von(document: VonValue, workspace_auto_core: 
         case Object(fields):
             let auto_link_result: AutoLinkResult = legion_parse_auto_link(document, workspace_auto_core, workspace_auto_std, has_workspace_default)
             let deps_value: VonValue = von_find_field(document, "dependencies")
+            let project_version: utf8 = von_as_text(von_find_field(document, "version"))
 
             return Fine(LegionProjectManifest {
                 name: von_as_text(von_find_field(document, "name")),
+                version: project_version,
                 description: von_as_text(von_find_field(document, "description")),
                 build_targets: legion_collect_build_targets(von_find_field(document, "build")),
+                publish_targets: legion_collect_publish_targets(von_find_field(document, "publish"), project_version),
                 auto_link_core: auto_link_result.core,
                 auto_link_std: auto_link_result.std,
                 dependencies: legion_collect_dependencies(deps_value)
@@ -168,9 +204,9 @@ micro legion_workspace_manifest_from_von(document: VonValue) -> VonParseResult<L
             let mut members: [utf8] = []
             let items: [VonValue] = von_as_array(von_find_field(document, "members"))
             let mut i: usize = 0
-            while i < len(items) {
+            while i < items.length() {
                 let member: utf8 = von_as_text(items[i])
-                if len(member) > 0 {
+                if member.length() > 0 {
                     push(members, member)
                 }
                 i = i + 1

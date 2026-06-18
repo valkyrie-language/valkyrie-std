@@ -1,6 +1,6 @@
 namespace std.collections;
 
-# std.collections: Stack �?LIFO �?
+# std.collections: Stack - LIFO 栈
 class Stack<T> {
     data: List<T>
 }
@@ -18,8 +18,8 @@ imply Stack<T> {
     micro peek(self): Option<T> {
         return self.data.last()
     }
-    micro len(self): usize {
-        return self.data.len()
+    micro length(self): usize {
+        return self.data.length()
     }
     micro is_empty(self): bool {
         return self.data.is_empty()
@@ -28,7 +28,7 @@ imply Stack<T> {
         self.data.clear()
     }
     micro iter(self, f: micro(T) -> unit): unit {
-        let mut i: i32 = self.data.len() as i32 - 1
+        let mut i: i32 = self.data.length() as i32 - 1
         while i >= 0 {
             f(self.data.get(i as usize).unwrap())
             i = i - 1

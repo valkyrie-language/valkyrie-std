@@ -2,7 +2,7 @@ namespace std.text;
 
 ⍝ [AsciiText] 是一个 ascii 文本，它只包含 ascii 字符集
 structure AsciiText {
-    _bytes: Vector<u8> 
+    _bytes: [u8] 
 }
 
 # 基本方法

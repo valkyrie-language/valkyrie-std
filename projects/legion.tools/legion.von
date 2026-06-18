@@ -1,8 +1,9 @@
 {
     name: "legion.tools",
+    version: "workspace",
     description: "Legion 构造工具",
     auto_link: {
-        core: false,
+        core: true,
         std: true
     },
     dependencies: {
@@ -26,7 +27,8 @@
         {
             target: "clr",
             type: "nuget",
-            package_id: "V.Legion"
+            package_id: "LoL.Legion",
+            version: "2020.0.0.0"
         }
     ]
 }

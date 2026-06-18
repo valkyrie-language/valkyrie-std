@@ -1,6 +1,7 @@
-﻿namespace std.io;
+namespace std.io;
 
-# std.io: time �?时间与计�?# 编译时根�?arch 委托 adaptor 实现
+# std.io: time - 时间与计时
+# 编译时根据 arch 委托 adaptor 实现
 
 micro now(): i64 {
     <% match arch %>

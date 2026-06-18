@@ -3,11 +3,11 @@ namespace std.collections;
 # std.collections: sort - 排序算法
 
 micro quick_sort(list: List<T>, cmp: micro(T, T) -> i32): unit {
-    let len: usize = list.len()
-    if len == 0 {
+    let length: usize = list.length()
+    if length == 0 {
         return
     }
-    quick_sort_range(list, 0, len - 1, cmp)
+    quick_sort_range(list, 0, length - 1, cmp)
 }
 
 micro quick_sort_range(list: List<T>, lo: usize, hi: usize, cmp: micro(T, T) -> i32): unit {
@@ -43,11 +43,11 @@ micro swap(list: List<T>, a: usize, b: usize): unit {
 }
 
 micro merge_sort(list: List<T>, cmp: micro(T, T) -> i32): unit {
-    let len: usize = list.len()
-    if len == 0 {
+    let length: usize = list.length()
+    if length == 0 {
         return
     }
-    merge_sort_range(list, 0, len - 1, cmp)
+    merge_sort_range(list, 0, length - 1, cmp)
 }
 
 micro merge_sort_range(list: List<T>, left: usize, right: usize, cmp: micro(T, T) -> i32): unit {
@@ -75,7 +75,7 @@ micro merge(list: List<T>, left: usize, mid: usize, right: usize, cmp: micro(T, 
     let mut a: usize = 0
     let mut b: usize = 0
     let mut k: usize = left
-    while a < left_arr.len() && b < right_arr.len() {
+    while a < left_arr.length() && b < right_arr.length() {
         if cmp(left_arr.get(a).unwrap(), right_arr.get(b).unwrap()) <= 0 {
             list.set(k, left_arr.get(a).unwrap())
             a = a + 1
@@ -85,12 +85,12 @@ micro merge(list: List<T>, left: usize, mid: usize, right: usize, cmp: micro(T, 
         }
         k = k + 1
     }
-    while a < left_arr.len() {
+    while a < left_arr.length() {
         list.set(k, left_arr.get(a).unwrap())
         a = a + 1
         k = k + 1
     }
-    while b < right_arr.len() {
+    while b < right_arr.length() {
         list.set(k, right_arr.get(b).unwrap())
         b = b + 1
         k = k + 1

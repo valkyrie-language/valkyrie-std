@@ -4,7 +4,7 @@ micro parse_i32(s: utf8) -> Option<i32> {
     let mut result: i32 = 0
     let mut sign: i32 = 1
     let mut i: usize = 0
-    let slen: usize = len(s)
+    let slen: usize = s.length() as usize
 
     if slen == 0 {
         return None

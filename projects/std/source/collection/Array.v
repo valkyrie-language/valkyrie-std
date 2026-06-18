@@ -1,47 +1,112 @@
-namespace std.collections;
+namespace std.collection;
 
-micro array_len<T>(items: [T]) -> usize {
-    return len(items)
-}
+[clr("System.Runtime", "System.Array")]
+[jvm("java.lang.Object[]")]
+class Array<T> {}
 
-micro array_length<T>(items: [T]) -> usize {
-    return len(items)
-}
-
-micro array_is_empty<T>(items: [T]) -> bool {
-    return len(items) == 0
-}
-
-micro array_get<T>(items: [T], index: usize): Option<T> {
-    if index >= len(items) {
-        return None
+imply Array<T> {
+    micro length(self): usize {
+        <% match arch %>
+            <% case "clr" %>
+            return __array_clr_length::<T>(self)
+            <% case "jvm" %>
+            return __array_jvm_length::<T>(self)
+            <% else %>
+            return __array_nyar_length::<T>(self)
+        <% end match %>
     }
 
-    return Some(items[index])
-}
-
-micro array_first<T>(items: [T]): Option<T> {
-    return array_get(items, 0)
-}
-
-micro array_last<T>(items: [T]): Option<T> {
-    let item_count: usize = len(items)
-    if item_count == 0 {
-        return None
+    micro is_empty(self): bool {
+        return self.length() == 0
     }
 
-    return Some(items[item_count - 1])
-}
-
-micro array_contains<T>(items: [T], value: T): bool {
-    let mut i: usize = 0
-    while i < len(items) {
-        if items[i] == value {
-            return true
+    micro get(self, index: usize): Option<T> {
+        if index >= self.length() {
+            return None
         }
 
-        i = i + 1
+        <% match arch %>
+            <% case "clr" %>
+            return Some(__array_clr_get::<T>(self, index))
+            <% case "jvm" %>
+            return Some(__array_jvm_get::<T>(self, index))
+            <% else %>
+            return Some(self[index])
+        <% end match %>
     }
 
-    return false
+    micro first(self): Option<T> {
+        return self.get(0)
+    }
+
+    micro last(self): Option<T> {
+        let item_count: usize = self.length()
+        if item_count == 0 {
+            return None
+        }
+
+        return self.get(item_count - 1)
+    }
+
+    micro contains(self, value: T): bool {
+        let mut i: usize = 0
+        while i < self.length() {
+            if self.get(i).unwrap() == value {
+                return true
+            }
+
+            i = i + 1
+        }
+
+        return false
+    }
 }
+
+structure ArrayIterator<T> {
+    _array: Array<T>
+    _index: usize
+}
+
+imply Array<T>: IntoIterator {
+    type Item = T;
+
+    micro into_iterator(self): ArrayIterator<T> {
+        return ArrayIterator<T> {
+            _array: self,
+            _index: 0,
+        }
+    }
+}
+
+imply ArrayIterator<T>: Iterator {
+    type Item = T;
+
+    micro has_next(self): bool {
+        return self._index < self._array.length()
+    }
+
+    micro next(mut self): Option<T> {
+        if !self.has_next() {
+            return None
+        }
+
+        let value: T = self._array.get(self._index).unwrap()
+        self._index = self._index + 1
+        return Some(value)
+    }
+}
+
+[clr("System.Runtime", "System.Array", "get_Length"), pure]
+private micro __array_clr_length<T>(array: Array<T>): usize { }
+
+[clr("System.Runtime", "System.Array", "GetValue"), pure]
+private micro __array_clr_get<T>(array: Array<T>, index: usize): T { }
+
+[jvm("java.lang.reflect.Array", "getLength"), pure]
+private micro __array_jvm_length<T>(array: Array<T>): usize { }
+
+[jvm("java.lang.reflect.Array", "get"), pure]
+private micro __array_jvm_get<T>(array: Array<T>, index: usize): T { }
+
+[vm("__nyar_length")]
+private micro __array_nyar_length<T>(array: Array<T>): usize { }

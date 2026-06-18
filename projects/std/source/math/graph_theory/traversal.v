@@ -15,7 +15,7 @@ micro dfs(graph: DirectedGraph, start: utf8) -> [utf8] {
 micro dfs_visit(graph: DirectedGraph, node: utf8, visited: [utf8], result: [utf8]) -> unit {
     # 检查是否已访问
     let mut i: usize = 0
-    while i < len(visited) {
+    while i < visited.length() {
         if visited[i] == node {
             return
         }
@@ -27,7 +27,7 @@ micro dfs_visit(graph: DirectedGraph, node: utf8, visited: [utf8], result: [utf8
 
     let successors: [utf8] = directed_graph_successors(graph, node)
     i = 0
-    while i < len(successors) {
+    while i < successors.length() {
         dfs_visit(graph, successors[i], visited, result)
         i = i + 1
     }
@@ -43,20 +43,20 @@ micro bfs(graph: DirectedGraph, start: utf8) -> [utf8] {
     push(visited, start)
     push(queue, start)
 
-    while len(queue) > 0 {
+    while queue.length() > 0 {
         let current: utf8 = queue[0]
         queue = array_remove_first(queue)
         push(result, current)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
         let mut i: usize = 0
-        while i < len(successors) {
+        while i < successors.length() {
             let succ: utf8 = successors[i]
 
             # 检查是否已访问
             let mut is_visited: bool = false
             let mut j: usize = 0
-            while j < len(visited) {
+            while j < visited.length() {
                 if visited[j] == succ {
                     is_visited = true
                 }

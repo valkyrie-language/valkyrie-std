@@ -5,7 +5,7 @@ namespace std.math.graph_theory;
 micro has_cycle(graph: DirectedGraph) -> bool {
     let sorted: [utf8] = topological_sort(graph)
     let node_count: usize = directed_graph_node_count(graph)
-    return len(sorted) < node_count
+    return sorted.length() < node_count
 }
 
 # 查找图中的一条循环路径
@@ -13,24 +13,24 @@ micro has_cycle(graph: DirectedGraph) -> bool {
 # 返回循环路径，无环返回空列表
 micro find_cycle(graph: DirectedGraph) -> [utf8] {
     let nodes: [utf8] = directed_graph_nodes(graph)
-    if len(nodes) == 0 {
+    if nodes.length() == 0 {
         return []
     }
 
     let mut color: [usize] = []
     let mut parent: [utf8] = []
     let mut i: usize = 0
-    while i < len(nodes) {
+    while i < nodes.length() {
         push(color, 0)
         push(parent, "")
         i = i + 1
     }
 
     i = 0
-    while i < len(nodes) {
+    while i < nodes.length() {
         if color[i] == 0 {
             let cycle: [utf8] = find_cycle_dfs(graph, nodes, color, parent, nodes[i])
-            if len(cycle) > 0 {
+            if cycle.length() > 0 {
                 return cycle
             }
         }
@@ -46,7 +46,7 @@ micro find_cycle_dfs(graph: DirectedGraph, nodes: [utf8], mut color: [usize], mu
     let mut idx: usize = 0
     let mut found: bool = false
     let mut i: usize = 0
-    while i < len(nodes) {
+    while i < nodes.length() {
         if nodes[i] == node {
             idx = i
             found = true
@@ -62,13 +62,13 @@ micro find_cycle_dfs(graph: DirectedGraph, nodes: [utf8], mut color: [usize], mu
 
     let successors: [utf8] = directed_graph_successors(graph, node)
     i = 0
-    while i < len(successors) {
+    while i < successors.length() {
         let succ: utf8 = successors[i]
 
         let mut succ_idx: usize = 0
         let mut succ_found: bool = false
         let mut j: usize = 0
-        while j < len(nodes) {
+        while j < nodes.length() {
             if nodes[j] == succ {
                 succ_idx = j
                 succ_found = true
@@ -88,14 +88,14 @@ micro find_cycle_dfs(graph: DirectedGraph, nodes: [utf8], mut color: [usize], mu
                     let mut p_idx: usize = 0
                     let mut p_found: bool = false
                     let mut k: usize = 0
-                    while k < len(nodes) {
+                    while k < nodes.length() {
                         if nodes[k] == current {
                             p_idx = k
                             p_found = true
                         }
                         k = k + 1
                     }
-                    if p_found && len(parent[p_idx]) > 0 {
+                    if p_found && parent[p_idx].length() > 0 {
                         current = parent[p_idx]
                     }
                     else {
@@ -108,7 +108,7 @@ micro find_cycle_dfs(graph: DirectedGraph, nodes: [utf8], mut color: [usize], mu
             if color[succ_idx] == 0 {
                 parent[succ_idx] = node
                 let sub_cycle: [utf8] = find_cycle_dfs(graph, nodes, color, parent, succ)
-                if len(sub_cycle) > 0 {
+                if sub_cycle.length() > 0 {
                     return sub_cycle
                 }
             }

@@ -15,7 +15,7 @@ micro parse_target(triple: utf8) -> CanonicalTarget {
 
     let mut part: i32 = 0
     let mut i: usize = 0
-    let length: usize = len(triple)
+    let length: usize = triple.length()
     while i < length {
         let ch: utf8 = triple[i]
         if ch == "-" {
@@ -50,7 +50,7 @@ micro format_target(target: CanonicalTarget) -> utf8 {
     result = result + target.vendor
     result = result + "-"
     result = result + target.system
-    if len(target.abi) > 0 {
+    if target.abi.length() > 0 {
         result = result + "-"
         result = result + target.abi
     }
