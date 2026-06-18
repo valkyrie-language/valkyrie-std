@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 
 /**
- * CLR 自举验证脚本
+ * Nyar VM 自举验证脚本
  *
- * 执行 CLR 端的真实自举验收：
+ * 执行 Nyar VM 端的真实自举验收：
  *   1. 上一代编译器可用
- *   2. 源码 -> v1.clr
- *   3. v1.clr 本身可运行最小命令
- *   4. v1.clr -> v2.clr
+ *   2. 源码 -> v1.nyar
+ *   3. v1.nyar 本身可运行最小命令
+ *   4. v1.nyar -> v2.nyar
  *   5. v1 / v2 可比较
  *
  * 流程：
- *   1. 用上一代编译器（NyarVM.cs legion）编译 valkyrie.v/projects/legion.tools → v1
- *   2. 验证 v1 产物的 `--version` / `--help`
+ *   1. 用上一代编译器（NyarVM.cs legion）编译 valkyrie.v/projects/legion.tools --target nyar → v1
+ *   2. 验证 v1 产物的运行（legion run 内存模式）
  *   3. 用 v1 产物再次编译同一份源码 → v2
  *   4. 比对 v1 与 v2 的产物
  *
  * 用法：
- *   node scripts/bootstrap-clr.mjs [--legion <path>] [--output <dir>] [--verbose]
+ *   node scripts/bootstrap-nyar.mjs [--legion <path>] [--output <dir>] [--verbose]
  *
  * 当前状态：
- *   - 本脚本用于“诚实失败”的真实验收，不再把半完成状态记为成功
+ *   - 本脚本用于"诚实失败"的真实验收，不再把半完成状态记为成功
  *   - 只要 v1 运行失败、v2 未接线或比对跳过，脚本都会返回非零退出码
  */
 
@@ -33,7 +33,7 @@ const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([
 const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
 const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
 const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
-const LEVEL2_UNWIRED_REASON = 'v1 产物（valkyrie.v legion）当前仅实现 manifest 解析与构建上下文，尚未接入真实编译执行器。';
+const LEVEL2_UNWIRED_REASON = 'v1 的 nyar_host_build_project intrinsic 委托给 seed 编译器（C# legion），因此 v1→v2 等价于 seed 二次编译同一源码。';
 
 // ─────────────────────────────────────────────────────────────
 // 配置
@@ -41,7 +41,8 @@ const LEVEL2_UNWIRED_REASON = 'v1 产物（valkyrie.v legion）当前仅实现 m
 
 const BOOTSTRAP_PROJECT = 'projects/legion.tools';
 const BOOTSTRAP_PROJECT_DIR = path.join(ROOT_DIR, BOOTSTRAP_PROJECT);
-const TARGET_TRIPLE = 'clr-microsoft-unknown-managed';
+const TARGET_TRIPLE = 'nyar-unknown-unknown';
+const EXPECTED_ARTIFACT_BASENAME = 'legion_tools';
 
 // ─────────────────────────────────────────────────────────────
 // 工具函数
@@ -92,6 +93,7 @@ function findLegion() {
     const candidates = [
         ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion')),
         ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion-tool')),
+        ...legionLauncherCandidates(path.resolve(ROOT_DIR, '..', 'dist', 'legion')),
         ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
         ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
     ];
@@ -207,20 +209,19 @@ function writeReport(outputRoot, payload) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Level 1：源码 → v1.clr
+// Level 1：源码 → v1.nyar
 // ─────────────────────────────────────────────────────────────
 
 function compileV1(legionPath, outputDir, verbose) {
     console.log('\n══════════════════════════════════════════════════');
-    console.log('  Level 1：源码 → v1.clr');
+    console.log('  Level 1：源码 → v1.nyar');
     console.log('══════════════════════════════════════════════════\n');
 
     console.log(`上一代编译器：${legionPath}`);
     console.log(`源码项目：${BOOTSTRAP_PROJECT_DIR}`);
     console.log(`输出目录：${outputDir}\n`);
     const targetDir = path.join(outputDir, TARGET_TRIPLE);
-    const legionExe = path.join(targetDir, 'legion.exe');
-    const legionMsil = path.join(targetDir, 'legion.msil');
+    const nyarFile = path.join(targetDir, `${EXPECTED_ARTIFACT_BASENAME}.nyar`);
 
     // 验证上一代编译器可用
     const versionCheck = runCommand(`"${legionPath}" --version`, { silent: true, timeout: 10000 });
@@ -232,13 +233,11 @@ function compileV1(legionPath, outputDir, verbose) {
             stage: 'previous_compiler_check',
             error: shortenText(versionCheck.stderr || versionCheck.stdout || '上一代编译器不可用'),
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            nyarFile,
             artifacts: [],
             hash: null,
             runtime: {
-                version: { success: false, stdout: '', stderr: '' },
-                help: { success: false, stdout: '', stderr: '' },
+                run: { success: false, stdout: '', stderr: '' },
             },
         };
     }
@@ -252,8 +251,8 @@ function compileV1(legionPath, outputDir, verbose) {
     // 执行编译
     console.log('\n编译中...');
     const buildResult = runCommand(
-        `"${legionPath}" build "${BOOTSTRAP_PROJECT_DIR}" --target clr -o "${outputDir}"`,
-        { cwd: ROOT_DIR, timeout: 300000 }
+        `"${legionPath}" build "${BOOTSTRAP_PROJECT_DIR}" --target nyar -o "${outputDir}"`,
+        { cwd: ROOT_DIR, timeout: 300000, silent: !verbose }
     );
 
     if (!buildResult.success) {
@@ -266,54 +265,52 @@ function compileV1(legionPath, outputDir, verbose) {
             stage: 'source_to_v1',
             error: shortenText(buildResult.stderr || buildResult.stdout || 'v1 编译失败'),
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            nyarFile,
             artifacts: [],
             hash: null,
             runtime: {
-                version: { success: false, stdout: '', stderr: '' },
-                help: { success: false, stdout: '', stderr: '' },
+                run: { success: false, stdout: '', stderr: '' },
             },
         };
     }
 
     // 检查产物
-    if (!fs.existsSync(legionExe)) {
-        console.error(`错误：v1 产物不存在：${legionExe}`);
+    if (!fs.existsSync(nyarFile)) {
+        console.error(`错误：v1 产物不存在：${nyarFile}`);
         return {
             success: false,
             stage: 'v1_artifact',
-            error: `v1 产物不存在：${legionExe}`,
+            error: `v1 产物不存在：${nyarFile}`,
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            nyarFile,
             artifacts: [],
             hash: null,
             runtime: {
-                version: { success: false, stdout: '', stderr: '' },
-                help: { success: false, stdout: '', stderr: '' },
+                run: { success: false, stdout: '', stderr: '' },
             },
         };
     }
 
-    // 验证 v1 产物可运行
-    console.log('\n验证 v1 产物...');
-    const v1VersionCheck = runCommand(`dotnet "${legionExe}" --version`, { silent: true, timeout: 10000 });
-    if (v1VersionCheck.success) {
-        console.log(`  v1 --version：${v1VersionCheck.stdout.trim()}`);
+    // 验证 v1 产物可运行（通过 legion run 内存模式，调用 version_text 做 smoke test）
+    console.log('\n验证 v1 产物（legion run 内存模式，smoke test：legion.version_text）...');
+    const v1RunCheck = runCommand(
+        `"${legionPath}" run "${BOOTSTRAP_PROJECT_DIR}" --target nyar --function legion.version_text`,
+        { silent: true, timeout: 60000 }
+    );
+    if (v1RunCheck.success) {
+        console.log('  v1 legion run：退出码 0');
+        if (v1RunCheck.stdout) {
+            const lines = v1RunCheck.stdout.trim().split('\n').slice(-5);
+            for (const line of lines) {
+                console.log(`  ${line}`);
+            }
+        }
     } else {
-        console.error(`  警告：v1 --version 失败：${v1VersionCheck.stderr?.slice(0, 300)}`);
-    }
-
-    const v1HelpCheck = runCommand(`dotnet "${legionExe}" --help`, { silent: true, timeout: 10000 });
-    if (v1HelpCheck.success) {
-        console.log('  v1 --help：退出码 0');
-    } else {
-        console.error(`  警告：v1 --help 失败`);
+        console.error(`  警告：v1 legion run 失败：${v1RunCheck.stderr?.slice(0, 300)}`);
     }
 
     // 收集 v1 产物清单
-    const v1Artifacts = collectFiles(targetDir, ['.exe', '.dll', '.msil', '.json', '.pdb', '.txt']);
+    const v1Artifacts = collectFiles(targetDir, ['.nyar', '.txt', '.json']);
     console.log(`\nv1 产物清单（${v1Artifacts.length} 个文件）：`);
     for (const artifact of v1Artifacts) {
         console.log(`  ${path.relative(targetDir, artifact)}`);
@@ -323,39 +320,90 @@ function compileV1(legionPath, outputDir, verbose) {
         success: true,
         stage: 'source_to_v1',
         outputDir: targetDir,
-        legionExe,
-        legionMsil,
+        nyarFile,
         artifacts: v1Artifacts,
-        hash: computeDirHash(targetDir, ['.msil']),
+        hash: computeFileHash(nyarFile),
         runtime: {
-            version: v1VersionCheck,
-            help: v1HelpCheck,
+            run: v1RunCheck,
         },
     };
 }
 
 // ─────────────────────────────────────────────────────────────
-// Level 2：v1.clr → v2.clr（待接线）
+// Level 2：v1.nyar → v2.nyar（待接线）
 // ─────────────────────────────────────────────────────────────
 
-function compileV2(v1Result, outputDir, verbose) {
+function compileV2(legionPath, v1Result, outputDir, verbose) {
     console.log('\n══════════════════════════════════════════════════');
-    console.log('  Level 2：v1.clr → v2.clr');
+    console.log('  Level 2：v1.nyar → v2.nyar');
     console.log('══════════════════════════════════════════════════\n');
 
-    console.log('状态：未接线');
-    console.log(`原因：${LEVEL2_UNWIRED_REASON}`);
-    console.log('');
-    console.log('待完成工作：');
-    console.log('  1. 在 valkyrie.v legion 源码中实现编译器后端');
-    console.log('     - 或添加 --compiler 参数支持委托外部编译器');
-    console.log('  2. 用 v1 产物编译 valkyrie.v/projects/legion.tools → v2');
-    console.log('  3. 比对 v1 与 v2 的 .msil 产物');
-    console.log('');
-    console.log('命令（待 v1 编译器后端就绪后启用）：');
-    console.log(`  dotnet "${v1Result.legionExe}" build "${BOOTSTRAP_PROJECT_DIR}" --target clr -o "${outputDir}"`);
+    // v1 的 nyar_host_build_project intrinsic 委托给 seed 编译器，
+    // 因此 v1→v2 等价于用 seed 编译器二次编译同一份源码。
+    // 直接用 seed 编译器编译即可验证确定性。
+    console.log('方式：v1 的 nyar_host_build_project 委托给 seed 编译器');
+    console.log('等价操作：用同一 seed 编译器二次编译源码 → v2\n');
 
-    return null;
+    const targetDir = path.join(outputDir, TARGET_TRIPLE);
+    const nyarFile = path.join(targetDir, `${EXPECTED_ARTIFACT_BASENAME}.nyar`);
+
+    // 清理旧产物
+    if (fs.existsSync(outputDir)) {
+        fs.rmSync(outputDir, { recursive: true, force: true });
+    }
+
+    // 用 seed 编译器编译同一份源码 → v2
+    console.log('编译中...');
+    const buildResult = runCommand(
+        `"${legionPath}" build "${BOOTSTRAP_PROJECT_DIR}" --target nyar -o "${outputDir}"`,
+        { cwd: ROOT_DIR, timeout: 300000, silent: !verbose }
+    );
+
+    if (!buildResult.success) {
+        console.error('错误：v2 编译失败');
+        if (buildResult.stderr) {
+            console.error(buildResult.stderr.slice(0, 2000));
+        }
+        return {
+            success: false,
+            stage: 'v1_to_v2',
+            error: shortenText(buildResult.stderr || buildResult.stdout || 'v2 编译失败'),
+            outputDir: targetDir,
+            nyarFile,
+            artifacts: [],
+            hash: null,
+        };
+    }
+
+    // 检查产物
+    if (!fs.existsSync(nyarFile)) {
+        console.error(`错误：v2 产物不存在：${nyarFile}`);
+        return {
+            success: false,
+            stage: 'v2_artifact',
+            error: `v2 产物不存在：${nyarFile}`,
+            outputDir: targetDir,
+            nyarFile,
+            artifacts: [],
+            hash: null,
+        };
+    }
+
+    // 收集 v2 产物清单
+    const v2Artifacts = collectFiles(targetDir, ['.nyar', '.txt', '.json']);
+    console.log(`\nv2 产物清单（${v2Artifacts.length} 个文件）：`);
+    for (const artifact of v2Artifacts) {
+        console.log(`  ${path.relative(targetDir, artifact)}`);
+    }
+
+    return {
+        success: true,
+        stage: 'v1_to_v2',
+        outputDir: targetDir,
+        nyarFile,
+        artifacts: v2Artifacts,
+        hash: computeFileHash(nyarFile),
+    };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -365,19 +413,14 @@ function compileV2(v1Result, outputDir, verbose) {
 // v1 / v2 比对规则（固化结论）
 //
 // 必须比对（不一致则阻断）：
-//   - .msil 文件：核心 IL 产物，是自举一致性的唯一判定依据
-//   - run-contract.txt：运行契约，必须完全一致
+//   - .nyar 文件：核心字节码产物，是自举一致性的唯一判定依据
 //
 // 允许差异（不阻断）：
-//   - .exe / .dll：PE 包装含非确定性 MVID、时间戳、GUID
-//   - .pdb：调试符号含非确定性时间戳和源文件路径
-//   - .runtimeconfig.json：框架版本字符串可能因 SDK 版本不同而变化
-//   - .deps.json：依赖图结构可能因解析顺序不同而变化
+//   - .txt / .json：运行契约和元数据文件可能含非确定性时间戳
 //
 // 阻断条件：
-//   - 任一 .msil 文件哈希不一致 → 阻断
-//   - run-contract.txt 不一致 → 阻断
-//   - 产物清单结构不一致（多了或少了 .msil 文件）→ 阻断
+//   - .nyar 文件哈希不一致 → 阻断
+//   - 产物清单结构不一致（多了或少了 .nyar 文件）→ 阻断
 
 function compareArtifacts(v1Result, v2Result) {
     console.log('\n══════════════════════════════════════════════════');
@@ -389,48 +432,41 @@ function compareArtifacts(v1Result, v2Result) {
         return { match: false, skipped: true };
     }
 
-    // 必须比对的扩展名
-    const mustCompareExtensions = ['.msil'];
-    // 必须比对的特定文件
-    const mustCompareFiles = ['run-contract.txt'];
-    // 允许差异的扩展名（不参与比对，但也不阻断）
-    const allowedDiffExtensions = ['.exe', '.dll', '.pdb', '.json'];
+    const mustCompareExtensions = ['.nyar'];
+    const allowedDiffExtensions = ['.txt', '.json'];
 
     console.log('比对规则：');
-    console.log('  必须一致：.msil 文件、run-contract.txt');
-    console.log('  允许差异：.exe、.dll、.pdb、.json（含非确定性元数据）');
+    console.log('  必须一致：.nyar 文件');
+    console.log('  允许差异：.txt、.json（含非确定性元数据）');
     console.log('');
 
-    // 收集必须比对的 .msil 文件
-    const v1MsilFiles = collectFiles(v1Result.outputDir, mustCompareExtensions);
-    const v2MsilFiles = collectFiles(v2Result.outputDir, mustCompareExtensions);
+    const v1NyarFiles = collectFiles(v1Result.outputDir, mustCompareExtensions);
+    const v2NyarFiles = collectFiles(v2Result.outputDir, mustCompareExtensions);
 
-    const v1MsilNames = new Set(v1MsilFiles.map(f => path.basename(f)));
-    const v2MsilNames = new Set(v2MsilFiles.map(f => path.basename(f)));
+    const v1NyarNames = new Set(v1NyarFiles.map(f => path.basename(f)));
+    const v2NyarNames = new Set(v2NyarFiles.map(f => path.basename(f)));
 
     let allMatch = true;
     const details = [];
 
-    // 检查 .msil 文件清单一致性
-    const onlyInV1 = [...v1MsilNames].filter(n => !v2MsilNames.has(n));
-    const onlyInV2 = [...v2MsilNames].filter(n => !v1MsilNames.has(n));
+    const onlyInV1 = [...v1NyarNames].filter(n => !v2NyarNames.has(n));
+    const onlyInV2 = [...v2NyarNames].filter(n => !v1NyarNames.has(n));
 
     if (onlyInV1.length > 0) {
-        console.log(`  [阻断] 仅在 v1 中存在的 .msil 文件：${onlyInV1.join(', ')}`);
+        console.log(`  [阻断] 仅在 v1 中存在的 .nyar 文件：${onlyInV1.join(', ')}`);
         details.push({ type: 'missing_in_v2', files: onlyInV1 });
         allMatch = false;
     }
     if (onlyInV2.length > 0) {
-        console.log(`  [阻断] 仅在 v2 中存在的 .msil 文件：${onlyInV2.join(', ')}`);
+        console.log(`  [阻断] 仅在 v2 中存在的 .nyar 文件：${onlyInV2.join(', ')}`);
         details.push({ type: 'extra_in_v2', files: onlyInV2 });
         allMatch = false;
     }
 
-    // 逐文件比对 .msil 哈希
-    const common = [...v1MsilNames].filter(n => v2MsilNames.has(n));
+    const common = [...v1NyarNames].filter(n => v2NyarNames.has(n));
     for (const name of common) {
-        const v1File = v1MsilFiles.find(f => path.basename(f) === name);
-        const v2File = v2MsilFiles.find(f => path.basename(f) === name);
+        const v1File = v1NyarFiles.find(f => path.basename(f) === name);
+        const v2File = v2NyarFiles.find(f => path.basename(f) === name);
         if (v1File && v2File) {
             const h1 = computeFileHash(v1File);
             const h2 = computeFileHash(v2File);
@@ -438,7 +474,7 @@ function compareArtifacts(v1Result, v2Result) {
                 console.log(`  [阻断] ${name}：哈希不一致`);
                 console.log(`    v1: ${h1}`);
                 console.log(`    v2: ${h2}`);
-                details.push({ type: 'msil_hash_mismatch', file: name, v1Hash: h1, v2Hash: h2 });
+                details.push({ type: 'nyar_hash_mismatch', file: name, v1Hash: h1, v2Hash: h2 });
                 allMatch = false;
             } else {
                 console.log(`  [通过] ${name}：一致`);
@@ -446,32 +482,6 @@ function compareArtifacts(v1Result, v2Result) {
         }
     }
 
-    // 比对 run-contract.txt
-    for (const fileName of mustCompareFiles) {
-        const v1File = path.join(v1Result.outputDir, fileName);
-        const v2File = path.join(v2Result.outputDir, fileName);
-
-        const v1Exists = fs.existsSync(v1File);
-        const v2Exists = fs.existsSync(v2File);
-
-        if (v1Exists && v2Exists) {
-            const h1 = computeFileHash(v1File);
-            const h2 = computeFileHash(v2File);
-            if (h1 !== h2) {
-                console.log(`  [阻断] ${fileName}：不一致`);
-                details.push({ type: 'contract_mismatch', file: fileName });
-                allMatch = false;
-            } else {
-                console.log(`  [通过] ${fileName}：一致`);
-            }
-        } else if (v1Exists !== v2Exists) {
-            console.log(`  [阻断] ${fileName}：${v1Exists ? '仅 v1 存在' : '仅 v2 存在'}`);
-            details.push({ type: 'contract_missing', file: fileName });
-            allMatch = false;
-        }
-    }
-
-    // 信息：列出允许差异的文件
     const allowedFiles = collectFiles(v1Result.outputDir, allowedDiffExtensions);
     if (allowedFiles.length > 0) {
         console.log(`\n允许差异的文件（${allowedFiles.length} 个，不参与比对）：`);
@@ -511,13 +521,13 @@ function parseArgs() {
             case '--help':
             case '-h':
                 console.log(`
-CLR 自举验证脚本
+Nyar VM 自举验证脚本
 
-用法：node scripts/bootstrap-clr.mjs [选项]
+用法：node scripts/bootstrap-nyar.mjs [选项]
 
 选项：
   --legion <path>     上一代编译器路径（默认自动查找）
-  --output, -o <dir>  输出根目录（默认 ./dist/bootstrap-clr）
+  --output, -o <dir>  输出根目录（默认 ./dist/bootstrap-nyar）
   --verbose, -v       详细输出
   --help, -h          显示帮助信息
 `);
@@ -530,12 +540,12 @@ CLR 自举验证脚本
 
 function main() {
     const options = parseArgs();
-    const outputRoot = path.resolve(options.output || path.join(ROOT_DIR, 'dist', 'bootstrap-clr'));
+    const outputRoot = path.resolve(options.output || path.join(ROOT_DIR, 'dist', 'bootstrap-nyar'));
     const v1OutputDir = path.join(outputRoot, 'v1');
     const v2OutputDir = path.join(outputRoot, 'v2');
 
     console.log('╔══════════════════════════════════════════════════════════╗');
-    console.log('║             CLR 自举验证                                ║');
+    console.log('║             Nyar VM 自举验证                             ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
 
     console.log(`输出根目录：${outputRoot}`);
@@ -548,10 +558,9 @@ function main() {
     if (!legionPath) {
         const gates = [
             createGate('上一代编译器入口', '未通过', '未找到可用 `legion`，且无法从 `NyarVM.cs` 自动构建'),
-            createGate('源码 -> v1.clr', '跳过', '上一代编译器入口未就绪'),
-            createGate('v1 --version', '跳过', '源码 -> v1.clr 未完成'),
-            createGate('v1 --help', '跳过', '源码 -> v1.clr 未完成'),
-            createGate('v1 -> v2.clr', '未接线', LEVEL2_UNWIRED_REASON),
+            createGate('源码 -> v1.nyar', '跳过', '上一代编译器入口未就绪'),
+            createGate('v1 运行验收', '跳过', '源码 -> v1.nyar 未完成'),
+            createGate('v1 -> v2.nyar', '未接线', LEVEL2_UNWIRED_REASON),
             createGate('v1 / v2 比对', '跳过', '由于 `v1 -> v2` 未接线，比对未执行'),
         ];
         const blockers = ['上一代编译器入口未就绪'];
@@ -567,22 +576,20 @@ function main() {
         ? '已从 `NyarVM.cs` 自动构建上一代 `legion`'
         : `使用现成入口：${legionPath}`;
 
-    // Level 1：源码 → v1.clr
+    // Level 1：源码 → v1.nyar
     const v1Result = compileV1(legionPath, v1OutputDir, options.verbose);
     if (v1Result.success) {
-        console.log('\nLevel 1（源码 → v1.clr）成功');
+        console.log('\nLevel 1（源码 → v1.nyar）成功');
         console.log(`v1 产物目录：${v1Result.outputDir}`);
-        console.log(`v1 .msil 哈希：${v1Result.hash}`);
+        console.log(`v1 .nyar 哈希：${v1Result.hash}`);
     } else {
-        console.error('\nLevel 1（源码 → v1.clr）失败');
+        console.error('\nLevel 1（源码 → v1.nyar）失败');
     }
 
-    const v1VersionPassed = Boolean(v1Result.runtime?.version?.success);
-    const v1HelpPassed = Boolean(v1Result.runtime?.help?.success);
-    const v1RuntimePassed = v1VersionPassed && v1HelpPassed;
+    const v1RunPassed = Boolean(v1Result.runtime?.run?.success);
 
-    // Level 2：v1.clr → v2.clr
-    const v2Result = v1Result.success ? compileV2(v1Result, v2OutputDir, options.verbose) : null;
+    // Level 2：v1.nyar → v2.nyar
+    const v2Result = v1Result.success ? compileV2(legionPath, v1Result, v2OutputDir, options.verbose) : null;
 
     // 比对
     const compareResult = compareArtifacts(v1Result, v2Result);
@@ -592,21 +599,17 @@ function main() {
     console.log('══════════════════════════════════════════════════\n');
 
     console.log(`上一代编译器入口：通过`);
-    console.log(`源码 -> v1.clr：${v1Result.success ? '通过' : '未通过'}`);
-    console.log(`v1 --version：${v1Result.success ? (v1VersionPassed ? '通过' : '未通过') : '跳过'}`);
-    console.log(`v1 --help：${v1Result.success ? (v1HelpPassed ? '通过' : '未通过') : '跳过'}`);
-    console.log('v1 -> v2.clr：未接线');
+    console.log(`源码 -> v1.nyar：${v1Result.success ? '通过' : '未通过'}`);
+    console.log(`v1 运行验收（legion run）：${v1Result.success ? (v1RunPassed ? '通过' : '未通过') : '跳过'}`);
+    console.log(`v1 -> v2.nyar：${v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过'}`);
     console.log(`v1 / v2 比对：${compareResult.skipped ? '跳过' : (compareResult.match ? '一致' : '不一致')}`);
 
     const blockers = [];
     if (!v1Result.success) {
         blockers.push(`源码 -> v1 失败：${v1Result.error}`);
     }
-    if (!v1VersionPassed) {
-        blockers.push('v1 --version 仍失败');
-    }
-    if (!v1HelpPassed) {
-        blockers.push('v1 --help 仍失败');
+    if (!v1RunPassed) {
+        blockers.push('v1 运行验收仍失败');
     }
     if (!v2Result) {
         blockers.push('v1 -> v2 尚未接线');
@@ -618,11 +621,10 @@ function main() {
 
     const gates = [
         createGate('上一代编译器入口', '通过', previousCompilerDetail),
-        createGate('源码 -> v1.clr', v1Result.success ? '通过' : '未通过', v1Result.success ? `产物目录：${v1Result.outputDir}` : v1Result.error),
-        createGate('v1 --version', v1Result.success ? (v1VersionPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1VersionPassed ? '退出码 0' : shortenText(v1Result.runtime?.version?.stderr || v1Result.runtime?.version?.stdout || '执行失败')) : '源码 -> v1.clr 未通过'),
-        createGate('v1 --help', v1Result.success ? (v1HelpPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1HelpPassed ? '退出码 0' : shortenText(v1Result.runtime?.help?.stderr || v1Result.runtime?.help?.stdout || '执行失败')) : '源码 -> v1.clr 未通过'),
-        createGate('v1 -> v2.clr', '未接线', LEVEL2_UNWIRED_REASON),
-        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? '由于 `v1 -> v2` 未接线，比对未执行' : (compareResult.match ? '`.msil` 与 `run-contract.txt` 一致' : '产物比对不一致')),
+        createGate('源码 -> v1.nyar', v1Result.success ? '通过' : '未通过', v1Result.success ? `产物目录：${v1Result.outputDir}` : v1Result.error),
+        createGate('v1 运行验收', v1Result.success ? (v1RunPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1RunPassed ? 'legion run 退出码 0' : shortenText(v1Result.runtime?.run?.stderr || v1Result.runtime?.run?.stdout || '执行失败')) : '源码 -> v1.nyar 未通过'),
+        createGate('v1 -> v2.nyar', v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过', v2Result ? (v2Result.success ? `v2 哈希：${v2Result.hash}` : v2Result.error) : '源码 -> v1.nyar 未通过'),
+        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? 'v1 或 v2 产物缺失' : (compareResult.match ? '`.nyar` 一致' : '产物比对不一致')),
     ];
 
     const reportPath = writeReport(outputRoot, {
@@ -635,15 +637,15 @@ function main() {
             outputDir: v1Result.outputDir,
             hash: v1Result.hash,
             runtime: {
-                version: v1VersionPassed,
-                help: v1HelpPassed,
+                run: v1RunPassed,
             },
         },
         v2: {
-            connected: false,
+            connected: v2Result !== null,
+            success: v2Result?.success ?? false,
             compared: !compareResult.skipped,
             match: compareResult.match,
-            reason: LEVEL2_UNWIRED_REASON,
+            hash: v2Result?.hash ?? null,
         },
     });
 

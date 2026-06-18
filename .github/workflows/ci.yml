@@ -55,7 +55,12 @@ jobs:
 
       - name: 构建 legion CLI
         working-directory: valkyrie.v
-        run: node scripts/build-legion.mjs --release --output ./dist/legion
+        run: |
+          dotnet publish ../NyarVM.cs/tools/legion/Legion.CLI.csproj \
+            -c Release \
+            --nologo \
+            -o ./dist/legion \
+            -p:UseAppHost=true
 
       - name: 上传 legion CLI 产物
         uses: actions/upload-artifact@v4

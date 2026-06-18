@@ -48,12 +48,16 @@ jobs:
       - name: 构建 legion CLI
         working-directory: valkyrie.v
         run: |
-          node scripts/build-legion.mjs --release --output ./dist/legion
+          dotnet publish ../NyarVM.cs/tools/legion/Legion.CLI.csproj \
+            -c Release \
+            --nologo \
+            -o ./dist/legion \
+            -p:UseAppHost=true
 
       - name: 记录 legion 路径
         id: legion
         run: |
-          echo "path=$(pwd)/dist/legion/legion" >> $GITHUB_OUTPUT
+          echo "path=$(pwd)/valkyrie.v/dist/legion/legion" >> $GITHUB_OUTPUT
 
       - name: 上传 legion 产物
         uses: actions/upload-artifact@v4

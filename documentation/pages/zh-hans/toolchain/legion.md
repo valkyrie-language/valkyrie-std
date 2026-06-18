@@ -336,8 +336,20 @@ my-package/
 |:---|:---|
 | `legion fmt` | 格式化代码 |
 | `legion fmt --check` | 仅检查格式 |
-| `legion check` | 类型检查 |
+| `legion check` | 执行与 `build` 一致的完整检查链路 |
 | `legion lint` | 代码 lint 检查 |
+| `legion lint --check` | 只读 lint 模式，不修改任何文件，直接输出警告或错误 |
+
+`legion check` 的语义：
+1. 读取与 `legion build` 相同的项目配置、目标矩阵和源文件集合
+2. 执行解析、元语言展开、类型检查、语义分析、HIR、MIR、LIR 与目标校验
+3. 单次执行尽量汇总并输出多个诊断，不以“修复文件”为目标
+4. 不落盘构建产物，但要求同一输入在同一环境下满足“`check` 能通过则 `build` 必然能通过”
+
+`legion check` 与 `legion lint --check` 的区别：
+1. `legion check` 负责编译正确性，关注能否通过完整编译链路
+2. `legion lint --check` 负责代码风格和静态规则检查
+3. `lint --check` 中的 `--check` 只表示“不要修改任何文件”，不表示执行编译检查
 
 ### 测试
 
