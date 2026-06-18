@@ -9,9 +9,7 @@ micro simple_flow() -> unit {
         print("non-positive")
     }
 
-    let mut count = 0
-    while count < 2 {
+    loop count in 0..2 {
         print("loop")
-        count += 1
     }
 }

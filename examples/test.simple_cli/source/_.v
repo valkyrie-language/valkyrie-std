@@ -32,9 +32,7 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
 
     let first_arg: utf8 = args[0]
     let cmds: [CommandModel] = app.commands
-    let mut i: usize = 0
-    while i < len(cmds) {
-        let cmd: CommandModel = cmds[i]
+    loop cmd in cmds {
         if cmd.name == first_arg {
             let mut pos: [utf8] = []
             let mut j: usize = 1
@@ -47,7 +45,6 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
                 positional: pos
             }
         }
-        i = i + 1
     }
     return ParsedCommand {
         command_name: "",

@@ -66,10 +66,8 @@ micro clr_read_utf8(data: [i32], offset: usize, length: usize) -> ClrBinaryResul
     match clr_read_bytes(data, offset, length) {
         case Fine(bytes):
             let mut text: utf8 = ""
-            let mut i: usize = 0
-            while i < bytes.length {
-                text = text + clr_byte_to_char(bytes[i])
-                i = i + 1
+            loop byte in bytes {
+                text = text + clr_byte_to_char(byte)
             }
             return Fine(text)
         case Fail(error):

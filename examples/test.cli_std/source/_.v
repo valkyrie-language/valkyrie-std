@@ -73,9 +73,7 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
     }
 
     let cmds: [CommandModel] = app.commands
-    let mut i: usize = 0
-    while i < len(cmds) {
-        let cmd: CommandModel = cmds[i]
+    loop cmd in cmds {
         if cmd.name == first_arg {
             let mut pos: [utf8] = []
             let mut j: usize = 1
@@ -89,7 +87,6 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
                 remaining: []
             }
         }
-        i = i + 1
     }
 
     return ParsedCommand {
@@ -122,9 +119,7 @@ micro generate_help(app: CommandApp) -> utf8 {
     result = result + app.description
     result = result + "\n\ncommands:\n"
 
-    let mut i: usize = 0
-    while i < len(app.commands) {
-        let cmd: CommandModel = app.commands[i]
+    loop cmd in app.commands {
         result = result + "  "
         result = result + cmd.name
         if len(cmd.description) > 0 {
@@ -132,7 +127,6 @@ micro generate_help(app: CommandApp) -> utf8 {
             result = result + cmd.description
         }
         result = result + "\n"
-        i = i + 1
     }
 
     return result
@@ -146,9 +140,7 @@ micro generate_command_help(app: CommandApp, cmd_name: utf8) -> utf8 {
     result = result + "\n"
 
     let cmds: [CommandModel] = app.commands
-    let mut i: usize = 0
-    while i < len(cmds) {
-        let cmd: CommandModel = cmds[i]
+    loop cmd in cmds {
         if cmd.name == cmd_name {
             if len(cmd.description) > 0 {
                 result = result + "\n"
@@ -156,7 +148,6 @@ micro generate_command_help(app: CommandApp, cmd_name: utf8) -> utf8 {
                 result = result + "\n"
             }
         }
-        i = i + 1
     }
 
     return result

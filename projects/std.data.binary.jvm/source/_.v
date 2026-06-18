@@ -87,13 +87,10 @@ micro jvm_read_utf8(data: [i32], offset: usize) -> JvmBinaryResult<JvmReadResult
 
     let bytes_result = jvm_read_bytes(data, str_offset, length)?
     let mut text: utf8 = ""
-    let mut i: usize = 0
-    while i < bytes_result.value.length {
-        let byte_val: i32 = bytes_result.value[i]
+    loop byte_val in bytes_result.value {
         if byte_val >= 32 && byte_val < 127 {
             text = text + byte_to_char(byte_val)
         }
-        i = i + 1
     }
     return Fine(JvmReadResult {
         value: text,

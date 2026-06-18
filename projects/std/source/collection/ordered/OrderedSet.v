@@ -62,10 +62,8 @@ imply OrderedSet<T>: Set<T> {
 
     micro iter(self, f: micro(T) -> unit) -> unit {
         let items: List<T> = self.to_list()
-        let mut i: usize = 0
-        while i < items.length() {
-            f(items.get(i).unwrap())
-            i = i + 1
+        loop item in items {
+            f(item)
         }
     }
 

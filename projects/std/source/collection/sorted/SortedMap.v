@@ -135,11 +135,8 @@ imply SortedMap<K, V>: Map<K, V> {
 
     micro iterator(self, f: micro(K, V) -> unit) -> unit {
         let keys: List<K> = self.keys()
-        let mut i: usize = 0
-        while i < keys.length() {
-            let key: K = keys.get(i).unwrap()
+        loop key in keys {
             f(key, self.get(key).unwrap())
-            i = i + 1
         }
     }
 }

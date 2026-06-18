@@ -26,13 +26,10 @@ micro new_von_field(name: utf8, value: VonValue) -> VonField {
 micro von_find_field(value: VonValue, field_name: utf8) -> VonValue {
     match value {
         case Object(fields):
-            let mut i: usize = 0
-            while i < fields.length() {
-                let field: VonField = fields[i]
+            loop field in fields {
                 if field.name == field_name {
                     return field.value
                 }
-                i = i + 1
             }
             return Empty
         else:

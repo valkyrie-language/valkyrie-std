@@ -11,10 +11,8 @@ micro control_flow_main() -> ExitCode {
         print("zero")
     }
 
-    let mut count = 0
-    while count < 3 {
-        print("while loop")
-        count += 1
+    loop count in 0..3 {
+        print("loop in {count}")
     }
 
     loop i in 0..3 {

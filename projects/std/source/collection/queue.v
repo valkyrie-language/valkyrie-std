@@ -89,12 +89,10 @@ imply Queue<T> {
 
     micro iter(mut self, f: micro(T) -> unit): unit {
         let length: usize = self.length()
-        let mut cursor: usize = 0
-        while cursor < length {
+        loop _ in 0..length {
             let value: T = self.dequeue().unwrap()
             f(value)
             self.enqueue(value)
-            cursor = cursor + 1
         }
     }
 }
@@ -134,5 +132,4 @@ private micro __queue_jvm_length<T>(queue: Queue<T>): usize { }
 
 [jvm("java.util.ArrayDeque", "clear")]
 private micro __queue_jvm_clear<T>(queue: Queue<T>): unit { }
-
 

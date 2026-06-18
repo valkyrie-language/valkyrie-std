@@ -14,22 +14,18 @@ micro dfs(graph: DirectedGraph, start: utf8) -> [utf8] {
 # DFS 辅助递归函数
 micro dfs_visit(graph: DirectedGraph, node: utf8, visited: [utf8], result: [utf8]) -> unit {
     # 检查是否已访问
-    let mut i: usize = 0
-    while i < visited.length() {
-        if visited[i] == node {
+    loop visited_node in visited {
+        if visited_node == node {
             return
         }
-        i = i + 1
     }
 
     push(visited, node)
     push(result, node)
 
     let successors: [utf8] = directed_graph_successors(graph, node)
-    i = 0
-    while i < successors.length() {
-        dfs_visit(graph, successors[i], visited, result)
-        i = i + 1
+    loop successor in successors {
+        dfs_visit(graph, successor, visited, result)
     }
 }
 
@@ -49,25 +45,19 @@ micro bfs(graph: DirectedGraph, start: utf8) -> [utf8] {
         push(result, current)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
-        let mut i: usize = 0
-        while i < successors.length() {
-            let succ: utf8 = successors[i]
-
+        loop succ in successors {
             # 检查是否已访问
             let mut is_visited: bool = false
-            let mut j: usize = 0
-            while j < visited.length() {
-                if visited[j] == succ {
+            loop visited_node in visited {
+                if visited_node == succ {
                     is_visited = true
                 }
-                j = j + 1
             }
 
             if !is_visited {
                 push(visited, succ)
                 push(queue, succ)
             }
-            i = i + 1
         }
     }
 

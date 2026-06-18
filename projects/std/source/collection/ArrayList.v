@@ -159,13 +159,10 @@ imply ArrayList<T> {
             <% case "jvm" %>
             return __array_list_jvm_contains(self, value)
             <% else %>
-            let mut i: usize = 0
-            while i < self._items.length {
-                if self._items[i] == value {
+            loop item in self._items {
+                if item == value {
                     return true
                 }
-
-                i = i + 1
             }
 
             return false

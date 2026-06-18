@@ -123,9 +123,7 @@ micro parse_build_request(args: [utf8]) -> BuildRequest {
 }
 
 micro select_publish_target(manifest: LegionProjectManifest, requested_target: utf8, publish_type: utf8) -> PublishSelection {
-    let mut i: usize = 0
-    while i < manifest.publish_targets.length() {
-        let target: LegionPublishTarget = manifest.publish_targets[i]
+    loop target in manifest.publish_targets {
         if target.type == publish_type {
             if requested_target.length() == 0 || target.target == requested_target {
                 return PublishSelection {
@@ -134,7 +132,6 @@ micro select_publish_target(manifest: LegionProjectManifest, requested_target: u
                 }
             }
         }
-        i = i + 1
     }
 
     return PublishSelection {
@@ -279,9 +276,7 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
 
             match legion_build_contexts(project_dir, manifest_path, manifest, request) {
                 case Fine(contexts):
-                    let mut i: usize = 0
-                    while i < contexts.length() {
-                        let context: LegionBuildContext = contexts[i]
+                    loop context in contexts {
                         std.io.print_line("正在构建 " + context.project_dir + " -> " + context.canonical_target + "...")
                         if context.verbose {
                             std.io.print_line("  清单：" + context.manifest_path)
@@ -292,10 +287,8 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                             }
                             if context.dependency_order.length() > 0 {
                                 std.io.print_line("  编译拓扑序：" + context.dependency_order.length() + " 个包")
-                                let mut j: usize = 0
-                                while j < context.dependency_order.length() {
-                                    std.io.print_line("    " + context.dependency_order[j])
-                                    j = j + 1
+                                loop dependency_name in context.dependency_order {
+                                    std.io.print_line("    " + dependency_name)
                                 }
                             }
 
@@ -303,10 +296,8 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                             let dep_graph: DirectedGraph = directed_graph_new()
                             # 添加项目自身
                             directed_graph_add_node(dep_graph, context.project_name)
-                            let mut k: usize = 0
-                            while k < context.dependency_names.length() {
-                                directed_graph_add_edge(dep_graph, context.project_name, context.dependency_names[k])
-                                k = k + 1
+                            loop dependency_name in context.dependency_names {
+                                directed_graph_add_edge(dep_graph, context.project_name, dependency_name)
                             }
                             if has_cycle(dep_graph) {
                                 std.io.print_line("  警告：依赖图中存在循环！")
@@ -314,7 +305,6 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                         }
                         std.io.print_line("  已完成强类型清单解析与构建上下文生成。")
                         std.io.print_line("  下一阶段直接在该上下文上接入包图与真实编译执行器。")
-                        i = i + 1
                     }
                 case Fail(error):
                     std.io.error("错误：生成构建上下文失败 - " + error.message)
@@ -353,11 +343,9 @@ micro emit_workspace_build(project_dir: utf8, requested_target: utf8, output: ut
             }
 
             std.io.print_line("发现 workspace，共 " + members.length() + " 个成员项目")
-            let mut i: usize = 0
-            while i < members.length() {
-                let member_dir: utf8 = path_join(project_dir, members[i])
+            loop member in members {
+                let member_dir: utf8 = path_join(project_dir, member)
                 emit_single_project_build(member_dir, requested_target, output, verbose)
-                i = i + 1
             }
         case Fail(error):
             std.io.error("错误：解析 legions.von 失败 - " + error.message)

@@ -61,10 +61,7 @@ micro find_cycle_dfs(graph: DirectedGraph, nodes: [utf8], mut color: [usize], mu
     color[idx] = 1
 
     let successors: [utf8] = directed_graph_successors(graph, node)
-    i = 0
-    while i < successors.length() {
-        let succ: utf8 = successors[i]
-
+    loop succ in successors {
         let mut succ_idx: usize = 0
         let mut succ_found: bool = false
         let mut j: usize = 0
@@ -113,7 +110,6 @@ micro find_cycle_dfs(graph: DirectedGraph, nodes: [utf8], mut color: [usize], mu
                 }
             }
         }
-        i = i + 1
     }
 
     color[idx] = 2

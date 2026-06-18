@@ -35,12 +35,10 @@ micro directed_graph_add_edge(mut graph: DirectedGraph, from: utf8, to: utf8) ->
 
 # 检查节点是否存在
 micro directed_graph_has_node(graph: DirectedGraph, node: utf8) -> bool {
-    let mut i: usize = 0
-    while i < graph._nodes.length() {
-        if graph._nodes[i] == node {
+    loop current_node in graph._nodes {
+        if current_node == node {
             return true
         }
-        i = i + 1
     }
     return false
 }
@@ -143,12 +141,10 @@ micro directed_graph_nodes(graph: DirectedGraph) -> [utf8] {
 # 获取节点的出度
 micro directed_graph_out_degree(graph: DirectedGraph, node: utf8) -> usize {
     let mut count: usize = 0
-    let mut i: usize = 0
-    while i < graph._edge_sources.length() {
-        if graph._edge_sources[i] == node {
+    loop source in graph._edge_sources {
+        if source == node {
             count = count + 1
         }
-        i = i + 1
     }
     return count
 }
@@ -156,12 +152,10 @@ micro directed_graph_out_degree(graph: DirectedGraph, node: utf8) -> usize {
 # 获取节点的入度
 micro directed_graph_in_degree(graph: DirectedGraph, node: utf8) -> usize {
     let mut count: usize = 0
-    let mut i: usize = 0
-    while i < graph._edge_sources.length() {
-        if graph._edge_targets[i] == node {
+    loop target in graph._edge_targets {
+        if target == node {
             count = count + 1
         }
-        i = i + 1
     }
     return count
 }

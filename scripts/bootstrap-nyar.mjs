@@ -3,25 +3,26 @@
 /**
  * Nyar VM 自举验证脚本
  *
- * 执行 Nyar VM 端的真实自举验收：
+ * 执行 Nyar VM 路线的当前可测验证：
  *   1. 上一代编译器可用
  *   2. 源码 -> v1.nyar
- *   3. v1.nyar 本身可运行最小命令
- *   4. v1.nyar -> v2.nyar
- *   5. v1 / v2 可比较
+ *   3. v1.nyar 本身可运行最小命令（通过 vcc 运行 .nyar 字节码）
+ *   4. 在 v1 运行验收通过后，再由同一 seed 对同一源码做第二次编译，得到 v2.nyar
+ *   5. 比较 v1 与第二次编译产物的 .nyar 是否一致
  *
  * 流程：
  *   1. 用上一代编译器（NyarVM.cs legion）编译 valkyrie.v/projects/legion.tools --target nyar → v1
- *   2. 验证 v1 产物的运行（legion run 内存模式）
- *   3. 用 v1 产物再次编译同一份源码 → v2
- *   4. 比对 v1 与 v2 的产物
+ *   2. 验证 v1 产物的运行（vcc run --nyar <file> --function legion.version_text）
+ *   3. 若 v1 运行通过，再由同一 seed 再次编译同一份源码 → v2
+ *   4. 比对 v1 与第二次编译产物
  *
  * 用法：
- *   node scripts/bootstrap-nyar.mjs [--legion <path>] [--output <dir>] [--verbose]
+ *   node scripts/bootstrap-nyar.mjs [--legion <path>] [--vcc <path>] [--output <dir>] [--verbose]
  *
  * 当前状态：
  *   - 本脚本用于"诚实失败"的真实验收，不再把半完成状态记为成功
- *   - 只要 v1 运行失败、v2 未接线或比对跳过，脚本都会返回非零退出码
+ *   - 第二轮仅测量同一 seed 的重复编译确定性，不把它表述为"v1 已独立驱动编译"
+ *   - 只要 v1 编译失败、v1 运行失败、第二次编译失败或比对失败，脚本都会返回非零退出码
  */
 
 import fs from 'fs';
@@ -33,7 +34,8 @@ const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([
 const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
 const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
 const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
-const LEVEL2_UNWIRED_REASON = 'v1 的 nyar_host_build_project intrinsic 委托给 seed 编译器（C# legion），因此 v1→v2 等价于 seed 二次编译同一源码。';
+const VCC_CSPROJ = path.join(NYARVM_DIR, 'tools', 'vcc', 'Valkyrie.CLI.csproj');
+const SECOND_COMPILE_NOTE = '第二轮产物来自同一 seed 对同一源码的再次编译，只用于测量当前确定性，不代表 v1 已独立驱动编译。';
 
 // ─────────────────────────────────────────────────────────────
 // 配置
@@ -41,7 +43,7 @@ const LEVEL2_UNWIRED_REASON = 'v1 的 nyar_host_build_project intrinsic 委托�
 
 const BOOTSTRAP_PROJECT = 'projects/legion.tools';
 const BOOTSTRAP_PROJECT_DIR = path.join(ROOT_DIR, BOOTSTRAP_PROJECT);
-const TARGET_TRIPLE = 'nyar-unknown-unknown';
+const TARGET_TRIPLE = 'nyar-unknown-unknown-managed';
 const EXPECTED_ARTIFACT_BASENAME = 'legion_tools';
 
 // ─────────────────────────────────────────────────────────────
@@ -54,10 +56,21 @@ function runCommand(command, options = {}) {
             encoding: 'utf8',
             timeout: options.timeout || 300000,
             cwd: options.cwd,
-            stdio: options.silent ? 'pipe' : 'inherit',
+            stdio: 'pipe',
         });
+        if (!options.silent && result) {
+            process.stdout.write(result);
+        }
         return { success: true, stdout: result || '' };
     } catch (error) {
+        if (!options.silent) {
+            if (error.stdout) {
+                process.stdout.write(error.stdout);
+            }
+            if (error.stderr) {
+                process.stderr.write(error.stderr);
+            }
+        }
         return {
             success: false,
             stdout: error.stdout || '',
@@ -100,6 +113,72 @@ function findLegion() {
     for (const c of candidates) {
         if (fs.existsSync(c)) {
             return c;
+        }
+    }
+    return null;
+}
+
+function vccLauncherCandidates(baseDir) {
+    return [
+        path.join(baseDir, 'vcc.exe'),
+        path.join(baseDir, 'vcc'),
+        path.join(baseDir, 'vcc.dll'),
+    ];
+}
+
+function findVcc() {
+    const envPath = process.env.VCC_PATH;
+    if (envPath && fs.existsSync(envPath)) {
+        return envPath;
+    }
+
+    const candidates = [
+        ...vccLauncherCandidates(path.join(ROOT_DIR, 'dist', 'vcc')),
+        ...vccLauncherCandidates(path.resolve(ROOT_DIR, '..', 'dist', 'vcc')),
+        ...vccLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'vcc', 'bin', 'Release', 'net10.0')),
+        ...vccLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'vcc', 'bin', 'Debug', 'net10.0')),
+    ];
+    for (const c of candidates) {
+        if (fs.existsSync(c)) {
+            return c;
+        }
+    }
+    return null;
+}
+
+function ensureVcc(outputRoot, verbose) {
+    const existing = findVcc();
+    if (existing) {
+        return existing;
+    }
+
+    if (!fs.existsSync(NYARVM_DIR) || !fs.existsSync(VCC_CSPROJ)) {
+        return null;
+    }
+
+    const toolOutputDir = path.join(outputRoot, '_vcc');
+    if (fs.existsSync(toolOutputDir)) {
+        fs.rmSync(toolOutputDir, { recursive: true, force: true });
+    }
+    fs.mkdirSync(toolOutputDir, { recursive: true });
+
+    console.log('未找到现成的 vcc，正在从 NyarVM.cs 构建...');
+    const publishResult = runCommand(
+        `dotnet publish "${VCC_CSPROJ}" -c Release --nologo -o "${toolOutputDir}" -p:UseAppHost=true -p:PublishAot=false`,
+        { cwd: NYARVM_DIR, silent: !verbose, timeout: 300000 }
+    );
+
+    if (!publishResult.success) {
+        console.error('错误：自动构建 vcc 失败');
+        if (publishResult.stderr) {
+            console.error(publishResult.stderr.slice(0, 4000));
+        }
+        return null;
+    }
+
+    for (const candidate of vccLauncherCandidates(toolOutputDir)) {
+        if (fs.existsSync(candidate)) {
+            return candidate;
         }
     }
     return null;
@@ -184,14 +263,45 @@ function shortenText(value, maxChars = 240) {
     return `${text.slice(0, maxChars)}...`;
 }
 
+function summarizeFailureOutput(result, fallback) {
+    const stdoutLines = String(result?.stdout || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    const stderrLines = String(result?.stderr || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    const allLines = [...stdoutLines, ...stderrLines];
+    const combinedText = allLines.join('\n');
+    const fileMatches = [...combinedText.matchAll(/[A-Za-z]:\\[^\r\n"]+?\.v/g)].map(match => match[0]);
+    const uniqueFiles = [...new Set(fileMatches)];
+    const hints = [];
+
+    if (/u32/.test(combinedText) && /char/.test(combinedText)) {
+        hints.push('观测到 `u32 -> char` 转换相关错误');
+    }
+    if (/\("\.\."\)/.test(combinedText) || /Token/.test(combinedText)) {
+        hints.push('观测到 `..` 相关解析错误');
+    }
+    if (uniqueFiles.length > 0) {
+        hints.push(`涉及文件：${uniqueFiles.slice(0, 4).join(', ')}`);
+    }
+    if (hints.length > 0) {
+        return shortenText(hints.join(' | '), 800);
+    }
+
+    const importantLines = allLines.filter(line => /解析错误|语义错误|构建失败|error[:：]|错误[:：]/i.test(line));
+    const selected = (importantLines.length > 0 ? importantLines : allLines).slice(-6);
+    return shortenText(selected.join(' | ') || fallback, 800);
+}
+
 function createGate(name, status, detail) {
     return { name, status, detail };
 }
 
+function printSection(title) {
+    console.log('\n==================================================');
+    console.log(`  ${title}`);
+    console.log('==================================================\n');
+}
+
 function printGateSummary(gates) {
-    console.log('\n══════════════════════════════════════════════════');
-    console.log('  门级状态');
-    console.log('══════════════════════════════════════════════════\n');
+    printSection('门级状态');
 
     for (const gate of gates) {
         console.log(`- ${gate.name}：${gate.status}`);
@@ -212,12 +322,11 @@ function writeReport(outputRoot, payload) {
 // Level 1：源码 → v1.nyar
 // ─────────────────────────────────────────────────────────────
 
-function compileV1(legionPath, outputDir, verbose) {
-    console.log('\n══════════════════════════════════════════════════');
-    console.log('  Level 1：源码 → v1.nyar');
-    console.log('══════════════════════════════════════════════════\n');
+function compileV1(legionPath, vccPath, outputDir, verbose) {
+    printSection('Level 1：源码 -> v1.nyar');
 
     console.log(`上一代编译器：${legionPath}`);
+    console.log(`nyar 运行时：${vccPath}`);
     console.log(`源码项目：${BOOTSTRAP_PROJECT_DIR}`);
     console.log(`输出目录：${outputDir}\n`);
     const targetDir = path.join(outputDir, TARGET_TRIPLE);
@@ -231,7 +340,7 @@ function compileV1(legionPath, outputDir, verbose) {
         return {
             success: false,
             stage: 'previous_compiler_check',
-            error: shortenText(versionCheck.stderr || versionCheck.stdout || '上一代编译器不可用'),
+            error: summarizeFailureOutput(versionCheck, '上一代编译器不可用'),
             outputDir: targetDir,
             nyarFile,
             artifacts: [],
@@ -260,10 +369,11 @@ function compileV1(legionPath, outputDir, verbose) {
         if (buildResult.stderr) {
             console.error(buildResult.stderr.slice(0, 2000));
         }
+        const errorSummary = summarizeFailureOutput(buildResult, 'v1 编译失败');
         return {
             success: false,
             stage: 'source_to_v1',
-            error: shortenText(buildResult.stderr || buildResult.stdout || 'v1 编译失败'),
+            error: errorSummary,
             outputDir: targetDir,
             nyarFile,
             artifacts: [],
@@ -291,14 +401,14 @@ function compileV1(legionPath, outputDir, verbose) {
         };
     }
 
-    // 验证 v1 产物可运行（通过 legion run 内存模式，调用 version_text 做 smoke test）
-    console.log('\n验证 v1 产物（legion run 内存模式，smoke test：legion.version_text）...');
+    // 验证 v1 产物可运行（通过 vcc 运行 .nyar 字节码，调用 legion.version_text 做 smoke test）
+    console.log('\n验证 v1 产物（vcc run，smoke test：legion.version_text）...');
     const v1RunCheck = runCommand(
-        `"${legionPath}" run "${BOOTSTRAP_PROJECT_DIR}" --target nyar --function legion.version_text`,
+        `"${vccPath}" run "${nyarFile}" --function legion.version_text`,
         { silent: true, timeout: 60000 }
     );
     if (v1RunCheck.success) {
-        console.log('  v1 legion run：退出码 0');
+        console.log('  vcc run：退出码 0');
         if (v1RunCheck.stdout) {
             const lines = v1RunCheck.stdout.trim().split('\n').slice(-5);
             for (const line of lines) {
@@ -306,7 +416,7 @@ function compileV1(legionPath, outputDir, verbose) {
             }
         }
     } else {
-        console.error(`  警告：v1 legion run 失败：${v1RunCheck.stderr?.slice(0, 300)}`);
+        console.error(`  警告：vcc run 失败：${v1RunCheck.stderr?.slice(0, 300)}`);
     }
 
     // 收集 v1 产物清单
@@ -330,19 +440,14 @@ function compileV1(legionPath, outputDir, verbose) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Level 2：v1.nyar → v2.nyar（待接线）
+// Level 2：第二次 seed 编译 → v2.nyar
 // ─────────────────────────────────────────────────────────────
 
-function compileV2(legionPath, v1Result, outputDir, verbose) {
-    console.log('\n══════════════════════════════════════════════════');
-    console.log('  Level 2：v1.nyar → v2.nyar');
-    console.log('══════════════════════════════════════════════════\n');
+function compileV2(legionPath, outputDir, verbose) {
+    printSection('Level 2：第二次 seed 编译 -> v2.nyar');
 
-    // v1 的 nyar_host_build_project intrinsic 委托给 seed 编译器，
-    // 因此 v1→v2 等价于用 seed 编译器二次编译同一份源码。
-    // 直接用 seed 编译器编译即可验证确定性。
-    console.log('方式：v1 的 nyar_host_build_project 委托给 seed 编译器');
-    console.log('等价操作：用同一 seed 编译器二次编译源码 → v2\n');
+    console.log('方式：使用同一 seed 对同一源码再次编译');
+    console.log(`说明：${SECOND_COMPILE_NOTE}\n`);
 
     const targetDir = path.join(outputDir, TARGET_TRIPLE);
     const nyarFile = path.join(targetDir, `${EXPECTED_ARTIFACT_BASENAME}.nyar`);
@@ -364,10 +469,11 @@ function compileV2(legionPath, v1Result, outputDir, verbose) {
         if (buildResult.stderr) {
             console.error(buildResult.stderr.slice(0, 2000));
         }
+        const errorSummary = summarizeFailureOutput(buildResult, '第二次 seed 编译失败');
         return {
             success: false,
-            stage: 'v1_to_v2',
-            error: shortenText(buildResult.stderr || buildResult.stdout || 'v2 编译失败'),
+            stage: 'second_seed_compile_to_v2',
+            error: errorSummary,
             outputDir: targetDir,
             nyarFile,
             artifacts: [],
@@ -398,7 +504,7 @@ function compileV2(legionPath, v1Result, outputDir, verbose) {
 
     return {
         success: true,
-        stage: 'v1_to_v2',
+        stage: 'second_seed_compile_to_v2',
         outputDir: targetDir,
         nyarFile,
         artifacts: v2Artifacts,
@@ -422,14 +528,12 @@ function compileV2(legionPath, v1Result, outputDir, verbose) {
 //   - .nyar 文件哈希不一致 → 阻断
 //   - 产物清单结构不一致（多了或少了 .nyar 文件）→ 阻断
 
-function compareArtifacts(v1Result, v2Result) {
-    console.log('\n══════════════════════════════════════════════════');
-    console.log('  v1 / v2 比对');
-    console.log('══════════════════════════════════════════════════\n');
+function compareArtifacts(v1Result, v2Result, skipReason = null) {
+    printSection('v1 / 第二次编译产物比对');
 
     if (!v1Result || !v2Result) {
-        console.log('比对跳过：v1 或 v2 产物缺失');
-        return { match: false, skipped: true };
+        console.log(`比对跳过：${skipReason || 'v1 或 v2 产物缺失'}`);
+        return { match: false, skipped: true, reason: skipReason || 'v1 或 v2 产物缺失' };
     }
 
     const mustCompareExtensions = ['.nyar'];
@@ -490,7 +594,7 @@ function compareArtifacts(v1Result, v2Result) {
         }
     }
 
-    return { match: allMatch, skipped: false, details };
+    return { match: allMatch, skipped: false, details, reason: null };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -501,6 +605,7 @@ function parseArgs() {
     const args = process.argv.slice(2);
     const options = {
         legion: null,
+        vcc: null,
         output: null,
         verbose: false,
     };
@@ -509,6 +614,9 @@ function parseArgs() {
         switch (args[i]) {
             case '--legion':
                 options.legion = args[++i];
+                break;
+            case '--vcc':
+                options.vcc = args[++i];
                 break;
             case '--output':
             case '-o':
@@ -527,6 +635,7 @@ Nyar VM 自举验证脚本
 
 选项：
   --legion <path>     上一代编译器路径（默认自动查找）
+  --vcc <path>        nyar 运行时路径（默认自动查找）
   --output, -o <dir>  输出根目录（默认 ./dist/bootstrap-nyar）
   --verbose, -v       详细输出
   --help, -h          显示帮助信息
@@ -544,9 +653,9 @@ function main() {
     const v1OutputDir = path.join(outputRoot, 'v1');
     const v2OutputDir = path.join(outputRoot, 'v2');
 
-    console.log('╔══════════════════════════════════════════════════════════╗');
-    console.log('║             Nyar VM 自举验证                             ║');
-    console.log('╚══════════════════════════════════════════════════════════╝\n');
+    console.log('==========================================================');
+    console.log(' Nyar VM 自举验证');
+    console.log('==========================================================\n');
 
     console.log(`输出根目录：${outputRoot}`);
     console.log(`自举项目：${BOOTSTRAP_PROJECT}`);
@@ -560,14 +669,34 @@ function main() {
             createGate('上一代编译器入口', '未通过', '未找到可用 `legion`，且无法从 `NyarVM.cs` 自动构建'),
             createGate('源码 -> v1.nyar', '跳过', '上一代编译器入口未就绪'),
             createGate('v1 运行验收', '跳过', '源码 -> v1.nyar 未完成'),
-            createGate('v1 -> v2.nyar', '未接线', LEVEL2_UNWIRED_REASON),
-            createGate('v1 / v2 比对', '跳过', '由于 `v1 -> v2` 未接线，比对未执行'),
+            createGate('第二次 seed 编译 -> v2.nyar', '跳过', '上游门禁未就绪'),
+            createGate('v1 / 第二次编译产物比对', '跳过', '上游门禁未就绪'),
         ];
         const blockers = ['上一代编译器入口未就绪'];
-        const reportPath = writeReport(outputRoot, { gates, blockers, success: false });
+        const reportPath = writeReport(outputRoot, { success: false, gates, blockers, notes: [SECOND_COMPILE_NOTE] });
         printGateSummary(gates);
         console.error('\n错误：找不到上一代 legion CLI');
         console.error('请设置 --legion / LEGION_PATH，或保证 NyarVM.cs 可用以便脚本自动构建上一代 legion');
+        console.log(`\n报告已写入：${reportPath}`);
+        process.exit(1);
+    }
+
+    // 查找 vcc（nyar 运行时）
+    const vccPath = options.vcc ? path.resolve(options.vcc) : ensureVcc(outputRoot, options.verbose);
+    if (!vccPath) {
+        const gates = [
+            createGate('上一代编译器入口', '通过', `使用现成入口：${legionPath}`),
+            createGate('nyar 运行时入口', '未通过', '未找到可用 `vcc`，且无法从 `NyarVM.cs` 自动构建'),
+            createGate('源码 -> v1.nyar', '跳过', 'nyar 运行时入口未就绪'),
+            createGate('v1 运行验收', '跳过', '源码 -> v1.nyar 未完成'),
+            createGate('第二次 seed 编译 -> v2.nyar', '跳过', '上游门禁未就绪'),
+            createGate('v1 / 第二次编译产物比对', '跳过', '上游门禁未就绪'),
+        ];
+        const blockers = ['nyar 运行时入口未就绪'];
+        const reportPath = writeReport(outputRoot, { success: false, gates, blockers, notes: [SECOND_COMPILE_NOTE] });
+        printGateSummary(gates);
+        console.error('\n错误：找不到 vcc CLI');
+        console.error('请设置 --vcc / VCC_PATH，或保证 NyarVM.cs 可用以便脚本自动构建 vcc');
         console.log(`\n报告已写入：${reportPath}`);
         process.exit(1);
     }
@@ -577,7 +706,7 @@ function main() {
         : `使用现成入口：${legionPath}`;
 
     // Level 1：源码 → v1.nyar
-    const v1Result = compileV1(legionPath, v1OutputDir, options.verbose);
+    const v1Result = compileV1(legionPath, vccPath, v1OutputDir, options.verbose);
     if (v1Result.success) {
         console.log('\nLevel 1（源码 → v1.nyar）成功');
         console.log(`v1 产物目录：${v1Result.outputDir}`);
@@ -586,52 +715,58 @@ function main() {
         console.error('\nLevel 1（源码 → v1.nyar）失败');
     }
 
-    const v1RunPassed = Boolean(v1Result.runtime?.run?.success);
+    const v1RunPassed = Boolean(v1Result.success && v1Result.runtime?.run?.success);
+    const v2SkipReason = !v1Result.success
+        ? '源码 -> v1.nyar 未通过'
+        : (!v1RunPassed ? 'v1 运行验收未通过，因此未执行第二次 seed 编译' : null);
 
-    // Level 2：v1.nyar → v2.nyar
-    const v2Result = v1Result.success ? compileV2(legionPath, v1Result, v2OutputDir, options.verbose) : null;
+    // Level 2：第二次 seed 编译 → v2.nyar
+    const v2Result = v2SkipReason ? null : compileV2(legionPath, v2OutputDir, options.verbose);
 
     // 比对
-    const compareResult = compareArtifacts(v1Result, v2Result);
+    const compareResult = compareArtifacts(v1Result, v2Result, v2SkipReason);
 
-    console.log('\n══════════════════════════════════════════════════');
-    console.log('  自举验证总结');
-    console.log('══════════════════════════════════════════════════\n');
+    printSection('自举验证总结');
 
     console.log(`上一代编译器入口：通过`);
+    console.log(`nyar 运行时入口：通过`);
     console.log(`源码 -> v1.nyar：${v1Result.success ? '通过' : '未通过'}`);
-    console.log(`v1 运行验收（legion run）：${v1Result.success ? (v1RunPassed ? '通过' : '未通过') : '跳过'}`);
-    console.log(`v1 -> v2.nyar：${v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过'}`);
-    console.log(`v1 / v2 比对：${compareResult.skipped ? '跳过' : (compareResult.match ? '一致' : '不一致')}`);
+    console.log(`v1 运行验收（vcc run）：${v1Result.success ? (v1RunPassed ? '通过' : '未通过') : '跳过'}`);
+    console.log(`第二次 seed 编译 -> v2.nyar：${v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过'}`);
+    console.log(`v1 / 第二次编译产物比对：${compareResult.skipped ? '跳过' : (compareResult.match ? '一致' : '不一致')}`);
+    console.log(`说明：${SECOND_COMPILE_NOTE}`);
 
     const blockers = [];
     if (!v1Result.success) {
         blockers.push(`源码 -> v1 失败：${v1Result.error}`);
     }
-    if (!v1RunPassed) {
-        blockers.push('v1 运行验收仍失败');
+    if (v1Result.success && !v1RunPassed) {
+        blockers.push(`v1 运行验收失败：${summarizeFailureOutput(v1Result.runtime?.run, 'vcc run 执行失败')}`);
     }
-    if (!v2Result) {
-        blockers.push('v1 -> v2 尚未接线');
-    } else if (compareResult.skipped) {
-        blockers.push('v1 / v2 比对被跳过');
-    } else if (!compareResult.match) {
-        blockers.push('v1 / v2 产物比对不一致');
+    if (v2Result && !v2Result.success) {
+        blockers.push(`第二次 seed 编译失败：${v2Result.error}`);
+    } else if (v2Result && compareResult.skipped) {
+        blockers.push(`v1 / 第二次编译产物比对被跳过：${compareResult.reason}`);
+    } else if (v2Result && !compareResult.match) {
+        blockers.push('v1 / 第二次编译产物比对不一致');
     }
 
     const gates = [
         createGate('上一代编译器入口', '通过', previousCompilerDetail),
+        createGate('nyar 运行时入口', '通过', `使用现成入口：${vccPath}`),
         createGate('源码 -> v1.nyar', v1Result.success ? '通过' : '未通过', v1Result.success ? `产物目录：${v1Result.outputDir}` : v1Result.error),
-        createGate('v1 运行验收', v1Result.success ? (v1RunPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1RunPassed ? 'legion run 退出码 0' : shortenText(v1Result.runtime?.run?.stderr || v1Result.runtime?.run?.stdout || '执行失败')) : '源码 -> v1.nyar 未通过'),
-        createGate('v1 -> v2.nyar', v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过', v2Result ? (v2Result.success ? `v2 哈希：${v2Result.hash}` : v2Result.error) : '源码 -> v1.nyar 未通过'),
-        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? 'v1 或 v2 产物缺失' : (compareResult.match ? '`.nyar` 一致' : '产物比对不一致')),
+        createGate('v1 运行验收', v1Result.success ? (v1RunPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1RunPassed ? 'vcc run 退出码 0' : summarizeFailureOutput(v1Result.runtime?.run, 'vcc run 执行失败')) : '源码 -> v1.nyar 未通过'),
+        createGate('第二次 seed 编译 -> v2.nyar', v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过', v2Result ? (v2Result.success ? `v2 哈希：${v2Result.hash}` : v2Result.error) : v2SkipReason),
+        createGate('v1 / 第二次编译产物比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? compareResult.reason : (compareResult.match ? '`.nyar` 一致' : '产物比对不一致')),
     ];
 
     const reportPath = writeReport(outputRoot, {
         success: blockers.length === 0,
+        notes: [SECOND_COMPILE_NOTE],
         gates,
         blockers,
         previousLegion: legionPath,
+        vcc: vccPath,
         v1: {
             success: v1Result.success,
             outputDir: v1Result.outputDir,
@@ -641,7 +776,9 @@ function main() {
             },
         },
         v2: {
-            connected: v2Result !== null,
+            executed: v2Result !== null,
+            method: 'repeat_seed_compile',
+            note: SECOND_COMPILE_NOTE,
             success: v2Result?.success ?? false,
             compared: !compareResult.skipped,
             match: compareResult.match,

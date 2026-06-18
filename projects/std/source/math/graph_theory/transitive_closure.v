@@ -15,25 +15,19 @@ micro transitive_successors(graph: DirectedGraph, start: utf8) -> [utf8] {
         queue = array_remove_first(queue)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
-        let mut i: usize = 0
-        while i < successors.length() {
-            let succ: utf8 = successors[i]
-
+        loop succ in successors {
             # 检查是否已访问
             let mut is_visited: bool = false
-            let mut j: usize = 0
-            while j < visited.length() {
-                if visited[j] == succ {
+            loop visited_node in visited {
+                if visited_node == succ {
                     is_visited = true
                 }
-                j = j + 1
             }
 
             if !is_visited {
                 push(visited, succ)
                 push(queue, succ)
             }
-            i = i + 1
         }
     }
 
@@ -61,24 +55,18 @@ micro transitive_predecessors(graph: DirectedGraph, start: utf8) -> [utf8] {
         queue = array_remove_first(queue)
 
         let predecessors: [utf8] = directed_graph_predecessors(graph, current)
-        let mut i: usize = 0
-        while i < predecessors.length() {
-            let pred: utf8 = predecessors[i]
-
+        loop pred in predecessors {
             let mut is_visited: bool = false
-            let mut j: usize = 0
-            while j < visited.length() {
-                if visited[j] == pred {
+            loop visited_node in visited {
+                if visited_node == pred {
                     is_visited = true
                 }
-                j = j + 1
             }
 
             if !is_visited {
                 push(visited, pred)
                 push(queue, pred)
             }
-            i = i + 1
         }
     }
 

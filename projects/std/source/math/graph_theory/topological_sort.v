@@ -36,9 +36,7 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
         push(result, current)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
-        let mut j: usize = 0
-        while j < successors.length() {
-            let succ: utf8 = successors[j]
+        loop succ in successors {
             # 找到后继节点在 nodes 中的索引，减少入度
             let mut k: usize = 0
             while k < nodes.length() {
@@ -50,7 +48,6 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
                 }
                 k = k + 1
             }
-            j = j + 1
         }
     }
 

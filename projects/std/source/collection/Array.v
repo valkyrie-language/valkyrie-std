@@ -49,13 +49,10 @@ imply Array<T> {
     }
 
     micro contains(self, value: T): bool {
-        let mut i: usize = 0
-        while i < self.length() {
-            if self.get(i).unwrap() == value {
+        loop item in self {
+            if item == value {
                 return true
             }
-
-            i = i + 1
         }
 
         return false

@@ -136,12 +136,10 @@ imply Deque<T> {
 
     micro iter(mut self, f: micro(T) -> unit): unit {
         let length: usize = self.length()
-        let mut cursor: usize = 0
-        while cursor < length {
+        loop _ in 0..length {
             let value: T = self.pop_front().unwrap()
             f(value)
             self.push_back(value)
-            cursor = cursor + 1
         }
     }
 }
@@ -202,5 +200,4 @@ private micro __deque_jvm_length<T>(deque: Deque<T>): usize { }
 
 [jvm("java.util.ArrayDeque", "clear")]
 private micro __deque_jvm_clear<T>(deque: Deque<T>): unit { }
-
 
