@@ -12,16 +12,16 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
     }
 
     # 计算所有节点的初始入度
-    let mut in_degree: [usize] = []
-    let mut i: usize = 0
-    while i < nodes.length() {
-        push(in_degree, directed_graph_in_degree(graph, nodes[i]))
-        i = i + 1
-    }
+    let mut in_degree: [usize] = nodes
+        .into_iterator()
+        .map(micro(node: utf8) -> usize {
+            return directed_graph_in_degree(graph, node)
+        })
+        .collect_array()
 
     # 入度为 0 的节点入队
     let mut queue: [utf8] = []
-    i = 0
+    let mut i: usize = 0
     while i < nodes.length() {
         if in_degree[i] == 0 {
             push(queue, nodes[i])

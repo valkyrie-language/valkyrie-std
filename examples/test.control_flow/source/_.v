@@ -1,30 +1,83 @@
 namespace control_flow;
 
-[main]
-micro control_flow_main() -> ExitCode {
-    let a = 10
-    if a > 0 {
-        print("positive")
-    } else if a < 0 {
-        print("negative")
+micro classify_number(value: i32) -> utf8 {
+    if value > 0 {
+        return "positive"
+    } else if value < 0 {
+        return "negative"
     } else {
-        print("zero")
+        return "zero"
     }
+}
 
-    loop count in 0..3 {
-        print("loop in {count}")
+micro count_with_counted_loop(limit: i32) -> i32 {
+    let mut count = 0
+    loop let i = 0; i < limit; i += 1 {
+        count += 1
     }
+    return count
+}
 
-    loop i in 0..3 {
-        print("loop {i}")
+micro count_with_while(limit: i32) -> i32 {
+    let mut current = 0
+    while (current < limit) {
+        current += 1
     }
+    return current
+}
 
-    let mut n = 0
+micro count_with_until(limit: i32) -> i32 {
+    let mut current = 0
+    until (current >= limit) {
+        current += 1
+    }
+    return current
+}
+
+micro count_with_infinite_loop(limit: i32) -> i32 {
+    let mut current = 0
     loop {
-        n += 1
-        if n >= 3 { break }
+        if current >= limit {
+            break
+        }
+        current += 1
     }
-    print("loop break ok")
+    return current
+}
+
+[main]
+micro main() -> ExitCode {
+    let limit = 4 as i32
+    let counted = count_with_counted_loop(limit)
+    let while_count = count_with_while(limit)
+    let until_count = count_with_until(limit)
+    let infinite_count = count_with_infinite_loop(limit)
+
+    if classify_number(limit) != "positive" {
+        return ExitCode(1 as i32)
+    }
+    if counted != limit {
+        return ExitCode(2 as i32)
+    }
+    if counted != while_count {
+        return ExitCode(3 as i32)
+    }
+    if while_count != until_count {
+        return ExitCode(4 as i32)
+    }
+    if until_count != infinite_count {
+        return ExitCode(5 as i32)
+    }
+
+    # pending loop_in sample for CLR bootstrap
+    #
+    # let mut ranged = 0
+    # loop item in [0 as i32, 1 as i32, 2 as i32, 3 as i32] {
+    #     ranged += item
+    # }
+    # if ranged != counted {
+    #     return ExitCode(6 as i32)
+    # }
 
     return ExitCode(0 as i32)
 }

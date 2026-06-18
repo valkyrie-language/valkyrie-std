@@ -119,18 +119,15 @@ imply OrderedMap<K, V>: Map<K, V> {
             <% case "jvm" %>
         return __ordered_map_jvm_list_from_any::<K>(__ordered_map_jvm_keys(self))
             <% else %>
-        let mut result: List<K> = ArrayList::new(self._count)
-        let mut cursor: usize = 0
-        while cursor < self._entries.length() {
-            let entry: OrderedMapEntry<K, V> = self._entries.get(cursor).unwrap()
-            if entry.active {
-                result.push(entry.key)
-            }
-
-            cursor = cursor + 1
-        }
-
-        return result
+        return self._entries
+            .into_iterator()
+            .filter(micro(entry: OrderedMapEntry<K, V>) -> bool {
+                return entry.active
+            })
+            .map(micro(entry: OrderedMapEntry<K, V>) -> K {
+                return entry.key
+            })
+            .collect_list()
         <% end match %>
     }
 
@@ -139,18 +136,15 @@ imply OrderedMap<K, V>: Map<K, V> {
             <% case "jvm" %>
         return __ordered_map_jvm_list_from_any::<V>(__ordered_map_jvm_values(self))
             <% else %>
-        let mut result: List<V> = ArrayList::new(self._count)
-        let mut cursor: usize = 0
-        while cursor < self._entries.length() {
-            let entry: OrderedMapEntry<K, V> = self._entries.get(cursor).unwrap()
-            if entry.active {
-                result.push(entry.value)
-            }
-
-            cursor = cursor + 1
-        }
-
-        return result
+        return self._entries
+            .into_iterator()
+            .filter(micro(entry: OrderedMapEntry<K, V>) -> bool {
+                return entry.active
+            })
+            .map(micro(entry: OrderedMapEntry<K, V>) -> V {
+                return entry.value
+            })
+            .collect_list()
         <% end match %>
     }
 
@@ -189,15 +183,14 @@ imply OrderedMap<K, V>: Map<K, V> {
             i = i + 1
         }
             <% else %>
-        let mut cursor: usize = 0
-        while cursor < self._entries.length() {
-            let entry: OrderedMapEntry<K, V> = self._entries.get(cursor).unwrap()
-            if entry.active {
+        self._entries
+            .into_iterator()
+            .filter(micro(entry: OrderedMapEntry<K, V>) -> bool {
+                return entry.active
+            })
+            .for_each(micro(entry: OrderedMapEntry<K, V>) -> unit {
                 f(entry.key, entry.value)
-            }
-
-            cursor = cursor + 1
-        }
+            })
         <% end match %>
     }
 }

@@ -66,6 +66,7 @@ structure ArrayIterator<T> {
 
 imply Array<T>: IntoIterator {
     type Item = T;
+    type Iter = ArrayIterator<T>;
 
     micro into_iterator(self): ArrayIterator<T> {
         return ArrayIterator<T> {

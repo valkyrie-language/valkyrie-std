@@ -177,6 +177,7 @@ structure ArrayListIterator<T> {
 
 imply ArrayList<T>: IntoIterator {
     type Item = T;
+    type Iter = ArrayListIterator<T>;
 
     micro into_iterator(self): ArrayListIterator<T> {
         return ArrayListIterator<T> {

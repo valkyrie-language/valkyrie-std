@@ -140,22 +140,20 @@ micro directed_graph_nodes(graph: DirectedGraph) -> [utf8] {
 
 # 获取节点的出度
 micro directed_graph_out_degree(graph: DirectedGraph, node: utf8) -> usize {
-    let mut count: usize = 0
-    loop source in graph._edge_sources {
-        if source == node {
-            count = count + 1
-        }
-    }
-    return count
+    return graph._edge_sources
+        .into_iterator()
+        .filter(micro(source: utf8) -> bool {
+            return source == node
+        })
+        .count()
 }
 
 # 获取节点的入度
 micro directed_graph_in_degree(graph: DirectedGraph, node: utf8) -> usize {
-    let mut count: usize = 0
-    loop target in graph._edge_targets {
-        if target == node {
-            count = count + 1
-        }
-    }
-    return count
+    return graph._edge_targets
+        .into_iterator()
+        .filter(micro(target: utf8) -> bool {
+            return target == node
+        })
+        .count()
 }

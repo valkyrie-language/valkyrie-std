@@ -17,16 +17,21 @@ micro find_cycle(graph: DirectedGraph) -> [utf8] {
         return []
     }
 
-    let mut color: [usize] = []
-    let mut parent: [utf8] = []
-    let mut i: usize = 0
-    while i < nodes.length() {
-        push(color, 0)
-        push(parent, "")
-        i = i + 1
-    }
+    let mut color: [usize] = nodes
+        .into_iterator()
+        .map(micro(_: utf8) -> usize {
+            return 0
+        })
+        .collect_array()
+    let mut parent: [utf8] = nodes
+        .into_iterator()
+        .map(micro(_: utf8) -> utf8 {
+            return ""
+        })
+        .collect_array()
 
-    i = 0
+    let mut i: usize = 0
+
     while i < nodes.length() {
         if color[i] == 0 {
             let cycle: [utf8] = find_cycle_dfs(graph, nodes, color, parent, nodes[i])
