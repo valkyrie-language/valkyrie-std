@@ -77,3 +77,23 @@ micro generic_reduce_smoke() -> unit {
     let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     assert(reduce_generic_iterator(values.into_iterator().take(3 as usize)) == (6 as i32))
 }
+
+[test]
+micro generic_any_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(any_in_generic_iterator(values.into_iterator().skip(1 as usize)))
+}
+
+[test]
+micro generic_position_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let found = position_in_generic_iterator(values.into_iterator().skip(1 as usize))
+    assert(found.is_some())
+    assert(found.unwrap() == (1 as usize))
+}
+
+[test]
+micro generic_count_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(count_generic_iterator(values.into_iterator().skip(1 as usize)) == (3 as usize))
+}

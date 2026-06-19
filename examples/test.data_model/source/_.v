@@ -1,5 +1,12 @@
 namespace map_methods;
 
+
+[data]
+structure Point {
+    x: f32,
+    y: f32,
+}
+
 [main]
 micro map_methods_main() -> ExitCode {
     let m = { "a": 1, "b": 2, "c": 3 }

@@ -4,6 +4,9 @@ using std.data.text.von;
 using std.io;
 using std.math.graph_theory;
 
+[clr("legion", "Legion.CLI.Interop.LegionSourceCompilerBridge", "BuildProject")]
+micro clr_source_compile_project(project_dir: utf8, target: utf8, output: utf8, verbose: bool) -> i32
+
 [clr("LoL.Legion.HostBridge", "Legion.Bootstrap.HostBridge", "PackProject")]
 micro clr_host_pack_project(project_dir: utf8, target: utf8, output: utf8, package_id: utf8, version: utf8, verbose: bool) -> utf8
 

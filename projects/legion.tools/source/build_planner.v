@@ -442,11 +442,28 @@ micro write_backend_execution_result_snapshot(output_dir: utf8, result: LegionBa
 
 micro execute_backend_request(request: LegionBackendExecutionRequest) -> LegionBackendExecutionResult {
     if request.executor_mode == "source_compiler" {
+        <% match arch %>
+            <% case "clr" %>
+        let exit_code: i32 = clr_source_compile_project(request.project_dir, request.canonical_target, request.output_dir, request.verbose)
+        if exit_code != 0 {
+            return LegionBackendExecutionResult {
+                executor_kind: "clr_source_compiler",
+                success: false,
+                error: "源码编译执行失败，退出码 = " + format("{}", exit_code)
+            }
+        }
+        return LegionBackendExecutionResult {
+            executor_kind: "clr_source_compiler",
+            success: true,
+            error: ""
+        }
+            <% else %>
         return LegionBackendExecutionResult {
             executor_kind: "source_compiler",
             success: false,
-            error: "源码编译执行器尚未接入：当前已禁用 host_bridge，请直接补齐源码编译执行入口"
+            error: "当前目标尚未接入源码编译执行器：" + request.canonical_target
         }
+        <% end match %>
     }
 
     return LegionBackendExecutionResult {
