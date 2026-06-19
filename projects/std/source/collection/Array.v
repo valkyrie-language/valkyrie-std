@@ -79,6 +79,21 @@ imply Array<T>: std.iterator.IntoIterator {
     }
 }
 
+imply Array<T>: std.iterator.FromIterator {
+    type Item = T;
+
+    micro from_iterator<I>(iter: I) -> Self
+        where I: std.iterator.Iterator<Item = T>
+    {
+        let mut result: [T] = []
+        loop item in iter {
+            push(result, item)
+        }
+
+        return result
+    }
+}
+
 imply ArrayIterator<T>: std.iterator.Iterator {
     type Item = T;
 

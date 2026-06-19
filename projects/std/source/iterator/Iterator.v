@@ -28,42 +28,11 @@ trait Iterator {
         }
     }
 
-    micro for_each(mut self, f: micro(Item) -> unit): unit {
-        while self.has_next() {
-            f(self.next().unwrap())
+    micro take(self, count: usize) -> TakeIterator<Item, Self> {
+        return TakeIterator<Item, Self> {
+            _iter: self,
+            _count: count,
+            _taken: 0,
         }
-    }
-
-    micro fold<U>(mut self, initial: U, f: micro(U, Item) -> U): U {
-        let mut result: U = initial
-        while self.has_next() {
-            result = f(result, self.next().unwrap())
-        }
-
-        return result
-    }
-
-    micro reduce<U>(self, initial: U, f: micro(U, Item) -> U): U {
-        return self.fold(initial, f)
-    }
-
-    micro any(mut self, pred: micro(Item) -> bool): bool {
-        while self.has_next() {
-            if pred(self.next().unwrap()) {
-                return true
-            }
-        }
-
-        return false
-    }
-
-    micro count(mut self): usize {
-        let mut result: usize = 0
-        while self.has_next() {
-            self.next()
-            result = result + 1
-        }
-
-        return result
     }
 }

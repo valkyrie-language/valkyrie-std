@@ -45,6 +45,37 @@ micro count_with_infinite_loop(limit: i32) -> i32 {
     return current
 }
 
+micro sum_with_loop_in(values: [i32]) -> i32 {
+    let mut total = 0 as i32
+    loop value in values {
+        total += value
+    }
+    return total
+}
+
+micro collect_even_doubles(values: [i32]) -> [i32] {
+    return values
+        .into_iterator()
+        .skip(1 as usize)
+        .map(micro(value: i32) -> i32 {
+            return value * (2 as i32)
+        })
+        .filter(micro(value: i32) -> bool {
+            return value >= (6 as i32)
+        })
+        .collect_array()
+}
+
+micro sum_generic_iterator<I>(iter: I) -> i32
+    where I: std.iterator.Iterator<Item = i32>
+{
+    let mut total = 0 as i32
+    loop item in iter {
+        total += item
+    }
+    return total
+}
+
 [main]
 micro main() -> ExitCode {
     let limit = 4 as i32
@@ -52,6 +83,12 @@ micro main() -> ExitCode {
     let while_count = count_with_while(limit)
     let until_count = count_with_until(limit)
     let infinite_count = count_with_infinite_loop(limit)
+    let loop_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let generic_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let transform_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let loop_in_sum = sum_with_loop_in(loop_values)
+    let generic_iter_sum = sum_generic_iterator(generic_values.into_iterator().skip(1 as usize))
+    let transformed = collect_even_doubles(transform_values)
 
     if classify_number(limit) != "positive" {
         return ExitCode(1 as i32)
@@ -67,6 +104,21 @@ micro main() -> ExitCode {
     }
     if until_count != infinite_count {
         return ExitCode(5 as i32)
+    }
+    if loop_in_sum != 10 {
+        return ExitCode(6 as i32)
+    }
+    if generic_iter_sum != 9 {
+        return ExitCode(7 as i32)
+    }
+    if transformed.length() != (2 as usize) {
+        return ExitCode(8 as i32)
+    }
+    if transformed.get(0 as usize).unwrap() != 6 {
+        return ExitCode(9 as i32)
+    }
+    if transformed.get(1 as usize).unwrap() != 8 {
+        return ExitCode(10 as i32)
     }
 
     # pending loop_in sample for CLR bootstrap

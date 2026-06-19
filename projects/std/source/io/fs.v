@@ -71,6 +71,16 @@ micro write_file_text(path: utf8, content: utf8) -> bool {
     <% end match %>
 }
 
+micro get_files(path: utf8, pattern: utf8, recursive: bool) -> [utf8] {
+    <% match arch %>
+        <% case "clr" %>
+    let search_option: i32 = if recursive { 1 } else { 0 }
+    return __io_clr_directory_get_files(path, pattern, search_option)
+        <% else %>
+    return []
+    <% end match %>
+}
+
 [clr("System.IO.FileSystem", "System.IO.File", "ReadAllText")]
 private micro __io_clr_file_read_all_text(path: utf8): utf8
 
@@ -88,6 +98,9 @@ private micro __io_clr_directory_create(path: utf8): unit
 
 [clr("System.IO.FileSystem", "System.IO.Directory", "GetCurrentDirectory")]
 private micro __io_clr_directory_get_current_directory(): utf8
+
+[clr("System.IO.FileSystem", "System.IO.Directory", "GetFiles")]
+private micro __io_clr_directory_get_files(path: utf8, pattern: utf8, search_option: i32): [utf8]
 
 [jvm("java.io.File", "exists")]
 private micro __io_jvm_file_exists(path: utf8): bool

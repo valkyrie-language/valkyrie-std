@@ -187,6 +187,21 @@ imply ArrayList<T>: std.iterator.IntoIterator {
     }
 }
 
+imply ArrayList<T>: std.iterator.FromIterator {
+    type Item = T;
+
+    micro from_iterator<I>(iter: I) -> Self
+        where I: std.iterator.Iterator<Item = T>
+    {
+        let mut result: Self = Self::new(0)
+        loop item in iter {
+            result.push(item)
+        }
+
+        return result
+    }
+}
+
 imply ArrayListIterator<T>: std.iterator.Iterator {
     type Item = T;
 

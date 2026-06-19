@@ -3,8 +3,16 @@ namespace legion;
 using std.data.text.von;
 using std.io;
 
+structure LegionBuildTargetOptions {
+    source_map: bool
+    type_script: bool
+    wat: bool
+    msil: bool
+}
+
 structure LegionBuildTarget {
     name: utf8
+    options: LegionBuildTargetOptions
 }
 
 structure LegionDependency {
@@ -57,6 +65,15 @@ micro legion_read_von_document(path: utf8) -> VonParseResult<VonValue> {
     return parse_von(source)
 }
 
+micro legion_empty_build_target_options() -> LegionBuildTargetOptions {
+    return LegionBuildTargetOptions {
+        source_map: false,
+        type_script: false,
+        wat: false,
+        msil: false
+    }
+}
+
 micro legion_collect_build_targets(value: VonValue) -> [LegionBuildTarget] {
     let mut result: [LegionBuildTarget] = []
     let items: [VonValue] = von_as_array(value)
@@ -65,8 +82,15 @@ micro legion_collect_build_targets(value: VonValue) -> [LegionBuildTarget] {
         let item: VonValue = items[i]
         let target_name: utf8 = von_as_text(von_find_field(item, "target"))
         if target_name.length() > 0 {
+            let options: LegionBuildTargetOptions = LegionBuildTargetOptions {
+                source_map: von_as_bool(von_find_field(item, "source_map")),
+                type_script: von_as_bool(von_find_field(item, "type_script")),
+                wat: von_as_bool(von_find_field(item, "wat")),
+                msil: von_as_bool(von_find_field(item, "msil"))
+            }
             push(result, LegionBuildTarget {
-                name: target_name
+                name: target_name,
+                options: options
             })
         }
         i = i + 1

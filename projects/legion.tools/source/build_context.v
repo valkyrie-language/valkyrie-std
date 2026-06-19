@@ -10,7 +10,13 @@ structure LegionBuildContext {
     output_dir: utf8
     dependency_names: [utf8]
     dependency_order: [utf8]
+    arch_tag: utf8
+    abi: utf8
+    backend_family: utf8
     verbose: bool
+    preferred_logical_entry: utf8
+    include_test_sources: bool
+    build_options: LegionBuildTargetOptions
 }
 
 micro legion_canonical_target(target: utf8) -> utf8 {
@@ -91,6 +97,65 @@ micro legion_output_root(project_dir: utf8, output: utf8) -> utf8 {
         return path_join(project_dir, "dist")
     }
     return resolve_project_dir(output)
+}
+
+micro legion_target_arch_tag(canonical_target: utf8) -> utf8 {
+    if canonical_target.starts_with("clr-") {
+        return "clr"
+    }
+    if canonical_target.starts_with("jvm-") {
+        return "jvm"
+    }
+    if canonical_target.starts_with("wasm32-") || canonical_target.starts_with("wasm64-") {
+        return "wasm"
+    }
+    if canonical_target.starts_with("nyar-") {
+        return "nyar"
+    }
+    return ""
+}
+
+micro legion_target_abi(canonical_target: utf8) -> utf8 {
+    if canonical_target.ends_with("-managed") {
+        return "managed"
+    }
+    if canonical_target.contains("-wasi-p1") {
+        return "wasi-p1"
+    }
+    if canonical_target.contains("-wasi-p2") {
+        return "wasi-p2"
+    }
+    if canonical_target.contains("-webassembly") {
+        return "webassembly"
+    }
+    return "unknown"
+}
+
+micro legion_target_backend_family(canonical_target: utf8) -> utf8 {
+    let arch_tag: utf8 = legion_target_arch_tag(canonical_target)
+    if arch_tag == "clr" || arch_tag == "jvm" || arch_tag == "wasm" {
+        return arch_tag
+    }
+    if arch_tag == "nyar" {
+        return "nyar_vm"
+    }
+    return "unknown"
+}
+
+micro legion_find_build_target(manifest: LegionProjectManifest, requested_target: utf8, canonical_target: utf8) -> LegionBuildTarget {
+    let mut i: usize = 0
+    while i < manifest.build_targets.length() {
+        let candidate: LegionBuildTarget = manifest.build_targets[i]
+        let candidate_canonical: utf8 = legion_canonical_target(candidate.name)
+        if candidate.name == requested_target || candidate_canonical == canonical_target {
+            return candidate
+        }
+        i = i + 1
+    }
+    return LegionBuildTarget {
+        name: requested_target,
+        options: legion_empty_build_target_options()
+    }
 }
 
 # 构建依赖图：使用图论模块的有向图存储依赖关系
@@ -177,6 +242,8 @@ micro legion_build_contexts(
             return Fail(new_von_diagnostic("存在不支持的构建目标", 0, 0))
         }
 
+        let build_target: LegionBuildTarget = legion_find_build_target(manifest, requested, canonical)
+
         push(contexts, LegionBuildContext {
             project_dir: project_dir,
             manifest_path: manifest_path,
@@ -185,7 +252,13 @@ micro legion_build_contexts(
             output_dir: path_join(output_root, canonical),
             dependency_names: dep_names,
             dependency_order: build_order,
-            verbose: request.verbose
+            arch_tag: legion_target_arch_tag(canonical),
+            abi: legion_target_abi(canonical),
+            backend_family: legion_target_backend_family(canonical),
+            verbose: request.verbose,
+            preferred_logical_entry: "",
+            include_test_sources: false,
+            build_options: build_target.options
         })
         i = i + 1
     }
