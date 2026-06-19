@@ -8,6 +8,19 @@ structure LegionSourceClosurePlan {
     files: [utf8]
 }
 
+structure LegionCompilePlan {
+    project_dir: utf8
+    canonical_target: utf8
+    output_dir: utf8
+    arch_tag: utf8
+    abi: utf8
+    backend_family: utf8
+    preferred_logical_entry: utf8
+    include_test_sources: bool
+    build_options: LegionBuildTargetOptions
+    source_closure: LegionSourceClosurePlan
+}
+
 micro push_unique_text(mut items: [utf8], value: utf8) -> unit {
     if !items.contains(value) {
         push(items, value)
@@ -218,15 +231,74 @@ micro collect_source_closure(context: LegionBuildContext, manifest: LegionProjec
     }
 }
 
-micro delegate_host_build(project_dir: utf8, requested_target: utf8, output: utf8, verbose: bool) -> unit {
+micro build_compile_plan(context: LegionBuildContext, manifest: LegionProjectManifest) -> VonParseResult<LegionCompilePlan> {
+    match collect_source_closure(context, manifest) {
+        case Fine(source_closure):
+            if source_closure.files.length() == 0 {
+                return Fail(new_von_diagnostic("未找到可编译的 Valkyrie 源文件，请检查 source/、script/、test/ 目录以及依赖包。", 0, 0))
+            }
+
+            return Fine(LegionCompilePlan {
+                project_dir: context.project_dir,
+                canonical_target: context.canonical_target,
+                output_dir: context.output_dir,
+                arch_tag: context.arch_tag,
+                abi: context.abi,
+                backend_family: context.backend_family,
+                preferred_logical_entry: context.preferred_logical_entry,
+                include_test_sources: context.include_test_sources,
+                build_options: context.build_options,
+                source_closure: source_closure
+            })
+        case Fail(error):
+            return Fail(error)
+    }
+}
+
+micro compile_plan_snapshot_path(output_dir: utf8) -> utf8 {
+    return path_join(output_dir, "compile-plan.txt")
+}
+
+micro append_line(mut buffer: utf8, line: utf8) -> unit {
+    buffer = buffer + line + "\n"
+}
+
+micro append_prefixed_lines(mut buffer: utf8, title: utf8, values: [utf8]) -> unit {
+    append_line(buffer, title + ": " + values.length() + " 项")
+    loop value in values {
+        append_line(buffer, "  " + value)
+    }
+}
+
+micro write_compile_plan_snapshot(plan: LegionCompilePlan) -> bool {
+    let mut content: utf8 = ""
+    append_line(content, "project_dir: " + plan.project_dir)
+    append_line(content, "canonical_target: " + plan.canonical_target)
+    append_line(content, "output_dir: " + plan.output_dir)
+    append_line(content, "arch_tag: " + plan.arch_tag)
+    append_line(content, "abi: " + plan.abi)
+    append_line(content, "backend_family: " + plan.backend_family)
+    append_line(content, "preferred_logical_entry: " + plan.preferred_logical_entry)
+    append_line(content, "include_test_sources: " + if plan.include_test_sources { "true" } else { "false" })
+    append_line(content, "build_options.source_map: " + if plan.build_options.source_map { "true" } else { "false" })
+    append_line(content, "build_options.type_script: " + if plan.build_options.type_script { "true" } else { "false" })
+    append_line(content, "build_options.wat: " + if plan.build_options.wat { "true" } else { "false" })
+    append_line(content, "build_options.msil: " + if plan.build_options.msil { "true" } else { "false" })
+    append_prefixed_lines(content, "package_names", plan.source_closure.package_names)
+    append_prefixed_lines(content, "package_dirs", plan.source_closure.package_dirs)
+    append_prefixed_lines(content, "files", plan.source_closure.files)
+    return std.io.write_file_text(compile_plan_snapshot_path(plan.output_dir), content)
+}
+
+micro delegate_host_build(project_dir: utf8, canonical_target: utf8, output_dir: utf8, verbose: bool) -> unit {
     <% match arch %>
         <% case "clr" %>
-        let exit_code: i32 = clr_host_build_project(project_dir, requested_target, output, verbose)
+        let exit_code: i32 = clr_host_build_project(project_dir, canonical_target, output_dir, verbose)
         if exit_code != 0 {
             std.io.error("错误：宿主构建器执行失败，退出码 = " + format("{}", exit_code))
         }
         <% case "nyar" %>
-        let success: bool = nyar_host_build_project(project_dir, requested_target, output)
+        let success: bool = nyar_host_build_project(project_dir, canonical_target, output_dir)
         if !success {
             std.io.error("错误：NyarVM 宿主构建器执行失败")
         }

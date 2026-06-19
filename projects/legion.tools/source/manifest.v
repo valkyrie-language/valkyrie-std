@@ -225,16 +225,15 @@ micro legion_project_manifest_from_von(document: VonValue, workspace_auto_core: 
 micro legion_workspace_manifest_from_von(document: VonValue) -> VonParseResult<LegionWorkspaceManifest> {
     match document {
         case Object(fields):
-            let mut members: [utf8] = []
-            let items: [VonValue] = von_as_array(von_find_field(document, "members"))
-            let mut i: usize = 0
-            while i < items.length() {
-                let member: utf8 = von_as_text(items[i])
-                if member.length() > 0 {
-                    push(members, member)
-                }
-                i = i + 1
-            }
+            let members: [utf8] = von_as_array(von_find_field(document, "members"))
+                .into_iterator()
+                .map(micro(item: VonValue) -> utf8 {
+                    return von_as_text(item)
+                })
+                .filter(micro(member: utf8) -> bool {
+                    return member.length() > 0
+                })
+                .collect_array()
 
             return Fine(LegionWorkspaceManifest {
                 members: members

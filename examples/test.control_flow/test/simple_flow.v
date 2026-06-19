@@ -21,11 +21,27 @@ micro control_flow_equivalence() -> unit {
     assert(counted == while_count)
     assert(while_count == until_count)
     assert(until_count == infinite_count)
+
+    let pending_loop_in_equivalence = "bootstrap CLI 暂不验证 loop in"
+}
+
+[test]
+micro iterator_loop_in_smoke() -> unit {
+    let loop_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     assert(sum_with_loop_in(loop_values) == (10 as i32))
-    assert(sum_generic_iterator(generic_values.into_iterator().skip(1 as usize)) == (9 as i32))
+}
+
+[test]
+micro iterator_chain_smoke() -> unit {
+    let transform_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let transformed = collect_even_doubles(transform_values)
     assert(transformed.length() == (2 as usize))
     assert(transformed.get(0 as usize).unwrap() == (6 as i32))
     assert(transformed.get(1 as usize).unwrap() == (8 as i32))
+}
 
-    let pending_loop_in_equivalence = "bootstrap CLI 暂不验证 loop in"
+[test]
+micro generic_iterator_smoke() -> unit {
+    let generic_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(sum_generic_iterator(generic_values.into_iterator().skip(1 as usize)) == (9 as i32))
 }

@@ -294,24 +294,26 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                             }
                         }
 
-                        match collect_source_closure(context, manifest) {
-                            case Fine(source_closure):
-                                if source_closure.files.length() == 0 {
-                                    std.io.error("错误：未找到可编译的 Valkyrie 源文件，请检查 source/、script/、test/ 目录以及依赖包。")
+                        match build_compile_plan(context, manifest) {
+                            case Fine(compile_plan):
+                                std.io.create_directory(compile_plan.output_dir)
+                                if !write_compile_plan_snapshot(compile_plan) {
+                                    std.io.error("错误：写入编译计划快照失败 - " + compile_plan.output_dir)
                                     return
                                 }
-
-                                std.io.create_directory(context.output_dir)
-                                std.io.print_line("  源码闭包：" + source_closure.package_names.length() + " 个包，" + source_closure.files.length() + " 个文件")
+                                std.io.print_line("  源码闭包：" + compile_plan.source_closure.package_names.length() + " 个包，" + compile_plan.source_closure.files.length() + " 个文件")
                                 if context.verbose {
-                                    loop package_name in source_closure.package_names {
+                                    loop package_name in compile_plan.source_closure.package_names {
                                         std.io.print_line("    包：" + package_name)
                                     }
+                                    std.io.print_line("  计划目标：" + compile_plan.canonical_target)
+                                    std.io.print_line("  计划输出：" + compile_plan.output_dir)
+                                    std.io.print_line("  计划快照：" + compile_plan_snapshot_path(compile_plan.output_dir))
                                 }
 
-                                delegate_host_build(project_dir, requested_target, output, verbose)
+                                delegate_host_build(compile_plan.project_dir, compile_plan.canonical_target, compile_plan.output_dir, verbose)
                             case Fail(error):
-                                std.io.error("错误：生成源码闭包失败 - " + error.message)
+                                std.io.error("错误：生成编译计划失败 - " + error.message)
                                 return
                         }
                     }

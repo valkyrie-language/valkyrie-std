@@ -44,17 +44,16 @@ micro legion_requested_targets(value: utf8) -> [utf8] {
         return ["clr", "jvm", "wasm", "nyar"]
     }
 
-    let mut result: [utf8] = []
-    let pieces: [utf8] = value.split(",")
-    let mut i: usize = 0
-    while i < pieces.length() {
-        let target: utf8 = pieces[i].trim()
-        if target.length() > 0 {
-            push(result, target)
-        }
-        i = i + 1
-    }
-    return result
+    return value
+        .split(",")
+        .into_iterator()
+        .map(micro(piece: utf8) -> utf8 {
+            return piece.trim()
+        })
+        .filter(micro(target: utf8) -> bool {
+            return target.length() > 0
+        })
+        .collect_array()
 }
 
 micro legion_manifest_targets(manifest: LegionProjectManifest, requested_target: utf8) -> [utf8] {
@@ -63,13 +62,12 @@ micro legion_manifest_targets(manifest: LegionProjectManifest, requested_target:
         return explicit_targets
     }
 
-    let mut result: [utf8] = []
-    let mut i: usize = 0
-    while i < manifest.build_targets.length() {
-        push(result, manifest.build_targets[i].name)
-        i = i + 1
-    }
-    return result
+    return manifest.build_targets
+        .into_iterator()
+        .map(micro(target: LegionBuildTarget) -> utf8 {
+            return target.name
+        })
+        .collect_array()
 }
 
 micro legion_last_path_segment(path: utf8) -> utf8 {

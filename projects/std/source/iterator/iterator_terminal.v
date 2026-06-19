@@ -46,6 +46,36 @@ micro any<I, T>(self: I, pred: micro(T) -> bool): bool
     return false
 }
 
+micro find<I, T>(self: I, pred: micro(T) -> bool): Option<T>
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    while iter.has_next() {
+        let item: T = iter.next().unwrap()
+        if pred(item) {
+            return Some(item)
+        }
+    }
+
+    return None
+}
+
+micro position<I, T>(self: I, pred: micro(T) -> bool): Option<usize>
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    let mut index: usize = 0
+    while iter.has_next() {
+        if pred(iter.next().unwrap()) {
+            return Some(index)
+        }
+
+        index = index + 1
+    }
+
+    return None
+}
+
 micro count<I, T>(self: I): usize
     where I: Iterator<Item = T>
 {

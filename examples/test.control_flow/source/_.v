@@ -76,6 +76,39 @@ micro sum_generic_iterator<I>(iter: I) -> i32
     return total
 }
 
+micro smoke_loop_in() -> ExitCode {
+    let loop_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let loop_in_sum = sum_with_loop_in(loop_values)
+    if loop_in_sum != 10 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_iterator_chain() -> ExitCode {
+    let transform_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let transformed = collect_even_doubles(transform_values)
+    if transformed.length() != (2 as usize) {
+        return ExitCode(1 as i32)
+    }
+    if transformed.get(0 as usize).unwrap() != 6 {
+        return ExitCode(2 as i32)
+    }
+    if transformed.get(1 as usize).unwrap() != 8 {
+        return ExitCode(3 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_generic_iterator() -> ExitCode {
+    let generic_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let generic_iter_sum = sum_generic_iterator(generic_values.into_iterator().skip(1 as usize))
+    if generic_iter_sum != 9 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
 [main]
 micro main() -> ExitCode {
     let limit = 4 as i32
@@ -83,13 +116,6 @@ micro main() -> ExitCode {
     let while_count = count_with_while(limit)
     let until_count = count_with_until(limit)
     let infinite_count = count_with_infinite_loop(limit)
-    let loop_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
-    let generic_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
-    let transform_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
-    let loop_in_sum = sum_with_loop_in(loop_values)
-    let generic_iter_sum = sum_generic_iterator(generic_values.into_iterator().skip(1 as usize))
-    let transformed = collect_even_doubles(transform_values)
-
     if classify_number(limit) != "positive" {
         return ExitCode(1 as i32)
     }
@@ -105,20 +131,14 @@ micro main() -> ExitCode {
     if until_count != infinite_count {
         return ExitCode(5 as i32)
     }
-    if loop_in_sum != 10 {
+    if smoke_loop_in() != ExitCode(0 as i32) {
         return ExitCode(6 as i32)
     }
-    if generic_iter_sum != 9 {
+    if smoke_generic_iterator() != ExitCode(0 as i32) {
         return ExitCode(7 as i32)
     }
-    if transformed.length() != (2 as usize) {
+    if smoke_iterator_chain() != ExitCode(0 as i32) {
         return ExitCode(8 as i32)
-    }
-    if transformed.get(0 as usize).unwrap() != 6 {
-        return ExitCode(9 as i32)
-    }
-    if transformed.get(1 as usize).unwrap() != 8 {
-        return ExitCode(10 as i32)
     }
 
     # pending loop_in sample for CLR bootstrap
