@@ -5,9 +5,9 @@ namespace std.types;
 [tag(ResultKind)]
 unite Result<T, E> {
     [tag(0)]
-    Fine(T)
-    [tag(1, default)]
-    Fail(E)
+    Fine(T),
+    [tag(1)]
+    Fail(E),
 }
 
 imply Result<T, E> {

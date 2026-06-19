@@ -5,9 +5,9 @@ namespace std.types;
 [tag(OptionKind)]
 unite Option<T> {
     [tag(0)]
-    Some(T)
+    Some(T),
     [tag(1, default)]
-    None
+    None,
 }
 
 imply Option<T> {
@@ -34,7 +34,7 @@ imply Option<T> {
             case Some(value):
                 value
             case None:
-                T.default
+                panic("unwrap on `None` value")
         }
     }
 
@@ -92,15 +92,11 @@ imply Option<T> {
         }
     }
 
-    micro filter(self, pred: micro(T) -> bool): Option<T> {
+    micro filter(self, predicate: micro(T) -> bool): Option<T> {
         match self {
-            case Some(value):
-                if pred(value) {
-                    Some(value)
-                } else {
-                    None
-                }
-            case None:
+            case Some(value) if predicate(value):
+                Some(value)
+            else:
                 None
         }
     }
