@@ -21,9 +21,72 @@ structure LegionCompilePlan {
     source_closure: LegionSourceClosurePlan
 }
 
+structure LegionBackendExecutionRequest {
+    project_dir: utf8
+    canonical_target: utf8
+    output_dir: utf8
+    arch_tag: utf8
+    abi: utf8
+    backend_family: utf8
+    preferred_logical_entry: utf8
+    include_test_sources: bool
+    build_options: LegionBuildTargetOptions
+    package_count: usize
+    file_count: usize
+    executor_mode: utf8
+    verbose: bool
+}
+
+structure LegionBackendExecutionResult {
+    executor_kind: utf8
+    success: bool
+    error: utf8
+}
+
 micro push_unique_text(mut items: [utf8], value: utf8) -> unit {
     if !items.contains(value) {
         push(items, value)
+    }
+}
+
+micro compare_utf8_text(left: utf8, right: utf8) -> i32 {
+    if left.equals(right) {
+        return 0
+    }
+
+    let mut left_chars = left.chars()
+    let mut right_chars = right.chars()
+    while left_chars.has_next() && right_chars.has_next() {
+        let left_char: char = left_chars.next().unwrap()
+        let right_char: char = right_chars.next().unwrap()
+        if left_char < right_char {
+            return -1
+        }
+        if left_char > right_char {
+            return 1
+        }
+    }
+
+    if left_chars.has_next() {
+        return 1
+    }
+    if right_chars.has_next() {
+        return -1
+    }
+    return 0
+}
+
+micro sort_texts(mut values: [utf8]) -> unit {
+    let mut i: usize = 1
+    while i < values.length() {
+        let current: utf8 = values[i]
+        let mut j: usize = i
+        while j > 0 && compare_utf8_text(values[j - 1], current) > 0 {
+            values[j] = values[j - 1]
+            j = j - 1
+        }
+        values[j] = current
+        i = i + 1
     }
 }
 
@@ -116,6 +179,7 @@ micro collect_project_source_files(project_dir: utf8, include_test_sources: bool
         }
     }
 
+    sort_texts(result)
     return result
 }
 
@@ -221,6 +285,9 @@ micro collect_source_closure(context: LegionBuildContext, manifest: LegionProjec
         package_dirs,
         files) {
         case Fine(done):
+            sort_texts(package_names)
+            sort_texts(package_dirs)
+            sort_texts(files)
             return Fine(LegionSourceClosurePlan {
                 package_names: package_names,
                 package_dirs: package_dirs,
@@ -259,50 +326,149 @@ micro compile_plan_snapshot_path(output_dir: utf8) -> utf8 {
     return path_join(output_dir, "compile-plan.txt")
 }
 
-micro append_line(mut buffer: utf8, line: utf8) -> unit {
-    buffer = buffer + line + "\n"
+micro backend_execution_snapshot_path(output_dir: utf8) -> utf8 {
+    return path_join(output_dir, "backend-request.txt")
 }
 
-micro append_prefixed_lines(mut buffer: utf8, title: utf8, values: [utf8]) -> unit {
-    append_line(buffer, title + ": " + values.length() + " 项")
+micro backend_execution_result_snapshot_path(output_dir: utf8) -> utf8 {
+    return path_join(output_dir, "backend-result.txt")
+}
+
+micro append_line(buffer: utf8, line: utf8) -> utf8 {
+    return buffer + line + "\n"
+}
+
+micro append_prefixed_lines(buffer: utf8, title: utf8, values: [utf8]) -> utf8 {
+    let mut result: utf8 = append_line(buffer, title + ": " + values.length() + " 项")
     loop value in values {
-        append_line(buffer, "  " + value)
+        result = append_line(result, "  " + value)
     }
+    return result
 }
 
 micro write_compile_plan_snapshot(plan: LegionCompilePlan) -> bool {
     let mut content: utf8 = ""
-    append_line(content, "project_dir: " + plan.project_dir)
-    append_line(content, "canonical_target: " + plan.canonical_target)
-    append_line(content, "output_dir: " + plan.output_dir)
-    append_line(content, "arch_tag: " + plan.arch_tag)
-    append_line(content, "abi: " + plan.abi)
-    append_line(content, "backend_family: " + plan.backend_family)
-    append_line(content, "preferred_logical_entry: " + plan.preferred_logical_entry)
-    append_line(content, "include_test_sources: " + if plan.include_test_sources { "true" } else { "false" })
-    append_line(content, "build_options.source_map: " + if plan.build_options.source_map { "true" } else { "false" })
-    append_line(content, "build_options.type_script: " + if plan.build_options.type_script { "true" } else { "false" })
-    append_line(content, "build_options.wat: " + if plan.build_options.wat { "true" } else { "false" })
-    append_line(content, "build_options.msil: " + if plan.build_options.msil { "true" } else { "false" })
-    append_prefixed_lines(content, "package_names", plan.source_closure.package_names)
-    append_prefixed_lines(content, "package_dirs", plan.source_closure.package_dirs)
-    append_prefixed_lines(content, "files", plan.source_closure.files)
+    content = append_line(content, "project_dir: " + plan.project_dir)
+    content = append_line(content, "canonical_target: " + plan.canonical_target)
+    content = append_line(content, "output_dir: " + plan.output_dir)
+    content = append_line(content, "arch_tag: " + plan.arch_tag)
+    content = append_line(content, "abi: " + plan.abi)
+    content = append_line(content, "backend_family: " + plan.backend_family)
+    content = append_line(content, "preferred_logical_entry: " + plan.preferred_logical_entry)
+    content = append_line(content, "include_test_sources: " + if plan.include_test_sources { "true" } else { "false" })
+    content = append_line(content, "build_options.source_map: " + if plan.build_options.source_map { "true" } else { "false" })
+    content = append_line(content, "build_options.type_script: " + if plan.build_options.type_script { "true" } else { "false" })
+    content = append_line(content, "build_options.wat: " + if plan.build_options.wat { "true" } else { "false" })
+    content = append_line(content, "build_options.msil: " + if plan.build_options.msil { "true" } else { "false" })
+    content = append_prefixed_lines(content, "package_names", plan.source_closure.package_names)
+    content = append_prefixed_lines(content, "package_dirs", plan.source_closure.package_dirs)
+    content = append_prefixed_lines(content, "files", plan.source_closure.files)
     return std.io.write_file_text(compile_plan_snapshot_path(plan.output_dir), content)
 }
 
-micro delegate_host_build(project_dir: utf8, canonical_target: utf8, output_dir: utf8, verbose: bool) -> unit {
+micro build_backend_execution_request(plan: LegionCompilePlan, verbose: bool) -> LegionBackendExecutionRequest {
+    return LegionBackendExecutionRequest {
+        project_dir: plan.project_dir,
+        canonical_target: plan.canonical_target,
+        output_dir: plan.output_dir,
+        arch_tag: plan.arch_tag,
+        abi: plan.abi,
+        backend_family: plan.backend_family,
+        preferred_logical_entry: plan.preferred_logical_entry,
+        include_test_sources: plan.include_test_sources,
+        build_options: plan.build_options,
+        package_count: plan.source_closure.package_names.length(),
+        file_count: plan.source_closure.files.length(),
+        executor_mode: "host_bridge",
+        verbose: verbose
+    }
+}
+
+micro write_backend_execution_request_snapshot(request: LegionBackendExecutionRequest) -> bool {
+    let mut content: utf8 = ""
+    content = append_line(content, "project_dir: " + request.project_dir)
+    content = append_line(content, "canonical_target: " + request.canonical_target)
+    content = append_line(content, "output_dir: " + request.output_dir)
+    content = append_line(content, "arch_tag: " + request.arch_tag)
+    content = append_line(content, "abi: " + request.abi)
+    content = append_line(content, "backend_family: " + request.backend_family)
+    content = append_line(content, "preferred_logical_entry: " + request.preferred_logical_entry)
+    content = append_line(content, "include_test_sources: " + if request.include_test_sources { "true" } else { "false" })
+    content = append_line(content, "build_options.source_map: " + if request.build_options.source_map { "true" } else { "false" })
+    content = append_line(content, "build_options.type_script: " + if request.build_options.type_script { "true" } else { "false" })
+    content = append_line(content, "build_options.wat: " + if request.build_options.wat { "true" } else { "false" })
+    content = append_line(content, "build_options.msil: " + if request.build_options.msil { "true" } else { "false" })
+    content = append_line(content, "package_count: " + format("{}", request.package_count))
+    content = append_line(content, "file_count: " + format("{}", request.file_count))
+    content = append_line(content, "executor_mode: " + request.executor_mode)
+    content = append_line(content, "verbose: " + if request.verbose { "true" } else { "false" })
+    content = append_line(content, "compile_plan_snapshot: " + compile_plan_snapshot_path(request.output_dir))
+    return std.io.write_file_text(backend_execution_snapshot_path(request.output_dir), content)
+}
+
+micro write_backend_execution_result_snapshot(output_dir: utf8, result: LegionBackendExecutionResult) -> bool {
+    let mut content: utf8 = ""
+    content = append_line(content, "executor_kind: " + result.executor_kind)
+    content = append_line(content, "success: " + if result.success { "true" } else { "false" })
+    content = append_line(content, "error: " + result.error)
+    return std.io.write_file_text(backend_execution_result_snapshot_path(output_dir), content)
+}
+
+micro execute_backend_request_via_host_bridge(request: LegionBackendExecutionRequest) -> LegionBackendExecutionResult {
     <% match arch %>
         <% case "clr" %>
-        let exit_code: i32 = clr_host_build_project(project_dir, canonical_target, output_dir, verbose)
+        let exit_code: i32 = clr_host_build_project(request.project_dir, request.canonical_target, request.output_dir, request.verbose)
         if exit_code != 0 {
-            std.io.error("错误：宿主构建器执行失败，退出码 = " + format("{}", exit_code))
+            return LegionBackendExecutionResult {
+                executor_kind: "clr_host_bridge",
+                success: false,
+                error: "宿主构建器执行失败，退出码 = " + format("{}", exit_code)
+            }
+        }
+        return LegionBackendExecutionResult {
+            executor_kind: "clr_host_bridge",
+            success: true,
+            error: ""
         }
         <% case "nyar" %>
-        let success: bool = nyar_host_build_project(project_dir, canonical_target, output_dir)
+        let success: bool = nyar_host_build_project(request.project_dir, request.canonical_target, request.output_dir)
         if !success {
-            std.io.error("错误：NyarVM 宿主构建器执行失败")
+            return LegionBackendExecutionResult {
+                executor_kind: "nyar_host_bridge",
+                success: false,
+                error: "NyarVM 宿主构建器执行失败"
+            }
+        }
+        return LegionBackendExecutionResult {
+            executor_kind: "nyar_host_bridge",
+            success: true,
+            error: ""
         }
         <% else %>
-        std.io.print_line("  当前宿主尚未接入源码编译执行器，暂不继续下探真实编译阶段。")
+        return LegionBackendExecutionResult {
+            executor_kind: "unsupported",
+            success: false,
+            error: "当前宿主尚未接入源码编译执行器，暂不继续下探真实编译阶段。"
+        }
         <% end match %>
+}
+
+micro execute_backend_request(request: LegionBackendExecutionRequest) -> LegionBackendExecutionResult {
+    if request.executor_mode == "host_bridge" {
+        return execute_backend_request_via_host_bridge(request)
+    }
+
+    if request.executor_mode == "source_compiler" {
+        return LegionBackendExecutionResult {
+            executor_kind: "source_compiler",
+            success: false,
+            error: "源码编译执行器尚未接入"
+        }
+    }
+
+    return LegionBackendExecutionResult {
+        executor_kind: "unsupported",
+        success: false,
+        error: "未知的后端执行模式：" + request.executor_mode
+    }
 }

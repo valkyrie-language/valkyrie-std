@@ -1,5 +1,11 @@
 namespace std.iterator;
 
+micro collect<I, T, C>(self: I) -> C
+    where I: Iterator<Item = T>, C: FromIterator<Item = T>
+{
+    return C::from_iterator(self)
+}
+
 micro collect_array<I, T>(self: I) -> [T]
     where I: Iterator<Item = T>
 {

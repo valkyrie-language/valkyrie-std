@@ -141,15 +141,17 @@ micro legion_target_backend_family(canonical_target: utf8) -> utf8 {
 }
 
 micro legion_find_build_target(manifest: LegionProjectManifest, requested_target: utf8, canonical_target: utf8) -> LegionBuildTarget {
-    let mut i: usize = 0
-    while i < manifest.build_targets.length() {
-        let candidate: LegionBuildTarget = manifest.build_targets[i]
-        let candidate_canonical: utf8 = legion_canonical_target(candidate.name)
-        if candidate.name == requested_target || candidate_canonical == canonical_target {
-            return candidate
-        }
-        i = i + 1
+    let selected: Option<LegionBuildTarget> = manifest.build_targets
+        .into_iterator()
+        .find(micro(candidate: LegionBuildTarget) -> bool {
+            let candidate_canonical: utf8 = legion_canonical_target(candidate.name)
+            return candidate.name == requested_target || candidate_canonical == canonical_target
+        })
+
+    if selected.is_some() {
+        return selected.unwrap()
     }
+
     return LegionBuildTarget {
         name: requested_target,
         options: legion_empty_build_target_options()

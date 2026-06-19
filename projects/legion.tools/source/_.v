@@ -123,14 +123,20 @@ micro parse_build_request(args: [utf8]) -> BuildRequest {
 }
 
 micro select_publish_target(manifest: LegionProjectManifest, requested_target: utf8, publish_type: utf8) -> PublishSelection {
-    loop target in manifest.publish_targets {
-        if target.type == publish_type {
-            if requested_target.length() == 0 || target.target == requested_target {
-                return PublishSelection {
-                    found: true,
-                    target: target
-                }
+    let selected: Option<LegionPublishTarget> = manifest.publish_targets
+        .into_iterator()
+        .find(micro(target: LegionPublishTarget) -> bool {
+            if target.type != publish_type {
+                return false
             }
+
+            return requested_target.length() == 0 || target.target == requested_target
+        })
+
+    if selected.is_some() {
+        return PublishSelection {
+            found: true,
+            target: selected.unwrap()
         }
     }
 
@@ -296,9 +302,19 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
 
                         match build_compile_plan(context, manifest) {
                             case Fine(compile_plan):
+                                let execution_request: LegionBackendExecutionRequest = build_backend_execution_request(compile_plan, verbose)
                                 std.io.create_directory(compile_plan.output_dir)
                                 if !write_compile_plan_snapshot(compile_plan) {
                                     std.io.error("错误：写入编译计划快照失败 - " + compile_plan.output_dir)
+                                    return
+                                }
+                                if !write_backend_execution_request_snapshot(execution_request) {
+                                    std.io.error("错误：写入后端执行请求快照失败 - " + execution_request.output_dir)
+                                    return
+                                }
+                                let execution_result: LegionBackendExecutionResult = execute_backend_request(execution_request)
+                                if !write_backend_execution_result_snapshot(execution_request.output_dir, execution_result) {
+                                    std.io.error("错误：写入后端执行结果快照失败 - " + execution_request.output_dir)
                                     return
                                 }
                                 std.io.print_line("  源码闭包：" + compile_plan.source_closure.package_names.length() + " 个包，" + compile_plan.source_closure.files.length() + " 个文件")
@@ -308,10 +324,17 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                                     }
                                     std.io.print_line("  计划目标：" + compile_plan.canonical_target)
                                     std.io.print_line("  计划输出：" + compile_plan.output_dir)
+                                    std.io.print_line("  执行模式：" + execution_request.executor_mode)
                                     std.io.print_line("  计划快照：" + compile_plan_snapshot_path(compile_plan.output_dir))
+                                    std.io.print_line("  后端请求：" + backend_execution_snapshot_path(execution_request.output_dir))
+                                    std.io.print_line("  执行结果：" + backend_execution_result_snapshot_path(execution_request.output_dir))
+                                    std.io.print_line("  执行器：" + execution_result.executor_kind)
                                 }
 
-                                delegate_host_build(compile_plan.project_dir, compile_plan.canonical_target, compile_plan.output_dir, verbose)
+                                if !execution_result.success {
+                                    std.io.error("错误：" + execution_result.error)
+                                    return
+                                }
                             case Fail(error):
                                 std.io.error("错误：生成编译计划失败 - " + error.message)
                                 return
@@ -328,7 +351,13 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
 }
 
 micro emit_workspace_build(project_dir: utf8, requested_target: utf8, output: utf8, verbose: bool) -> unit {
-    let manifest_path: utf8 = path_join(project_dir, "legions.von")
+    let manifest_path: utf8 = find_workspace_manifest_path(project_dir)
+    if manifest_path.length() == 0 {
+        std.io.error("错误：找不到 legions.von，无法执行 workspace 构建")
+        return
+    }
+
+    let workspace_dir: utf8 = workspace_root_dir(manifest_path)
     match legion_read_workspace_manifest(manifest_path) {
         case Fine(manifest):
             let members: [utf8] = manifest.members
@@ -339,7 +368,7 @@ micro emit_workspace_build(project_dir: utf8, requested_target: utf8, output: ut
 
             std.io.print_line("发现 workspace，共 " + members.length() + " 个成员项目")
             loop member in members {
-                let member_dir: utf8 = path_join(project_dir, member)
+                let member_dir: utf8 = path_join(workspace_dir, member)
                 emit_single_project_build(member_dir, requested_target, output, verbose)
             }
         case Fail(error):
@@ -351,10 +380,10 @@ micro emit_workspace_build(project_dir: utf8, requested_target: utf8, output: ut
 micro execute_build(args: [utf8]) -> unit {
     let request: BuildRequest = parse_build_request(args)
     let project_dir: utf8 = resolve_project_dir(request.project)
-    let workspace_manifest: utf8 = path_join(project_dir, "legions.von")
+    let workspace_manifest: utf8 = find_workspace_manifest_path(project_dir)
     let project_manifest: utf8 = path_join(project_dir, "legion.von")
 
-    if std.io.file_exists(workspace_manifest) {
+    if workspace_manifest.length() > 0 {
         emit_workspace_build(project_dir, request.target, request.output, request.verbose)
         return
     }

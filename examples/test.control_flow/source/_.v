@@ -53,6 +53,15 @@ micro sum_with_loop_in(values: [i32]) -> i32 {
     return total
 }
 
+micro sum_with_manual_iterator(values: [i32]) -> i32 {
+    let mut iter = values.into_iterator()
+    let mut total = 0 as i32
+    while iter.has_next() {
+        total += iter.next().unwrap()
+    }
+    return total
+}
+
 micro collect_even_doubles(values: [i32]) -> [i32] {
     return values
         .into_iterator()
@@ -76,10 +85,53 @@ micro sum_generic_iterator<I>(iter: I) -> i32
     return total
 }
 
+micro sum_generic_manual_iterator<I>(iter: I) -> i32
+    where I: std.iterator.Iterator<Item = i32>
+{
+    let mut current: I = iter
+    let mut total = 0 as i32
+    while current.has_next() {
+        total += current.next().unwrap()
+    }
+    return total
+}
+
+micro count_with_take(values: [i32]) -> usize {
+    return values
+        .into_iterator()
+        .take(3 as usize)
+        .count()
+}
+
+micro find_in_generic_iterator<I>(iter: I) -> Option<i32>
+    where I: std.iterator.Iterator<Item = i32>
+{
+    return iter.find(micro(value: i32) -> bool {
+        return value >= (4 as i32)
+    })
+}
+
+micro reduce_generic_iterator<I>(iter: I) -> i32
+    where I: std.iterator.Iterator<Item = i32>
+{
+    return iter.reduce(0 as i32, micro(acc: i32, value: i32) -> i32 {
+        return acc + value
+    })
+}
+
 micro smoke_loop_in() -> ExitCode {
     let loop_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     let loop_in_sum = sum_with_loop_in(loop_values)
     if loop_in_sum != 10 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_manual_iterator() -> ExitCode {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let total = sum_with_manual_iterator(values)
+    if total != 10 {
         return ExitCode(1 as i32)
     }
     return ExitCode(0 as i32)
@@ -100,10 +152,49 @@ micro smoke_iterator_chain() -> ExitCode {
     return ExitCode(0 as i32)
 }
 
+micro smoke_iterator_take_count() -> ExitCode {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let count = count_with_take(values)
+    if count != (3 as usize) {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
 micro smoke_generic_iterator() -> ExitCode {
     let generic_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     let generic_iter_sum = sum_generic_iterator(generic_values.into_iterator().skip(1 as usize))
     if generic_iter_sum != 9 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_generic_manual_iterator() -> ExitCode {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let total = sum_generic_manual_iterator(values.into_iterator().skip(1 as usize))
+    if total != 9 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_generic_find() -> ExitCode {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let found = find_in_generic_iterator(values.into_iterator().skip(1 as usize))
+    if found.is_none() {
+        return ExitCode(1 as i32)
+    }
+    if found.unwrap() != 4 {
+        return ExitCode(2 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_generic_reduce() -> ExitCode {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let total = reduce_generic_iterator(values.into_iterator().take(3 as usize))
+    if total != 6 {
         return ExitCode(1 as i32)
     }
     return ExitCode(0 as i32)
@@ -134,11 +225,26 @@ micro main() -> ExitCode {
     if smoke_loop_in() != ExitCode(0 as i32) {
         return ExitCode(6 as i32)
     }
-    if smoke_generic_iterator() != ExitCode(0 as i32) {
+    if smoke_manual_iterator() != ExitCode(0 as i32) {
         return ExitCode(7 as i32)
     }
-    if smoke_iterator_chain() != ExitCode(0 as i32) {
+    if smoke_iterator_take_count() != ExitCode(0 as i32) {
         return ExitCode(8 as i32)
+    }
+    if smoke_generic_iterator() != ExitCode(0 as i32) {
+        return ExitCode(9 as i32)
+    }
+    if smoke_generic_manual_iterator() != ExitCode(0 as i32) {
+        return ExitCode(10 as i32)
+    }
+    if smoke_generic_find() != ExitCode(0 as i32) {
+        return ExitCode(11 as i32)
+    }
+    if smoke_generic_reduce() != ExitCode(0 as i32) {
+        return ExitCode(12 as i32)
+    }
+    if smoke_iterator_chain() != ExitCode(0 as i32) {
+        return ExitCode(13 as i32)
     }
 
     # pending loop_in sample for CLR bootstrap

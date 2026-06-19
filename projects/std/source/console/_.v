@@ -68,16 +68,16 @@ micro read_char(): i32 {
 }
 
 [clr("System.Console", "System.Console", "Write")]
-private micro __console_clr_write(value: utf8): unit
+private micro __console_clr_write(value: utf8): unit { }
 
 [clr("System.Console", "System.Console", "WriteLine")]
-private micro __console_clr_write_line(value: utf8): unit
+private micro __console_clr_write_line(value: utf8): unit { }
 
 [clr("System.Console", "System.Console", "ReadLine")]
-private micro __console_clr_read_line(): utf8
+private micro __console_clr_read_line(): utf8 { }
 
 [clr("System.Console", "System.Console", "ReadKey")]
-private micro __console_clr_read_key(): i32
+private micro __console_clr_read_key(): i32 { }
 
 [jvm("java.lang.System", "out.print")]
 private micro __console_jvm_write(value: utf8): unit

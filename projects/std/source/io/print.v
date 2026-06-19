@@ -3,7 +3,7 @@ namespace std.io;
 micro print(message: utf8): unit {
     <% match arch %>
         <% case "clr" %>
-        std.adaptor.clr.console.console_write(message)
+        std.console.write(message)
         <% case "jvm" %>
         std.adaptor.jvm.console.jvm_print(message)
         <% case "wasm32" %>
@@ -18,7 +18,7 @@ micro print(message: utf8): unit {
 micro print_line(message: utf8): unit {
     <% match arch %>
         <% case "clr" %>
-        std.adaptor.clr.console.console_write_line(message)
+        std.console.write_line(message)
         <% case "jvm" %>
         std.adaptor.jvm.console.jvm_println(message)
         <% case "wasm32" %>
@@ -33,7 +33,7 @@ micro print_line(message: utf8): unit {
 micro error(message: utf8): unit {
     <% match arch %>
         <% case "clr" %>
-        std.adaptor.clr.console.console_write(message)
+        std.console.write(message)
         <% case "jvm" %>
         std.adaptor.jvm.console.jvm_err_println(message)
         <% case "wasm32" %>
@@ -48,7 +48,7 @@ micro error(message: utf8): unit {
 micro trace(message: utf8): unit {
     <% match arch %>
         <% case "clr" %>
-        std.adaptor.clr.console.console_write_line(message)
+        std.console.write_line(message)
         <% case "jvm" %>
         std.adaptor.jvm.console.jvm_err_println(message)
         <% case "wasm32" %>

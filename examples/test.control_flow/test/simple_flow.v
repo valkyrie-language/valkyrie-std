@@ -32,6 +32,18 @@ micro iterator_loop_in_smoke() -> unit {
 }
 
 [test]
+micro iterator_manual_next_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(sum_with_manual_iterator(values) == (10 as i32))
+}
+
+[test]
+micro iterator_take_count_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(count_with_take(values) == (3 as usize))
+}
+
+[test]
 micro iterator_chain_smoke() -> unit {
     let transform_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     let transformed = collect_even_doubles(transform_values)
@@ -44,4 +56,24 @@ micro iterator_chain_smoke() -> unit {
 micro generic_iterator_smoke() -> unit {
     let generic_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     assert(sum_generic_iterator(generic_values.into_iterator().skip(1 as usize)) == (9 as i32))
+}
+
+[test]
+micro generic_manual_iterator_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(sum_generic_manual_iterator(values.into_iterator().skip(1 as usize)) == (9 as i32))
+}
+
+[test]
+micro generic_find_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    let found = find_in_generic_iterator(values.into_iterator().skip(1 as usize))
+    assert(found.is_some())
+    assert(found.unwrap() == (4 as i32))
+}
+
+[test]
+micro generic_reduce_smoke() -> unit {
+    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
+    assert(reduce_generic_iterator(values.into_iterator().take(3 as usize)) == (6 as i32))
 }

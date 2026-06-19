@@ -75,68 +75,59 @@ micro legion_empty_build_target_options() -> LegionBuildTargetOptions {
 }
 
 micro legion_collect_build_targets(value: VonValue) -> [LegionBuildTarget] {
-    let mut result: [LegionBuildTarget] = []
-    let items: [VonValue] = von_as_array(value)
-    let mut i: usize = 0
-    while i < items.length() {
-        let item: VonValue = items[i]
-        let target_name: utf8 = von_as_text(von_find_field(item, "target"))
-        if target_name.length() > 0 {
+    return von_as_array(value)
+        .into_iterator()
+        .map(micro(item: VonValue) -> LegionBuildTarget {
+            let target_name: utf8 = von_as_text(von_find_field(item, "target"))
             let options: LegionBuildTargetOptions = LegionBuildTargetOptions {
                 source_map: von_as_bool(von_find_field(item, "source_map")),
                 type_script: von_as_bool(von_find_field(item, "type_script")),
                 wat: von_as_bool(von_find_field(item, "wat")),
                 msil: von_as_bool(von_find_field(item, "msil"))
             }
-            push(result, LegionBuildTarget {
+
+            return LegionBuildTarget {
                 name: target_name,
                 options: options
-            })
-        }
-        i = i + 1
-    }
-    return result
+            }
+        })
+        .filter(micro(target: LegionBuildTarget) -> bool {
+            return target.name.length() > 0
+        })
+        .collect_array()
 }
 
 micro legion_collect_publish_targets(value: VonValue, default_version: utf8) -> [LegionPublishTarget] {
-    let mut result: [LegionPublishTarget] = []
-    let items: [VonValue] = von_as_array(value)
-    let mut i: usize = 0
-    while i < items.length() {
-        let item: VonValue = items[i]
-        let target_name: utf8 = von_as_text(von_find_field(item, "target"))
-        let publish_type: utf8 = von_as_text(von_find_field(item, "type"))
-        let package_id: utf8 = von_as_text(von_find_field(item, "package_id"))
-        let publish_version_raw: utf8 = von_as_text(von_find_field(item, "version"))
-        let publish_version: utf8 = if publish_version_raw.length() > 0 { publish_version_raw } else { default_version }
-        if target_name.length() > 0 && publish_type.length() > 0 {
-            push(result, LegionPublishTarget {
+    return von_as_array(value)
+        .into_iterator()
+        .map(micro(item: VonValue) -> LegionPublishTarget {
+            let target_name: utf8 = von_as_text(von_find_field(item, "target"))
+            let publish_type: utf8 = von_as_text(von_find_field(item, "type"))
+            let package_id: utf8 = von_as_text(von_find_field(item, "package_id"))
+            let publish_version_raw: utf8 = von_as_text(von_find_field(item, "version"))
+            let publish_version: utf8 = if publish_version_raw.length() > 0 { publish_version_raw } else { default_version }
+
+            return LegionPublishTarget {
                 target: target_name,
                 type: publish_type,
                 package_id: package_id,
                 version: publish_version
-            })
-        }
-        i = i + 1
-    }
-    return result
+            }
+        })
+        .filter(micro(target: LegionPublishTarget) -> bool {
+            return target.target.length() > 0 && target.type.length() > 0
+        })
+        .collect_array()
 }
 
 # 从 VON 值中解析依赖对象，过滤掉 core/std 布尔标志
 micro legion_collect_dependencies(deps_value: VonValue) -> [LegionDependency] {
-    let mut result: [LegionDependency] = []
-    let fields: [VonField] = von_as_object(deps_value)
-    let mut i: usize = 0
-    while i < fields.length() {
-        let field: VonField = fields[i]
-
-        # 跳过 core/std 布尔控制标志（兼容旧 schema）
-        if field.name == "core" || field.name == "std" {
-            i = i + 1
-            continue
-        }
-
-        if field.name.length() > 0 {
+    return von_as_object(deps_value)
+        .into_iterator()
+        .filter(micro(field: VonField) -> bool {
+            return field.name != "core" && field.name != "std"
+        })
+        .map(micro(field: VonField) -> LegionDependency {
             let version: utf8 = ""
             let abi: utf8 = ""
 
@@ -150,15 +141,16 @@ micro legion_collect_dependencies(deps_value: VonValue) -> [LegionDependency] {
                     version = von_as_text(field.value)
             }
 
-            push(result, LegionDependency {
+            return LegionDependency {
                 name: field.name,
                 version: version,
                 abi: abi
-            })
-        }
-        i = i + 1
-    }
-    return result
+            }
+        })
+        .filter(micro(dependency: LegionDependency) -> bool {
+            return dependency.name.length() > 0
+        })
+        .collect_array()
 }
 
 # 从 VON 对象中解析 auto_link 配置
