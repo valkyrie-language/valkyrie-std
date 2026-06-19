@@ -33,3 +33,28 @@ micro `test iterator collect to array list`() {
         panic("iterator collect array list value test failed")
     }
 }
+
+[test]
+micro `test iterator take count and collect`() {
+    let taken_count: usize = [1, 2, 3, 4]
+        .into_iterator()
+        .take(2)
+        .count()
+
+    if taken_count != 2 {
+        panic("iterator take count test failed")
+    }
+
+    let result: [i32] = [1, 2, 3, 4]
+        .into_iterator()
+        .take(3)
+        .collect_array()
+
+    if result.length != 3 {
+        panic("iterator take collect length test failed")
+    }
+
+    if result[0] != 1 || result[1] != 2 || result[2] != 3 {
+        panic("iterator take collect value test failed")
+    }
+}
