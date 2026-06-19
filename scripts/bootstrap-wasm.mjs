@@ -26,6 +26,7 @@
  *   - 本脚本用于“诚实失败”的真实验收，不再把半完成状态记为成功
  *   - 当前正确产物名应为 `legion.mjs` / `legion.wasm`
  *   - 若实际仍输出 `legion_tools.*`，脚本会把它标记为已知错误产物，而不是误记为通过
+ *   - 当前脚本仅用于实验性排查，不属于 `CLR / NuGet` 源头自举发布门
  */
 
 import fs from 'fs';
@@ -589,6 +590,7 @@ function main() {
     console.log('╔══════════════════════════════════════════════════════════╗');
     console.log('║             WASM 自举验证                               ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
+    console.log('说明：当前发布门仅承认 `CLR / NuGet` 源头自举；本脚本只用于手工排查 WASM 后端现状。\n');
 
     console.log(`输出根目录：${outputRoot}`);
     console.log(`自举项目：${BOOTSTRAP_PROJECT}`);
@@ -636,7 +638,7 @@ function main() {
     if (!expectedEntryReady || !v1RuntimePassed) {
         blockers.push('未进入 `v1 -> v2`：Level 1 入口契约或运行验收未通过');
     } else if (!v2Result) {
-        blockers.push('v1 -> v2 尚未接线');
+        blockers.push('v1 -> v2 未执行或未产出有效结果');
     } else if (compareResult.skipped) {
         blockers.push('v1 / v2 比对被跳过');
     } else if (!compareResult.match) {

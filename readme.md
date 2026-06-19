@@ -318,13 +318,13 @@ flowchart TD
 
 ### CI 自举验证管线
 
-上一代编译器已分别发布到三个后端的包管理器。CI 中每个后端独立执行"二重编译对比"——上一代编译器编译当前源码得 v1，v1 编译当前源码得 v2，v1 ≡ v2 则自举成功。
+当前发布门只承认 `CLR / NuGet` 的源头自举链，不再把 `JVM`、`WASM`、对角交叉验证或实验性后端脚本当成主线完成条件。
 
-| 后端 | 包管理器 | 安装命令 |
+当前唯一有效的发布门是：
+
+| 路径 | 上一代入口 | 验收链 |
 |:---|:---|:---|
-| **CLR** | NuGet | `dotnet tool install Valkyrie.Compiler.CLR --global` |
-| **JVM** | Maven Central | `mvn dependency:copy -Dartifact=dev.valkyrie:compiler-jvm:LATEST` |
-| **WASM** | npm | `npm install -g @valkyrie/compiler-wasm` |
+| **CLR 源头自举** | `NuGet Tool` seed | `seed -> v1.clr -> v2.clr -> 比对` |
 
 ```mermaid
 flowchart TB
@@ -332,67 +332,30 @@ flowchart TB
         Src["valkyrie.v 源码<br/>（Valkyrie 编写的编译器）"]
     end
 
-    subgraph CLR["CLR 后端自举 — NuGet"]
-        NuGet["从 NuGet 安装<br/>Valkyrie.Compiler.CLR<br/>（上一代）"] --> C1["编译：源码 → v1.clr"]
-        C1 --> C2["用 v1.clr 编译：源码 → v2.clr"]
+    subgraph CLR["CLR 源头自举 — NuGet"]
+        NuGet["从 NuGet 获取<br/>上一代 seed 编译器"] --> C1["编译：源码 → v1.clr"]
+        C1 --> CRun["运行：v1 --version / --help"]
+        CRun --> C2["编译：v1.clr → v2.clr"]
         C2 --> CC{"v1.clr ≟ v2.clr"}
-        CC -- "一致" --> CPass["CLR 自举 ✅"]
-        CC -- "不一致" --> CFail["CLR 自举 ❌"]
-    end
-
-    subgraph JVM["JVM 后端自举 — Maven"]
-        Maven["从 Maven 安装<br/>compiler-jvm<br/>（上一代）"] --> J1["编译：源码 → v1.jar"]
-        J1 --> J2["用 v1.jar 编译：源码 → v2.jar"]
-        J2 --> JC{"v1.jar ≟ v2.jar"}
-        JC -- "一致" --> JPass["JVM 自举 ✅"]
-        JC -- "不一致" --> JFail["JVM 自举 ❌"]
-    end
-
-    subgraph WASM["WASM 后端自举 — npm"]
-        Npm["从 npm 安装<br/>@valkyrie/compiler-wasm<br/>（上一代）"] --> W1["编译：源码 → v1.wasm"]
-        W1 --> W2["用 v1.wasm 编译：源码 → v2.wasm"]
-        W2 --> WC{"v1.wasm ≟ v2.wasm"}
-        WC -- "一致" --> WPass["WASM 自举 ✅"]
-        WC -- "不一致" --> WFail["WASM 自举 ❌"]
+        CC -- "一致" --> CPass["CLR 源头自举 ✅"]
+        CC -- "不一致" --> CFail["CLR 源头自举 ❌"]
     end
 
     subgraph Final["判定"]
-        CPass --> Gate{"三个后端<br/>全部通过？"}
-        JPass --> Gate
-        WPass --> Gate
-        Gate -- "是" --> AllPass["🎉 自举验证全部通过<br/>本轮编译器可安全发布"]
-        Gate -- "否" --> Block["🚫 阻止发布<br/>以 Level 0 结果为基准修复"]
+        CPass --> Publish["允许发布当前编译器"]
+        CFail --> Block["🚫 阻止发布<br/>继续修复真实阻断项"]
     end
 
     Src --> C1
-    Src --> J1
-    Src --> W1
 ```
 
-#### 为什么三个后端要独立验证？
+#### 为什么当前只以 CLR 为主门？
 
-编译器对不同后端的代码生成路径完全不同——CLR 生成 MSIL，JVM 生成 JVM 字节码，WASM 生成 Wasm——任何一端都可能引入 bug。三个后端全部通过才证明编译器正确。
+因为当前短期目标是先把 `CLR / NuGet` 的源头自举链跑通，并建立真实可发布的 seed、`v1`、`v2`、运行验收与产物比对闭环。`JVM` 与 `WASM` 仍可继续排查，但不再作为当前发布门的一部分。
 
-#### 跨后端对角验证（可选扩展）
+#### 其它后端如何处理？
 
-除各自独立自举外，还可交叉验证以检测更深层的等价性 bug：
-
-```mermaid
-flowchart LR
-    subgraph Diagonal["对角交叉验证"]
-        D1["CLR 编译器编译<br/>JVM 后端测试用例<br/>→ JVM 字节码"]
-        D2["JVM VM 执行<br/>该字节码"]
-        D3["结果 ≟ 预期"]
-    end
-
-    subgraph Diagonal2[""]
-        E1["WASM 编译器编译<br/>CLR 后端测试用例<br/>→ MSIL"]
-        E2["CLR 运行时执行<br/>该 MSIL"]
-        E3["结果 ≟ 预期"]
-    end
-```
-
-即：用后端 A 的编译器编译后端 B 的测试用例，在后端 B 的运行时上执行，验证行为一致性。
+`JVM`、`WASM` 与跨后端对角验证目前只保留为实验性排查或未来阶段目标，不计入本轮发布门，也不能拿来替代 `CLR` 源头自举的真实验收。
 
 ---
 

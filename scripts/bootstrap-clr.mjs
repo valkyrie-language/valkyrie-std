@@ -33,7 +33,7 @@ const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([
 const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
 const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
 const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
-const LEVEL2_PENDING_REASON = '当前脚本尚未完成 `v1.clr -> v2.clr` 的真实源头自举验证；在真实执行前不得把该门记为通过。';
+const LEVEL2_SKIPPED_REASON = '由于上游门禁未通过，`v1.clr -> v2.clr` 未执行。';
 
 // ─────────────────────────────────────────────────────────────
 // 配置
@@ -92,6 +92,9 @@ function findLegion() {
     const candidates = [
         ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion')),
         ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion-tool')),
+        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'publish')),
+        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', '.artifacts', 'bin', 'Release', 'net10.0')),
+        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', '.artifacts', 'bin', 'Debug', 'net10.0')),
         ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
         ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
     ];
@@ -601,7 +604,7 @@ function main() {
             createGate('源码 -> v1.clr', '跳过', '上一代编译器入口未就绪'),
             createGate('v1 --version', '跳过', '源码 -> v1.clr 未完成'),
             createGate('v1 --help', '跳过', '源码 -> v1.clr 未完成'),
-            createGate('v1 -> v2.clr', '跳过', LEVEL2_PENDING_REASON),
+            createGate('v1 -> v2.clr', '跳过', LEVEL2_SKIPPED_REASON),
             createGate('v1 / v2 比对', '跳过', '由于上游门禁未通过，比对未执行'),
         ];
         const blockers = ['上一代编译器入口未就绪'];
@@ -701,7 +704,7 @@ function main() {
             outputDir: v2Result?.outputDir || null,
             compared: !compareResult.skipped,
             match: compareResult.match,
-            reason: v2Result ? (v2Result.success ? null : v2Result.error) : LEVEL2_PENDING_REASON,
+            reason: v2Result ? (v2Result.success ? null : v2Result.error) : LEVEL2_SKIPPED_REASON,
         },
     });
 

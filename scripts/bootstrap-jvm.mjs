@@ -22,6 +22,7 @@
  * 当前状态：
  *   - 本脚本用于“诚实失败”的真实验收，不再把半完成状态记为成功
  *   - 只要 v1 运行失败、v2 未接线或比对跳过，脚本都会返回非零退出码
+ *   - 当前脚本仅用于实验性排查，不属于 `CLR / NuGet` 源头自举发布门
  */
 
 import fs from 'fs';
@@ -506,6 +507,7 @@ function main() {
     console.log('╔══════════════════════════════════════════════════════════╗');
     console.log('║             JVM 自举验证                                ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
+    console.log('说明：当前发布门仅承认 `CLR / NuGet` 源头自举；本脚本只用于手工排查 JVM 后端现状。\n');
 
     console.log(`输出根目录：${outputRoot}`);
     console.log(`自举项目：${BOOTSTRAP_PROJECT}`);
@@ -555,7 +557,7 @@ function main() {
         blockers.push('v1 --help 仍失败');
     }
     if (!v2Result) {
-        blockers.push('v1 -> v2 尚未接线');
+        blockers.push('v1 -> v2 未执行或未产出有效结果');
     } else if (compareResult.skipped) {
         blockers.push('v1 / v2 比对被跳过');
     } else if (!compareResult.match) {
