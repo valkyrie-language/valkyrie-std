@@ -35,12 +35,11 @@ micro directed_graph_add_edge(mut graph: DirectedGraph, from: utf8, to: utf8) ->
 
 # 检查节点是否存在
 micro directed_graph_has_node(graph: DirectedGraph, node: utf8) -> bool {
-    loop current_node in graph._nodes {
-        if current_node == node {
-            return true
-        }
-    }
-    return false
+    return graph._nodes
+        .into_iterator()
+        .any(micro(current_node: utf8) -> bool {
+            return current_node == node
+        })
 }
 
 # 检查边是否存在

@@ -18,10 +18,9 @@ micro transitive_successors(graph: DirectedGraph, start: utf8) -> [utf8] {
         loop succ in successors {
             let is_visited: bool = visited
                 .into_iterator()
-                .filter(micro(visited_node: utf8) -> bool {
+                .any(micro(visited_node: utf8) -> bool {
                     return visited_node == succ
                 })
-                .count() > 0
 
             if !is_visited {
                 push(visited, succ)
@@ -56,10 +55,9 @@ micro transitive_predecessors(graph: DirectedGraph, start: utf8) -> [utf8] {
         loop pred in predecessors {
             let is_visited: bool = visited
                 .into_iterator()
-                .filter(micro(visited_node: utf8) -> bool {
+                .any(micro(visited_node: utf8) -> bool {
                     return visited_node == pred
                 })
-                .count() > 0
 
             if !is_visited {
                 push(visited, pred)

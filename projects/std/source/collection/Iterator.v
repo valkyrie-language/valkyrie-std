@@ -20,6 +20,18 @@ trait Iterator {
         }
     }
 
+    micro skip(self, count: usize) -> Iterator<Item=Item> {
+        let mut skipped: usize = 0
+        loop item in self {
+            if skipped < count {
+                skipped = skipped + 1
+                continue
+            }
+
+            yield item
+        }
+    }
+
     micro for_each(mut self, f: micro(Item) -> unit): unit {
         while self.has_next() {
             f(self.next().unwrap())
@@ -68,7 +80,7 @@ trait Iterator {
         return result
     }
 
-    micro collect_list(self): ArrayList<Item> {
+    micro collect_array_list(self): ArrayList<Item> {
         let mut result: ArrayList<Item> = ArrayList::new(0)
         loop item in self {
             result.push(item)

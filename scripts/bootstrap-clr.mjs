@@ -21,7 +21,7 @@
  *
  * 当前状态：
  *   - 本脚本用于“诚实失败”的真实验收，不再把半完成状态记为成功
- *   - 只要 v1 运行失败、v2 未接线或比对跳过，脚本都会返回非零退出码
+ *   - 只要任一门未通过、未执行或比对跳过，脚本都会返回非零退出码
  */
 
 import fs from 'fs';
@@ -33,7 +33,7 @@ const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([
 const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
 const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
 const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
-const LEVEL2_UNWIRED_REASON = 'v1 产物（valkyrie.v legion）当前仅实现 manifest 解析与构建上下文，尚未接入真实编译执行器。';
+const LEVEL2_PENDING_REASON = '当前脚本尚未完成 `v1.clr -> v2.clr` 的真实源头自举验证；在真实执行前不得把该门记为通过。';
 
 // ─────────────────────────────────────────────────────────────
 // 配置
@@ -335,7 +335,7 @@ function compileV1(legionPath, outputDir, verbose) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Level 2：v1.clr → v2.clr（待接线）
+// Level 2：v1.clr → v2.clr
 // ─────────────────────────────────────────────────────────────
 
 function compileV2(v1Result, outputDir, verbose) {
@@ -343,19 +343,69 @@ function compileV2(v1Result, outputDir, verbose) {
     console.log('  Level 2：v1.clr → v2.clr');
     console.log('══════════════════════════════════════════════════\n');
 
-    console.log('状态：未接线');
-    console.log(`原因：${LEVEL2_UNWIRED_REASON}`);
-    console.log('');
-    console.log('待完成工作：');
-    console.log('  1. 在 valkyrie.v legion 源码中实现编译器后端');
-    console.log('     - 或添加 --compiler 参数支持委托外部编译器');
-    console.log('  2. 用 v1 产物编译 valkyrie.v/projects/legion.tools → v2');
-    console.log('  3. 比对 v1 与 v2 的 .msil 产物');
-    console.log('');
-    console.log('命令（待 v1 编译器后端就绪后启用）：');
-    console.log(`  dotnet "${v1Result.legionExe}" build "${BOOTSTRAP_PROJECT_DIR}" --target clr -o "${outputDir}"`);
+    console.log(`v1 编译器：${v1Result.legionExe}`);
+    console.log(`源码项目：${BOOTSTRAP_PROJECT_DIR}`);
+    console.log(`输出目录：${outputDir}\n`);
 
-    return null;
+    if (fs.existsSync(outputDir)) {
+        fs.rmSync(outputDir, { recursive: true, force: true });
+    }
+
+    const buildResult = runCommand(
+        `dotnet "${v1Result.legionExe}" build "${BOOTSTRAP_PROJECT_DIR}" --target clr -o "${outputDir}"`,
+        { cwd: ROOT_DIR, timeout: 300000 }
+    );
+
+    const targetDir = path.join(outputDir, TARGET_TRIPLE);
+    const legionExe = path.join(targetDir, 'legion.exe');
+    const legionMsil = path.join(targetDir, 'legion.msil');
+
+    if (!buildResult.success) {
+        console.error('错误：v2 编译失败');
+        if (buildResult.stderr) {
+            console.error(buildResult.stderr.slice(0, 2000));
+        }
+        return {
+            success: false,
+            stage: 'v1_to_v2',
+            error: shortenText(buildResult.stderr || buildResult.stdout || 'v2 编译失败'),
+            outputDir: targetDir,
+            legionExe,
+            legionMsil,
+            artifacts: [],
+            hash: null,
+        };
+    }
+
+    if (!fs.existsSync(legionExe)) {
+        console.error(`错误：v2 产物不存在：${legionExe}`);
+        return {
+            success: false,
+            stage: 'v2_artifact',
+            error: `v2 产物不存在：${legionExe}`,
+            outputDir: targetDir,
+            legionExe,
+            legionMsil,
+            artifacts: [],
+            hash: null,
+        };
+    }
+
+    const v2Artifacts = collectFiles(targetDir, ['.exe', '.dll', '.msil', '.json', '.pdb', '.txt']);
+    console.log(`v2 产物清单（${v2Artifacts.length} 个文件）：`);
+    for (const artifact of v2Artifacts) {
+        console.log(`  ${path.relative(targetDir, artifact)}`);
+    }
+
+    return {
+        success: true,
+        stage: 'v1_to_v2',
+        outputDir: targetDir,
+        legionExe,
+        legionMsil,
+        artifacts: v2Artifacts,
+        hash: computeDirHash(targetDir, ['.msil']),
+    };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -384,7 +434,7 @@ function compareArtifacts(v1Result, v2Result) {
     console.log('  v1 / v2 比对');
     console.log('══════════════════════════════════════════════════\n');
 
-    if (!v1Result || !v2Result) {
+    if (!v1Result || !v2Result || !v2Result.success) {
         console.log('比对跳过：v1 或 v2 产物缺失');
         return { match: false, skipped: true };
     }
@@ -551,8 +601,8 @@ function main() {
             createGate('源码 -> v1.clr', '跳过', '上一代编译器入口未就绪'),
             createGate('v1 --version', '跳过', '源码 -> v1.clr 未完成'),
             createGate('v1 --help', '跳过', '源码 -> v1.clr 未完成'),
-            createGate('v1 -> v2.clr', '未接线', LEVEL2_UNWIRED_REASON),
-            createGate('v1 / v2 比对', '跳过', '由于 `v1 -> v2` 未接线，比对未执行'),
+            createGate('v1 -> v2.clr', '跳过', LEVEL2_PENDING_REASON),
+            createGate('v1 / v2 比对', '跳过', '由于上游门禁未通过，比对未执行'),
         ];
         const blockers = ['上一代编译器入口未就绪'];
         const reportPath = writeReport(outputRoot, { gates, blockers, success: false });
@@ -582,7 +632,7 @@ function main() {
     const v1RuntimePassed = v1VersionPassed && v1HelpPassed;
 
     // Level 2：v1.clr → v2.clr
-    const v2Result = v1Result.success ? compileV2(v1Result, v2OutputDir, options.verbose) : null;
+    const v2Result = v1RuntimePassed ? compileV2(v1Result, v2OutputDir, options.verbose) : null;
 
     // 比对
     const compareResult = compareArtifacts(v1Result, v2Result);
@@ -595,7 +645,7 @@ function main() {
     console.log(`源码 -> v1.clr：${v1Result.success ? '通过' : '未通过'}`);
     console.log(`v1 --version：${v1Result.success ? (v1VersionPassed ? '通过' : '未通过') : '跳过'}`);
     console.log(`v1 --help：${v1Result.success ? (v1HelpPassed ? '通过' : '未通过') : '跳过'}`);
-    console.log('v1 -> v2.clr：未接线');
+    console.log(`v1 -> v2.clr：${v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过'}`);
     console.log(`v1 / v2 比对：${compareResult.skipped ? '跳过' : (compareResult.match ? '一致' : '不一致')}`);
 
     const blockers = [];
@@ -609,7 +659,9 @@ function main() {
         blockers.push('v1 --help 仍失败');
     }
     if (!v2Result) {
-        blockers.push('v1 -> v2 尚未接线');
+        blockers.push('v1 -> v2 未执行：上游门禁未通过');
+    } else if (!v2Result.success) {
+        blockers.push(`v1 -> v2 失败：${v2Result.error}`);
     } else if (compareResult.skipped) {
         blockers.push('v1 / v2 比对被跳过');
     } else if (!compareResult.match) {
@@ -621,8 +673,12 @@ function main() {
         createGate('源码 -> v1.clr', v1Result.success ? '通过' : '未通过', v1Result.success ? `产物目录：${v1Result.outputDir}` : v1Result.error),
         createGate('v1 --version', v1Result.success ? (v1VersionPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1VersionPassed ? '退出码 0' : shortenText(v1Result.runtime?.version?.stderr || v1Result.runtime?.version?.stdout || '执行失败')) : '源码 -> v1.clr 未通过'),
         createGate('v1 --help', v1Result.success ? (v1HelpPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1HelpPassed ? '退出码 0' : shortenText(v1Result.runtime?.help?.stderr || v1Result.runtime?.help?.stdout || '执行失败')) : '源码 -> v1.clr 未通过'),
-        createGate('v1 -> v2.clr', '未接线', LEVEL2_UNWIRED_REASON),
-        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? '由于 `v1 -> v2` 未接线，比对未执行' : (compareResult.match ? '`.msil` 与 `run-contract.txt` 一致' : '产物比对不一致')),
+        createGate(
+            'v1 -> v2.clr',
+            v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过',
+            v2Result ? (v2Result.success ? `产物目录：${v2Result.outputDir}` : v2Result.error) : '由于 `v1` 运行门未通过，第二轮编译未执行'
+        ),
+        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? '由于 `v1 -> v2` 未完成，比对未执行' : (compareResult.match ? '`.msil` 与 `run-contract.txt` 一致' : '产物比对不一致')),
     ];
 
     const reportPath = writeReport(outputRoot, {
@@ -640,10 +696,12 @@ function main() {
             },
         },
         v2: {
-            connected: false,
+            attempted: Boolean(v2Result),
+            success: Boolean(v2Result?.success),
+            outputDir: v2Result?.outputDir || null,
             compared: !compareResult.skipped,
             match: compareResult.match,
-            reason: LEVEL2_UNWIRED_REASON,
+            reason: v2Result ? (v2Result.success ? null : v2Result.error) : LEVEL2_PENDING_REASON,
         },
     });
 

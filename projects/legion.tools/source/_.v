@@ -145,13 +145,10 @@ micro default_package_output_dir(project_dir: utf8) -> utf8 {
 }
 
 micro collect_tail_args(args: [utf8], start_index: usize) -> [utf8] {
-    let mut result: [utf8] = []
-    let mut i: usize = start_index
-    while i < args.length() {
-        push(result, args[i])
-        i = i + 1
-    }
-    return result
+    return args
+        .into_iterator()
+        .skip(start_index)
+        .collect_array()
 }
 
 micro print_root_help() -> unit {

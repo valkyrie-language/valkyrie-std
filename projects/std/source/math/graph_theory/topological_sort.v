@@ -64,11 +64,9 @@ micro array_remove_first(arr: [utf8]) -> [utf8] {
     if arr.length() <= 1 {
         return []
     }
-    let mut result: [utf8] = []
-    let mut i: usize = 1
-    while i < arr.length() {
-        push(result, arr[i])
-        i = i + 1
-    }
-    return result
+
+    return arr
+        .into_iterator()
+        .skip(1)
+        .collect_array()
 }

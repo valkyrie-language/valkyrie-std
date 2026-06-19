@@ -127,7 +127,7 @@ imply OrderedMap<K, V>: Map<K, V> {
             .map(micro(entry: OrderedMapEntry<K, V>) -> K {
                 return entry.key
             })
-            .collect_list()
+            .collect_array_list()
         <% end match %>
     }
 
@@ -144,7 +144,7 @@ imply OrderedMap<K, V>: Map<K, V> {
             .map(micro(entry: OrderedMapEntry<K, V>) -> V {
                 return entry.value
             })
-            .collect_list()
+            .collect_array_list()
         <% end match %>
     }
 

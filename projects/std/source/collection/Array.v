@@ -49,10 +49,13 @@ imply Array<T> {
     }
 
     micro contains(self, value: T): bool {
-        loop item in self {
-            if item == value {
+        let mut i: usize = 0
+        while i < self.length() {
+            if self.get(i).unwrap() == value {
                 return true
             }
+
+            i = i + 1
         }
 
         return false
@@ -66,7 +69,6 @@ structure ArrayIterator<T> {
 
 imply Array<T>: IntoIterator {
     type Item = T;
-    type Iter = ArrayIterator<T>;
 
     micro into_iterator(self): ArrayIterator<T> {
         return ArrayIterator<T> {

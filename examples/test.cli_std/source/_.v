@@ -75,12 +75,10 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
     let cmds: [CommandModel] = app.commands
     loop cmd in cmds {
         if cmd.name == first_arg {
-            let mut pos: [utf8] = []
-            let mut j: usize = 1
-            while j < len(args) {
-                push(pos, args[j])
-                j = j + 1
-            }
+            let pos: [utf8] = args
+                .into_iterator()
+                .skip(1)
+                .collect_array()
             return ParsedCommand {
                 command_name: cmd.name,
                 positional: pos,
