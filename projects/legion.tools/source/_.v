@@ -4,15 +4,8 @@ using std.data.text.von;
 using std.io;
 using std.math.graph_theory;
 
-[clr("LoL.Legion.HostBridge", "Legion.Bootstrap.HostBridge", "BuildProject")]
-micro clr_host_build_project(project_dir: utf8, target: utf8, output: utf8, verbose: bool) -> i32
-
 [clr("LoL.Legion.HostBridge", "Legion.Bootstrap.HostBridge", "PackProject")]
 micro clr_host_pack_project(project_dir: utf8, target: utf8, output: utf8, package_id: utf8, version: utf8, verbose: bool) -> utf8
-
-# NyarVM 宿主委托：通过 [vm] 属性绑定到运行时注册的 host.build_project intrinsic
-[vm("host.build_project")]
-micro nyar_host_build_project(project_dir: utf8, target: utf8, output: utf8) -> bool
 
 structure BuildRequest {
     project: utf8

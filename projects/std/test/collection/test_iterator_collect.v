@@ -58,3 +58,36 @@ micro `test iterator take count and collect`() {
         panic("iterator take collect value test failed")
     }
 }
+
+[test]
+micro `test iterator find and position`() {
+    let found: Option<i32> = [1, 2, 3, 4]
+        .into_iterator()
+        .find(micro(value: i32) -> bool {
+            return value > 2
+        })
+
+    if found.is_none() || found.unwrap() != 3 {
+        panic("iterator find value test failed")
+    }
+
+    let position: Option<usize> = [1, 2, 3, 4]
+        .into_iterator()
+        .position(micro(value: i32) -> bool {
+            return value == 4
+        })
+
+    if position.is_none() || position.unwrap() != 3 {
+        panic("iterator position value test failed")
+    }
+
+    let missing: Option<i32> = [1, 2]
+        .into_iterator()
+        .find(micro(value: i32) -> bool {
+            return value == 9
+        })
+
+    if missing.is_some() {
+        panic("iterator find missing value test failed")
+    }
+}

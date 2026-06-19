@@ -71,16 +71,15 @@ micro legion_manifest_targets(manifest: LegionProjectManifest, requested_target:
 }
 
 micro legion_last_path_segment(path: utf8) -> utf8 {
-    let parts: [utf8] = normalize_path(path).split("/")
-    let mut result: utf8 = ""
-    let mut i: usize = 0
-    while i < parts.length() {
-        if parts[i].length() > 0 {
-            result = parts[i]
-        }
-        i = i + 1
-    }
-    return result
+    return normalize_path(path)
+        .split("/")
+        .into_iterator()
+        .filter(micro(part: utf8) -> bool {
+            return part.length() > 0
+        })
+        .reduce("", micro(result: utf8, part: utf8) -> utf8 {
+            return part
+        })
 }
 
 micro legion_project_name(project_dir: utf8, manifest: LegionProjectManifest) -> utf8 {
@@ -175,12 +174,11 @@ micro legion_build_dependency_graph(manifest: LegionProjectManifest, project_nam
     }
 
     # 添加显式声明的依赖
-    let mut i: usize = 0
-    while i < manifest.dependencies.length() {
-        let dep: LegionDependency = manifest.dependencies[i]
-        directed_graph_add_edge(graph, project_name, dep.name)
-        i = i + 1
-    }
+    manifest.dependencies
+        .into_iterator()
+        .for_each(micro(dep: LegionDependency) -> unit {
+            directed_graph_add_edge(graph, project_name, dep.name)
+        })
 
     return graph
 }
@@ -196,12 +194,11 @@ micro legion_dependency_names(manifest: LegionProjectManifest, project_name: utf
         push(result, "std")
     }
 
-    let mut i: usize = 0
-    while i < manifest.dependencies.length() {
-        let dep: LegionDependency = manifest.dependencies[i]
-        push(result, dep.name)
-        i = i + 1
-    }
+    manifest.dependencies
+        .into_iterator()
+        .for_each(micro(dep: LegionDependency) -> unit {
+            push(result, dep.name)
+        })
 
     return result
 }
