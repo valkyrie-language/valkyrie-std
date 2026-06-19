@@ -250,4 +250,17 @@ imply Utf8Text {
 
         return -1
     }
+
+    micro chars(self) -> Utf8Iterator {
+        return Utf8Iterator::new(self)
+    }
+}
+
+imply Utf8Text: std.iterator.IntoIterator {
+    type Item = char;
+    type Iter = Utf8Iterator;
+
+    micro into_iterator(self): Utf8Iterator {
+        return self.chars()
+    }
 }

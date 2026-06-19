@@ -5,6 +5,11 @@ structure AsciiText {
     _bytes: [u8] 
 }
 
+structure AsciiIterator {
+    _text: AsciiText
+    _offset: usize
+}
+
 # 基本方法
 imply AsciiText: Text {
     ⍝ 获取 ascii 文本的字节数长度
@@ -39,9 +44,37 @@ imply AsciiText: Text {
 # 迭代器方法
 imply AsciiText {
     ⍝ 获取 ascii 文本的字符迭代器
-    micro chars(self) -> Iterator<Item=char> {
-        loop byte in self._bytes {
-            yield byte as char
+    micro chars(self) -> AsciiIterator {
+        return AsciiIterator {
+            _text: self,
+            _offset: 0,
         }
+    }
+}
+
+imply AsciiText: std.iterator.IntoIterator {
+    type Item = char;
+    type Iter = AsciiIterator;
+
+    micro into_iterator(self): AsciiIterator {
+        return self.chars()
+    }
+}
+
+imply AsciiIterator: std.iterator.Iterator {
+    type Item = char;
+
+    micro has_next(self): bool {
+        return self._offset < self._text._bytes.length()
+    }
+
+    micro next(mut self): Option<char> {
+        if !self.has_next() {
+            return None
+        }
+
+        let value: char = self._text._bytes[self._offset] as char
+        self._offset = self._offset + 1
+        return Some(value)
     }
 }

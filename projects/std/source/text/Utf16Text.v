@@ -149,6 +149,19 @@ imply Utf16Text {
             return false
         <% end match %>
     }
+
+    micro chars(self) -> Utf16Iterator {
+        return Utf16Iterator::new(self)
+    }
+}
+
+imply Utf16Text: std.iterator.IntoIterator {
+    type Item = char;
+    type Iter = Utf16Iterator;
+
+    micro into_iterator(self): Utf16Iterator {
+        return self.chars()
+    }
 }
 
 ⍝ 返回当前 UTF-16 文本的长度。

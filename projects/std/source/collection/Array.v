@@ -67,8 +67,9 @@ structure ArrayIterator<T> {
     _index: usize
 }
 
-imply Array<T>: IntoIterator {
+imply Array<T>: std.iterator.IntoIterator {
     type Item = T;
+    type Iter = ArrayIterator<T>;
 
     micro into_iterator(self): ArrayIterator<T> {
         return ArrayIterator<T> {
@@ -78,7 +79,7 @@ imply Array<T>: IntoIterator {
     }
 }
 
-imply ArrayIterator<T>: Iterator {
+imply ArrayIterator<T>: std.iterator.Iterator {
     type Item = T;
 
     micro has_next(self): bool {

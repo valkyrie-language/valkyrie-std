@@ -9,8 +9,8 @@ trait Map<K, V> {
     }
     micro remove(mut self, key: K) -> Option<V>;
     micro contains(self, key: K) -> bool;
-    micro keys(self) -> Iterator<Item=K>;
-    micro values(self) -> Iterator<Item=V>;
+    micro keys(self) -> std.iterator.Iterator<Item=K>;
+    micro values(self) -> std.iterator.Iterator<Item=V>;
     micro count(self) -> usize;
     micro is_empty(self) -> bool;
     micro clear(mut self) -> unit;

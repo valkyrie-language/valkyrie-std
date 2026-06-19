@@ -175,7 +175,7 @@ structure ArrayListIterator<T> {
     _index: usize
 }
 
-imply ArrayList<T>: IntoIterator {
+imply ArrayList<T>: std.iterator.IntoIterator {
     type Item = T;
     type Iter = ArrayListIterator<T>;
 
@@ -187,7 +187,7 @@ imply ArrayList<T>: IntoIterator {
     }
 }
 
-imply ArrayListIterator<T>: Iterator {
+imply ArrayListIterator<T>: std.iterator.Iterator {
     type Item = T;
 
     micro has_next(self): bool {
@@ -261,4 +261,3 @@ private micro __array_list_jvm_clear<T>(list: ArrayList<T>): unit { }
 
 [jvm("java.util.ArrayList", "contains"), pure]
 private micro __array_list_jvm_contains<T>(list: ArrayList<T>, value: T): bool { }
-
