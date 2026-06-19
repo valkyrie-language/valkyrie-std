@@ -1,0 +1,33 @@
+namespace std.iterator;
+
+structure SkipWhileIterator<T, I> {
+    _iter: I
+    _predicate: micro(T) -> bool
+    _skipped: bool
+}
+
+imply SkipWhileIterator<T, I>: Iterator {
+    type Item = T;
+
+    micro has_next(self): bool {
+        let mut iter: Self = self
+        return iter.next().is_some()
+    }
+
+    micro next(mut self): Option<T> {
+        if !self._skipped {
+            while self._iter.has_next() {
+                let item: T = self._iter.next().unwrap()
+                if !self._predicate(item) {
+                    self._skipped = true
+                    return Some(item)
+                }
+            }
+
+            self._skipped = true
+            return None
+        }
+
+        return self._iter.next()
+    }
+}

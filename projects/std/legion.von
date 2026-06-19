@@ -25,8 +25,7 @@
             msil: true,
             exclude_directories: [
                 "source/command",
-                "source/math/graph_theory",
-                "source/types"
+                "source/math/graph_theory"
             ],
             exclude_files: [
                 "source/collection/sorted/BTreeMap.v",
@@ -61,8 +60,7 @@
             target: "jvm-openjdk-unknown-managed",
             exclude_directories: [
                 "source/command",
-                "source/math/graph_theory",
-                "source/types"
+                "source/math/graph_theory"
             ],
             exclude_files: [
                 "source/collection/sorted/BTreeMap.v",

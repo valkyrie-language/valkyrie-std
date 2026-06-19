@@ -46,6 +46,19 @@ micro any<I, T>(self: I, pred: micro(T) -> bool): bool
     return false
 }
 
+micro all<I, T>(self: I, pred: micro(T) -> bool): bool
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    while iter.has_next() {
+        if !pred(iter.next().unwrap()) {
+            return false
+        }
+    }
+
+    return true
+}
+
 micro find<I, T>(self: I, pred: micro(T) -> bool): Option<T>
     where I: Iterator<Item = T>
 {
@@ -55,6 +68,46 @@ micro find<I, T>(self: I, pred: micro(T) -> bool): Option<T>
         if pred(item) {
             return Some(item)
         }
+    }
+
+    return None
+}
+
+micro first<I, T>(self: I): Option<T>
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    if !iter.has_next() {
+        return None
+    }
+
+    return iter.next()
+}
+
+micro last<I, T>(self: I): Option<T>
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    let mut result: Option<T> = None
+    while iter.has_next() {
+        result = iter.next()
+    }
+
+    return result
+}
+
+micro nth<I, T>(self: I, index: usize): Option<T>
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    let mut current: usize = 0
+    while iter.has_next() {
+        let item: T = iter.next().unwrap()
+        if current == index {
+            return Some(item)
+        }
+
+        current = current + 1
     }
 
     return None
@@ -74,6 +127,19 @@ micro position<I, T>(self: I, pred: micro(T) -> bool): Option<usize>
     }
 
     return None
+}
+
+micro contains<I, T>(self: I, value: T): bool
+    where I: Iterator<Item = T>
+{
+    let mut iter: I = self
+    while iter.has_next() {
+        if iter.next().unwrap() == value {
+            return true
+        }
+    }
+
+    return false
 }
 
 micro count<I, T>(self: I): usize
