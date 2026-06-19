@@ -1,17 +1,5 @@
 namespace! std.iterator;
 
-structure MapIterator<T, U, I> {
-    _iter: I
-    _mapper: micro(T) -> U
-}
-
-structure FilterIterator<T, I> {
-    _iter: I
-    _predicate: micro(T) -> bool
-}
-
-structure SkipIterator<T, I> {
-    _iter: I
-    _count: usize
-    _skipped: usize
-}
+using! std.iterator.{IntoIterator, Iterator}
+using! std.iterator.{FilterIterator, MapIterator, SkipIterator}
+using! std.iterator.{collect_array, collect_array_list}
