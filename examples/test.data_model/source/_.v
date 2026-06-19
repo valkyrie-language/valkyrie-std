@@ -1,4 +1,4 @@
-namespace map_methods;
+namespace data_model;
 
 
 [data]
@@ -7,35 +7,22 @@ structure Point {
     y: f32,
 }
 
+micro offset(point: Point, dx: f32, dy: f32) -> Point {
+    return Point {
+        x: point.x + dx,
+        y: point.y + dy,
+    }
+}
+
 [main]
-micro map_methods_main() -> ExitCode {
-    let m = { "a": 1, "b": 2, "c": 3 }
-    print("len={m.length}")
-    print("a={m[\"a\"]}")
-    print("contains_b={m.contains(\"b\")}")
-    print("keys={m.keys()}")
-    print("values={m.values()}")
-    print("entries={m.entries()}")
-    print("get_a={m.get(\"a\")}")
-    print("get_x={m.get(\"x\", -1)}")
+micro data_model_main() -> ExitCode {
+    let origin = Point { x: 0.0, y: 0.0 }
+    let target = Point { x: 3.5, y: 4.5 }
+    let moved = offset(target, -1.0, 2.0)
 
-    let m2 = m.set("d", 4)
-    print("after_set={m2.length}")
-
-    let m3 = m.remove("a")
-    print("after_remove={m3.length}")
-
-    let merged = m.merge({ "d": 4, "e": 5 })
-    print("merged={merged.length}")
-
-    let inverted = m.invert()
-    print("inverted ok")
-
-    let filtered = m.filter((k, v) => v > 1)
-    print("filtered={filtered.length}")
-
-    let mapped = m.map_values(v => v * 10)
-    print("mapped ok")
+    print("origin=({origin.x}, {origin.y})")
+    print("target=({target.x}, {target.y})")
+    print("moved=({moved.x}, {moved.y})")
 
     return ExitCode(0 as i32)
 }
