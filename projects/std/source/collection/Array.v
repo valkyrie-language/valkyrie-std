@@ -72,7 +72,7 @@ imply Array<T>: std.iterator.IntoIterator {
     type Iter = ArrayIterator<T>;
 
     micro into_iterator(self): ArrayIterator<T> {
-        return ArrayIterator<T> {
+        return ArrayIterator::<T> {
             _array: self,
             _index: 0,
         }

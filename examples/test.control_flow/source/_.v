@@ -141,6 +141,27 @@ micro count_generic_iterator<I>(iter: I) -> usize
     return iter.count()
 }
 
+micro sum_tuple_pairs_loop_in() -> i32 {
+    let mut total = 0 as i32
+    loop (left, right) in [
+        (0 as i32, 1 as i32),
+        (1 as i32, 2 as i32),
+        (2 as i32, 3 as i32),
+    ] {
+        total += left + right
+    }
+    return total
+}
+
+micro sum_fixed_array_literal() -> i32 {
+    let values: [i32; 3] = [1 as i32, 2 as i32, 3 as i32]
+    let mut total = 0 as i32
+    loop value in values {
+        total += value
+    }
+    return total
+}
+
 micro smoke_loop_in() -> ExitCode {
     let loop_values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     let loop_in_sum = sum_with_loop_in(loop_values)
@@ -252,6 +273,22 @@ micro smoke_generic_count() -> ExitCode {
     return ExitCode(0 as i32)
 }
 
+micro smoke_tuple_loop_in() -> ExitCode {
+    let total = sum_tuple_pairs_loop_in()
+    if total != 9 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
+micro smoke_fixed_array_literal() -> ExitCode {
+    let total = sum_fixed_array_literal()
+    if total != 6 {
+        return ExitCode(1 as i32)
+    }
+    return ExitCode(0 as i32)
+}
+
 [main]
 micro main() -> ExitCode {
     let limit = 4 as i32
@@ -306,6 +343,12 @@ micro main() -> ExitCode {
     }
     if smoke_iterator_chain() != ExitCode(0 as i32) {
         return ExitCode(16 as i32)
+    }
+    if smoke_tuple_loop_in() != ExitCode(0 as i32) {
+        return ExitCode(17 as i32)
+    }
+    if smoke_fixed_array_literal() != ExitCode(0 as i32) {
+        return ExitCode(18 as i32)
     }
 
     # pending loop_in sample for CLR bootstrap

@@ -24,7 +24,7 @@ Valkyrie 项目（`.v` 源码）使用 `legion test` 命令进行测试，测试
 my-project/
 ├── legion.von
 ├── source/
-│   └── main.v          # 实现代码
+│   └── _.v          # 实现代码
 └── test/
     ├── simple_test.v   # 测试文件
     └── bench_test.v    # 基准文件

@@ -180,7 +180,7 @@ imply ArrayList<T>: std.iterator.IntoIterator {
     type Iter = ArrayListIterator<T>;
 
     micro into_iterator(self): ArrayListIterator<T> {
-        return ArrayListIterator<T> {
+        return ArrayListIterator::<T> {
             _list: self,
             _index: 0,
         }

@@ -1,4 +1,23 @@
-namespace control_flow::test;
+namespace test_control_flow;
+
+using control_flow::any_in_generic_iterator
+using control_flow::classify_number
+using control_flow::collect_even_doubles
+using control_flow::count_generic_iterator
+using control_flow::count_with_counted_loop
+using control_flow::count_with_infinite_loop
+using control_flow::count_with_take
+using control_flow::count_with_until
+using control_flow::count_with_while
+using control_flow::find_in_generic_iterator
+using control_flow::position_in_generic_iterator
+using control_flow::reduce_generic_iterator
+using control_flow::sum_fixed_array_literal
+using control_flow::sum_generic_iterator
+using control_flow::sum_generic_manual_iterator
+using control_flow::sum_tuple_pairs_loop_in
+using control_flow::sum_with_loop_in
+using control_flow::sum_with_manual_iterator
 
 [test]
 micro control_flow_equivalence() -> unit {
@@ -96,4 +115,18 @@ micro generic_position_smoke() -> unit {
 micro generic_count_smoke() -> unit {
     let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
     assert(count_generic_iterator(values.into_iterator().skip(1 as usize)) == (3 as usize))
+}
+
+[test]
+micro tuple_loop_in_smoke() -> unit {
+    assert(sum_tuple_pairs_loop_in() == (9 as i32))
+}
+
+[test]
+micro fixed_array_literal_smoke() -> unit {
+    let values: [i32; 3] = [1 as i32, 2 as i32, 3 as i32]
+    assert(values[0 as usize] == (1 as i32))
+    assert(values[1 as usize] == (2 as i32))
+    assert(values[2 as usize] == (3 as i32))
+    assert(sum_fixed_array_literal() == (6 as i32))
 }
