@@ -97,25 +97,58 @@ function resolveLegionLauncher(baseDir) {
     return null;
 }
 
+// 扫描指定 dist 目录下所有 `legion*` 子目录，收集存在的 legion 启动器。
+// 用于在存在多个历史 seed 构建时按修改时间挑选最新的一份。
+function collectLegionLaunchersFromDist(distDir) {
+    const results = [];
+    if (!fs.existsSync(distDir)) {
+        return results;
+    }
+    for (const entry of fs.readdirSync(distDir, { withFileTypes: true })) {
+        if (!entry.isDirectory()) {
+            continue;
+        }
+        if (!/^legion/i.test(entry.name)) {
+            continue;
+        }
+        for (const candidate of legionLauncherCandidates(path.join(distDir, entry.name))) {
+            if (fs.existsSync(candidate)) {
+                results.push(candidate);
+            }
+        }
+    }
+    return results;
+}
+
+// 收集所有可用 seed 候选，按修改时间降序排列（最新在前）。
+// 调用方应逐个尝试，直到找到能通过 v1 编译 + 运行验收的 seed。
+function findLegionCandidates() {
+    const distCandidates = [
+        ...collectLegionLaunchersFromDist(path.join(ROOT_DIR, 'dist')),
+        ...collectLegionLaunchersFromDist(path.resolve(ROOT_DIR, '..', 'dist')),
+    ];
+    if (distCandidates.length > 0) {
+        distCandidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+        return distCandidates;
+    }
+
+    // 仅当 dist/ 下没有任何发布产物时，才回退到 NyarVM.cs 的 build 输出。
+    const buildCandidates = [
+        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
+        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
+    ].filter(c => fs.existsSync(c));
+
+    return buildCandidates;
+}
+
 function findLegion() {
     const envPath = process.env.LEGION_PATH;
     if (envPath && fs.existsSync(envPath)) {
         return envPath;
     }
 
-    const candidates = [
-        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion')),
-        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion-tool')),
-        ...legionLauncherCandidates(path.resolve(ROOT_DIR, '..', 'dist', 'legion')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
-    ];
-    for (const c of candidates) {
-        if (fs.existsSync(c)) {
-            return c;
-        }
-    }
-    return null;
+    const candidates = findLegionCandidates();
+    return candidates.length > 0 ? candidates[0] : null;
 }
 
 function vccLauncherCandidates(baseDir) {
@@ -661,11 +694,59 @@ function main() {
     console.log(`自举项目：${BOOTSTRAP_PROJECT}`);
     console.log(`目标三元组：${TARGET_TRIPLE}\n`);
 
-    // 查找 legion
-    const autoBuiltLegionRoot = path.join(outputRoot, '_previous_legion');
-    const legionPath = options.legion ? path.resolve(options.legion) : ensurePreviousLegion(outputRoot, options.verbose);
-    if (!legionPath) {
+    // 查找 vcc（nyar 运行时）— 先于 seed 查找，因为 seed 验证需要 vcc
+    const vccPath = options.vcc ? path.resolve(options.vcc) : ensureVcc(outputRoot, options.verbose);
+    if (!vccPath) {
         const gates = [
+            createGate('nyar 运行时入口', '未通过', '未找到可用 `vcc`，且无法从 `NyarVM.cs` 自动构建'),
+            createGate('上一代编译器入口', '跳过', 'nyar 运行时入口未就绪'),
+            createGate('源码 -> v1.nyar', '跳过', '上一代编译器入口未就绪'),
+            createGate('v1 运行验收', '跳过', '源码 -> v1.nyar 未完成'),
+            createGate('第二次 seed 编译 -> v2.nyar', '跳过', '上游门禁未就绪'),
+            createGate('v1 / 第二次编译产物比对', '跳过', '上游门禁未就绪'),
+        ];
+        const blockers = ['nyar 运行时入口未就绪'];
+        const reportPath = writeReport(outputRoot, { success: false, gates, blockers, notes: [SECOND_COMPILE_NOTE] });
+        printGateSummary(gates);
+        console.error('\n错误：找不到 vcc CLI');
+        console.error('请设置 --vcc / VCC_PATH，或保证 NyarVM.cs 可用以便脚本自动构建 vcc');
+        console.log(`\n报告已写入：${reportPath}`);
+        process.exit(1);
+    }
+
+    // 查找 seed：若 --legion 显式指定则直接使用；否则收集候选并逐个尝试。
+    // 最新 seed 不一定可用（可能存在函数导出回归），因此逐个验证 v1 编译 + 运行。
+    const autoBuiltLegionRoot = path.join(outputRoot, '_previous_legion');
+    let legionPath = null;
+    let v1Result = null;
+
+    if (options.legion) {
+        legionPath = path.resolve(options.legion);
+        v1Result = compileV1(legionPath, vccPath, v1OutputDir, options.verbose);
+    } else {
+        const candidates = findLegionCandidates();
+        if (candidates.length === 0) {
+            const autoBuilt = ensurePreviousLegion(outputRoot, options.verbose);
+            if (autoBuilt) {
+                candidates.push(autoBuilt);
+            }
+        }
+
+        for (let i = 0; i < candidates.length; i++) {
+            legionPath = candidates[i];
+            console.log(`\n[seed 候选 ${i + 1}/${candidates.length}] ${legionPath}`);
+            v1Result = compileV1(legionPath, vccPath, v1OutputDir, options.verbose);
+            if (v1Result.success && v1Result.runtime?.run?.success) {
+                console.log(`[seed 候选 ${i + 1}] 通过 v1 编译 + 运行验收`);
+                break;
+            }
+            console.log(`[seed 候选 ${i + 1}] 未通过，尝试下一个候选...`);
+        }
+    }
+
+    if (!legionPath || !v1Result) {
+        const gates = [
+            createGate('nyar 运行时入口', '通过', `使用现成入口：${vccPath}`),
             createGate('上一代编译器入口', '未通过', '未找到可用 `legion`，且无法从 `NyarVM.cs` 自动构建'),
             createGate('源码 -> v1.nyar', '跳过', '上一代编译器入口未就绪'),
             createGate('v1 运行验收', '跳过', '源码 -> v1.nyar 未完成'),
@@ -681,32 +762,10 @@ function main() {
         process.exit(1);
     }
 
-    // 查找 vcc（nyar 运行时）
-    const vccPath = options.vcc ? path.resolve(options.vcc) : ensureVcc(outputRoot, options.verbose);
-    if (!vccPath) {
-        const gates = [
-            createGate('上一代编译器入口', '通过', `使用现成入口：${legionPath}`),
-            createGate('nyar 运行时入口', '未通过', '未找到可用 `vcc`，且无法从 `NyarVM.cs` 自动构建'),
-            createGate('源码 -> v1.nyar', '跳过', 'nyar 运行时入口未就绪'),
-            createGate('v1 运行验收', '跳过', '源码 -> v1.nyar 未完成'),
-            createGate('第二次 seed 编译 -> v2.nyar', '跳过', '上游门禁未就绪'),
-            createGate('v1 / 第二次编译产物比对', '跳过', '上游门禁未就绪'),
-        ];
-        const blockers = ['nyar 运行时入口未就绪'];
-        const reportPath = writeReport(outputRoot, { success: false, gates, blockers, notes: [SECOND_COMPILE_NOTE] });
-        printGateSummary(gates);
-        console.error('\n错误：找不到 vcc CLI');
-        console.error('请设置 --vcc / VCC_PATH，或保证 NyarVM.cs 可用以便脚本自动构建 vcc');
-        console.log(`\n报告已写入：${reportPath}`);
-        process.exit(1);
-    }
-
     const previousCompilerDetail = legionPath.startsWith(autoBuiltLegionRoot)
         ? '已从 `NyarVM.cs` 自动构建上一代 `legion`'
         : `使用现成入口：${legionPath}`;
 
-    // Level 1：源码 → v1.nyar
-    const v1Result = compileV1(legionPath, vccPath, v1OutputDir, options.verbose);
     if (v1Result.success) {
         console.log('\nLevel 1（源码 → v1.nyar）成功');
         console.log(`v1 产物目录：${v1Result.outputDir}`);
