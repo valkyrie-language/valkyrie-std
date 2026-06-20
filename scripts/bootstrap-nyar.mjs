@@ -97,55 +97,25 @@ function resolveLegionLauncher(baseDir) {
     return null;
 }
 
-// 扫描指定 dist 目录下所有 `legion*` 子目录，收集存在的 legion 启动器。
-// 用于在存在多个历史 seed 构建时按修改时间挑选最新的一份。
-function collectLegionLaunchersFromDist(distDir) {
-    const results = [];
-    if (!fs.existsSync(distDir)) {
-        return results;
-    }
-    for (const entry of fs.readdirSync(distDir, { withFileTypes: true })) {
-        if (!entry.isDirectory()) {
-            continue;
-        }
-        if (!/^legion/i.test(entry.name)) {
-            continue;
-        }
-        for (const candidate of legionLauncherCandidates(path.join(distDir, entry.name))) {
-            if (fs.existsSync(candidate)) {
-                results.push(candidate);
-            }
-        }
-    }
-    return results;
-}
-
 function findLegion() {
     const envPath = process.env.LEGION_PATH;
     if (envPath && fs.existsSync(envPath)) {
         return envPath;
     }
 
-    // 优先在 dist/ 下挑选发布产物：工作区 dist/ 与上级 dist/ 下的 legion* 目录。
-    // 按修改时间降序，优先使用最新的 seed 构建，
-    // 避免误用被覆盖前的旧 `dist/legion/` 导致语法不支持。
-    const distCandidates = [
-        ...collectLegionLaunchersFromDist(path.join(ROOT_DIR, 'dist')),
-        ...collectLegionLaunchersFromDist(path.resolve(ROOT_DIR, '..', 'dist')),
-    ];
-    if (distCandidates.length > 0) {
-        distCandidates.sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
-        return distCandidates[0];
-    }
-
-    // 仅当 dist/ 下没有任何发布产物时，才回退到 NyarVM.cs 的 build 输出。
-    // 注意：bin/Debug 属于开发构建，不保证与发布 seed 行为一致，仅作兜底。
-    const buildCandidates = [
+    const candidates = [
+        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion')),
+        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion-tool')),
+        ...legionLauncherCandidates(path.resolve(ROOT_DIR, '..', 'dist', 'legion')),
         ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
         ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
-    ].filter(c => fs.existsSync(c));
-
-    return buildCandidates.length > 0 ? buildCandidates[0] : null;
+    ];
+    for (const c of candidates) {
+        if (fs.existsSync(c)) {
+            return c;
+        }
+    }
+    return null;
 }
 
 function vccLauncherCandidates(baseDir) {
