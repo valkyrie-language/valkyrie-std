@@ -1,3 +1,4 @@
+# std.console: 统一控制台 API
 namespace std.console;
 
 micro write(message: utf8): unit {

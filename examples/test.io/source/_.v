@@ -5,14 +5,14 @@ let shared = 42;
 ⍝ ./hello_world.exe
 [main]
 micro hello_world() {
-    print("Hello World!")
+    std.console.write_line("Hello World!")
     ExitCode(add_one(shared) as i32)
 }
 
 ⍝ ./hello_world_utf8.exe 
 [main]
 micro hello_world_utf8() -> ExitCode {
-    print("你好，世界！")
+    std.console.write_line("你好，世界！")
     return ExitCode(add_two(shared) as i32)
 }
 
