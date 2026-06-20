@@ -23,11 +23,15 @@ micro utf8_concat() -> unit {
 }
 
 [test]
-micro utf8_multiline() -> unit {
-    let s = @"
-        line 1
-        line 2
-    "
+micro utf8_interpolation_expression() -> unit {
+    let slot = 2
+    let msg = "slot={slot + 1}"
+    print(msg)
+}
+
+[test]
+micro utf8_raw() -> unit {
+    let s = r"{slot}"
     print(s)
 }
 
