@@ -235,3 +235,24 @@ micro `test iterator filter_map`() {
         panic("iterator filter_map empty test failed")
     }
 }
+
+[test]
+micro `test iterator enumerate uses 1 based ordinal`() {
+    let first_pair: Option<(ordinal: usize, value: i32)> = [10, 20]
+        .into_iterator()
+        .enumerate()
+        .first()
+
+    if first_pair.is_none() {
+        panic("iterator enumerate first pair missing test failed")
+    }
+
+    let pair: (ordinal: usize, value: i32) = first_pair.unwrap()
+    if pair.1 != 1 {
+        panic("iterator enumerate ordinal base test failed")
+    }
+
+    if pair.2 != 10 {
+        panic("iterator enumerate value test failed")
+    }
+}
