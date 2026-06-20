@@ -253,32 +253,32 @@ micro smoke_generic_any() -> ExitCode {
 }
 
 micro smoke_generic_position() -> ExitCode {
-    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
-    let found = position_in_generic_iterator(values.into_iterator().skip(1 as usize))
+    let values: [i32] = [1_i32, 2_i32, 3_i32, 4_i32]
+    let found = position_in_generic_iterator(values.into_iterator().skip(1_usize))
     if found.is_none() {
-        return ExitCode(1 as i32)
+        return ExitCode(1_i32)
     }
-    if found.unwrap() != (1 as usize) {
-        return ExitCode(2 as i32)
+    if found.unwrap() != 1_usize {
+        return ExitCode(2_i32)
     }
-    return ExitCode(0 as i32)
+    return ExitCode(0_i32)
 }
 
 micro smoke_generic_count() -> ExitCode {
-    let values: [i32] = [1 as i32, 2 as i32, 3 as i32, 4 as i32]
-    let count = count_generic_iterator(values.into_iterator().skip(1 as usize))
-    if count != (3 as usize) {
-        return ExitCode(1 as i32)
+    let values: [i32] = [1_i32, 2_i32, 3_i32, 4_i32]
+    let count = count_generic_iterator(values.into_iterator().skip(1_usize))
+    if count != 3_usize {
+        return ExitCode(1_i32)
     }
-    return ExitCode(0 as i32)
+    return ExitCode(0_i32)
 }
 
 micro smoke_tuple_loop_in() -> ExitCode {
     let total = sum_tuple_pairs_loop_in()
     if total != 9 {
-        return ExitCode(1 as i32)
+        return ExitCode(1_i32)
     }
-    return ExitCode(0 as i32)
+    return ExitCode(0_i32)
 }
 
 micro smoke_fixed_array_literal() -> ExitCode {
