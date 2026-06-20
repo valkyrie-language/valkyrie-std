@@ -18,6 +18,7 @@ Valkyrie 区分两种求值模式：
 3.14            # 浮点字面量
 "hello"         # 字符串字面量
 "slot={slot + 1}" # 字符串插值，花括号内是表达式
+r"{slot}"       # raw string，不做插值
 true            # 布尔字面量
 null            # 空值字面量
 my_variable     # 标识符引用
