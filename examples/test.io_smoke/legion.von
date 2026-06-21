@@ -1,0 +1,15 @@
+{
+    name: "test.io_smoke",
+    version: "0.0.0.0",
+    description: "IO 最简冒烟测试",
+    license: "MIT",
+    dependencies: {
+        "std": true
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ]
+}
