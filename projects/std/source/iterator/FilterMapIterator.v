@@ -9,8 +9,7 @@ imply FilterMapIterator<T, U, I>: Iterator {
     type Item = U;
 
     micro has_next(self): bool {
-        let mut iter: Self = self
-        return iter.next().is_some()
+        return self._iter.has_next()
     }
 
     micro next(mut self): Option<U> {

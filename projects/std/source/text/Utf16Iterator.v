@@ -36,12 +36,12 @@ imply Utf16Iterator: std.iterator.Iterator {
                 let low: u32 = (second as u32) - 0xDC00
                 let code_point: u32 = 0x10000 + (high << 10) + low
                 self._offset = self._offset + 2
-                return Some(code_point as char)
+                return Some(__char_from_u16(code_point as u16))
             }
         }
 
         self._offset = self._offset + 1
-        return Some((first as u32) as char)
+        return Some(__char_from_u16(first))
     }
 
     private micro code_unit_length(self) -> usize {
@@ -70,6 +70,9 @@ imply Utf16Iterator: std.iterator.Iterator {
 
 [clr("System.Runtime", "System.String", "get_Chars"), pure]
 private micro __utf16_clr_char_at(value: utf16, index: isize): char { }
+
+[clr("System.Runtime", "System.Convert", "ToChar"), pure]
+private micro __char_from_u16(value: u16): char { }
 
 [jvm("java.lang.String", "charAt"), pure]
 private micro __utf16_jvm_char_at(value: utf16, index: isize): char { }

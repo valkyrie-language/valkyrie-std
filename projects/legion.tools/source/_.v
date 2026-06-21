@@ -119,15 +119,18 @@ micro parse_build_request(args: [utf8]) -> BuildRequest {
 }
 
 micro select_publish_target(manifest: LegionProjectManifest, requested_target: utf8, publish_type: utf8) -> PublishSelection {
-    let selected: Option<LegionPublishTarget> = manifest.publish_targets
-        .into_iterator()
-        .find(micro(target: LegionPublishTarget) -> bool {
-            if target.type != publish_type {
-                return false
+    let mut selected: Option<LegionPublishTarget> = None
+    let mut i: usize = 0
+    while i < manifest.publish_targets.length() {
+        let target: LegionPublishTarget = manifest.publish_targets[i]
+        if target.type == publish_type {
+            if requested_target.length() == 0 || target.target == requested_target {
+                selected = Some(target)
+                break
             }
-
-            return requested_target.length() == 0 || target.target == requested_target
-        })
+        }
+        i = i + 1
+    }
 
     if selected.is_some() {
         return PublishSelection {
@@ -282,17 +285,6 @@ micro emit_single_project_build(project_dir: utf8, requested_target: utf8, outpu
                                 loop dependency_name in context.dependency_order {
                                     std.io.print_line("    " + dependency_name)
                                 }
-                            }
-
-                            # 依赖图诊断
-                            let dep_graph: DirectedGraph = directed_graph_new()
-                            # 添加项目自身
-                            directed_graph_add_node(dep_graph, context.project_name)
-                            loop dependency_name in context.dependency_names {
-                                directed_graph_add_edge(dep_graph, context.project_name, dependency_name)
-                            }
-                            if has_cycle(dep_graph) {
-                                std.io.print_line("  警告：依赖图中存在循环！")
                             }
                         }
 

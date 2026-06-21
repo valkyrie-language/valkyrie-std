@@ -10,8 +10,10 @@ imply TakeWhileIterator<T, I>: Iterator {
     type Item = T;
 
     micro has_next(self): bool {
-        let mut iter: Self = self
-        return iter.next().is_some()
+        if self._done {
+            return false
+        }
+        return self._iter.has_next()
     }
 
     micro next(mut self): Option<T> {
