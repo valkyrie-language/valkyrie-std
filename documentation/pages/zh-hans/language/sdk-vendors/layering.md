@@ -2,23 +2,23 @@
 
 ## 总体结构
 
-`sdk vendor` 体系把“抽象能力”和“宿主实现”拆成四层：
+`sdk vendor` 体系把“稳定语义入口”和“宿主实现”拆成四层：
 
-1. 语言层：提供 `attrs`、命名空间、路径解析、类型检查与编译期元数据语义。
-2. 标准抽象层：由 `std` 定义稳定的跨平台 port。
-3. 宿主实现层：由 `sdk` 或第三方 vendor 包提供具体 provider。
-4. 装配层：由 `manifest`、target profile 与 planner 决定当前构建可见的 provider 集合。
+1. 语言层：提供特性标注、命名空间、路径解析、类型检查与编译期元数据语义。
+2. 标准入口层：由 `std` 定义稳定函数入口与语义契约。
+3. 宿主实现层：由 `sdk`、`std.adaptor.*` 或第三方 vendor 包提供 `fill`。
+4. 装配层：由 `manifest`、planner 与第三方构建器共同决定当前构建的有效依赖闭包，默认自动装配，只有冲突时才通过项目侧 `sdk.bind` 决定当前构建使用哪个 `fill`。
 
 ## 职责边界
 
 ### `std`
 
-`std` 只负责抽象能力，不直接承载宿主名字。
+`std` 只负责稳定语义入口，不直接承载宿主名字。
 
 应放在 `std` 的内容：
 
 - 集合、文本、迭代器、数学抽象、容器协议
-- `std.net.request` 这种“能力抽象”
+- `std.net.request` 这种“稳定入口”
 - `std.console.write_line` 这种“统一语义入口”
 - 与宿主无关的数据结构和错误模型
 
@@ -38,10 +38,22 @@
 
 - 提供底层 FFI 绑定
 - 完成编码转换、句柄转换、异常包装
-- 声明“我提供哪个 port”
-- 声明适用的 target / abi / publish 约束
+- 声明“我填充哪个 `std` 入口”
+- 通过 `sdk-vendor` 声明自身适用范围
 
-### 第三方 vendor 包
+### `std.adaptor.*`
+
+`std.adaptor.*` 仍然保留，而且在发行版中承担“默认 `sdk` 集合”的职责。
+
+它的定位应当从“`std` 内部硬编码分支”收敛为：
+
+- 发行版预装的官方 `fill`
+- 没有显式第三方 `sdk` 时的默认供给
+- 向新 `sdk vendor` 体系迁移时的兼容层
+
+也就是说，新的体系不是把 `std.adaptor.*` 立即删除，而是把它们纳入统一协议。
+
+### 第三方 `sdk`
 
 第三方或厂商维护的包是 `sdk` 的一种特殊形式。它们不需要进入官方 `std` 仓库，只需要遵守统一协议即可。
 
@@ -51,14 +63,22 @@
 - `cloudflare.worker.sdk.fetch`
 - `electron.sdk.fs`
 
-### 编译器与构建系统
+### 编译器、planner 与第三方构建器
 
 编译器和构建系统不实现宿主逻辑，只负责：
 
-1. 收集 port 声明
-2. 收集 provider 声明
-3. 依据 target / manifest 过滤 provider
-4. 在符号解析阶段把 port 静态绑定到唯一 provider
+1. 收集 `port` 标记
+2. 收集 `fill` 声明
+3. 基于显式依赖、发行版默认依赖和第三方构建器注入规则形成有效依赖闭包
+4. 依据 `sdk-vendor` 与项目侧 `sdk` 配置过滤候选实现
+5. 在符号解析阶段把 `std` 入口静态绑定到唯一 `fill`
+
+第三方构建器只多承担两类平台职责：
+
+1. 隐式注入默认 `sdk`
+2. 处理平台自己的工程组织、打包、资源与发布流程
+
+它不应反向改写语言语义，也不应绕过 planner 直接在后端偷偷替换 `fill`。
 
 ## 推荐目录形态
 
@@ -66,8 +86,6 @@
 
 ```text
 projects/std
-  source/port/net.v
-  source/port/console.v
   source/net/http.v
   source/console/_.v
 ```
@@ -82,6 +100,15 @@ projects/sdk.wasi
 projects/sdk.nyar
 ```
 
+### 发行版默认包
+
+```text
+projects/std.adaptor.clr
+projects/std.adaptor.jvm
+projects/std.adaptor.wasm
+projects/std.adaptor.nyar
+```
+
 ### 第三方 vendor 包
 
 ```text
@@ -93,25 +120,25 @@ vendors/tencent.wechat.sdk.storage
 命名不要求所有人都使用同一前缀，但必须满足两条约束：
 
 1. 包名能稳定区分组织者与宿主。
-2. provider 声明的导出路径在工作区中唯一。
+2. `fill` 声明的导出路径在工作区中唯一。
 
 ## 命名原则
 
-### 抽象能力命名
+### 稳定入口命名
 
-抽象能力用稳定语义命名，而不是用宿主术语命名。
+稳定入口用语义命名，而不是用宿主术语命名。
 
 好例子：
 
-- `std.port.net.request`
-- `std.port.console.write_line`
-- `std.port.storage.get_text`
+- `std.net.request`
+- `std.console.write_line`
+- `std.storage.get_text`
 
 坏例子：
 
-- `std.port.fetch`
-- `std.port.wx_request`
-- `std.port.http_client`
+- `std.fetch`
+- `std.wx_request`
+- `std.http_client`
 
 ### 宿主实现命名
 
@@ -135,11 +162,11 @@ vendors/tencent.wechat.sdk.storage
 
 ## 与旧 `adaptor` 的关系
 
-旧的 `std.adaptor.*` 可以视为过渡期的宿主包，但不再建议把它当作最终架构：
+旧的 `std.adaptor.*` 可以视为“发行版自带官方 `sdk`”：
 
-- 若它只提供宿主实现，可以迁移到 `sdk.*`
-- 若它同时承担 `std` 抽象与宿主逻辑，应拆分
-- 若它仅是历史命名，可以在迁移期保留别名，但新文档与新工程不再继续扩张该模式
+- 若它只提供宿主实现，可以直接纳入新的 `fill` 协议
+- 若它同时承担入口语义与宿主逻辑，应逐步拆分职责
+- 若它仅是历史命名，可以保留包名，不强制立刻改成 `sdk.*`
 
 ## 设计原则
 
@@ -148,11 +175,17 @@ vendors/tencent.wechat.sdk.storage
 - `std` 不选择宿主
 - `sdk` 不定义语言抽象
 - planner 不实现宿主 API
-- backend 不参与 provider 选择
+- backend 不参与 `bind` 选择
 
-### 显式依赖
+### 有效依赖闭包
 
-某个项目想使用第三方 vendor 能力，必须把对应包显式放入依赖闭包。编译器不自动联网下载，也不根据名字猜测 provider。
+某个项目的可见实现来自有效依赖闭包，而不是只来自显式 `dependencies`：
+
+- 项目显式依赖决定用户主动锁定的部分
+- 发行版默认 `std.adaptor.*` 决定官方开箱即用能力
+- 第三方构建器可以按平台隐式注入默认 `sdk`
+
+编译器不自动联网下载；若候选实现唯一则自动装配，只有冲突时才需要项目侧 `sdk.bind` 明确选择。
 
 ### 零运行时成本
 

@@ -2,16 +2,17 @@
 
 ## 设计定位
 
-特性标注只声明“port 与 provider 的关系”，并不决定当前构建能看见哪些 provider。这个职责属于：
+特性标注只声明“`port` 与 `fill` 的关系”，并不决定当前构建能看见哪些实现。这个职责属于：
 
 1. `legion.von`
 2. target profile
 3. planner
-4. 依赖闭包与发布格式过滤
+4. 第三方构建器的默认 `sdk` 注入策略
+5. 冲突时的项目侧 `sdk.bind` 显式消歧
 
 因此，`sdk vendor` 的核心原则是：
 
-> 源码声明语义，清单声明适用范围，planner 负责装配。
+> 源码声明语义，`sdk-vendor` 声明 `sdk` 身份，planner 基于有效依赖闭包自动装配，项目侧 `sdk` 字段只在冲突、锁版本或测试版本时显式介入。
 
 ## 为什么 target 选择不能写进源码
 
@@ -20,11 +21,11 @@ target 是构建环境信息，而不是源码语义。
 若把 target 选择写进函数声明，就会出现：
 
 1. 同一份源码必须重复嵌入大量平台矩阵
-2. 第三方 vendor 包很难复用
-3. 一个 provider 既要声明能力，又要内嵌发布逻辑
+2. 第三方 `sdk` 包很难复用
+3. 一个 `fill` 既要声明能力，又要内嵌发布逻辑
 4. 语言层与构建系统层混在一起
 
-因此，provider 的“是否参与当前构建”必须由 manifest 与 planner 判定。
+因此，`fill` 的“是否参与当前构建”必须由 manifest、planner 与第三方构建器共同判定。
 
 ## Manifest 应表达什么
 
@@ -34,13 +35,13 @@ target 是构建环境信息，而不是源码语义。
 
 ```von
 {
-    name: "tencent.wechat.sdk.net"
+    name: "tencent.wechat.sdk"
 }
 ```
 
 ### 依赖关系
 
-provider 包必须显式声明依赖的抽象包或工具包：
+`sdk` 包自己必须显式声明依赖的抽象包或工具包：
 
 ```von
 dependencies: {
@@ -48,100 +49,162 @@ dependencies: {
 }
 ```
 
-### 适用目标
+这条规则只约束 `sdk` 包本身，不要求应用项目每次都显式把它写进 `dependencies`。
 
-provider 包应通过 `build` 条目声明支持的 target 或发布矩阵：
+### `sdk-vendor` 元数据
+
+`sdk` 的适用范围不应塞进通用 `build`，而应使用独立字段：
 
 ```von
-build: [
-    {
-        target: "wasm32-unknown-browser-wasm",
-        publish: ["mini-game"]
-    }
-]
+sdk-vendor: {
+    kind: "third-party-sdk",
+    targets: ["wasm32-unknown-browser-wasm"],
+    publish: ["mini-game"],
+    fills: ["std.net.get", "std.console.write_line"]
+}
 ```
 
-如果后续 target 模型支持更细粒度的 vendor / specification，也应继续放在 manifest 侧表达，而不是写进源码特性标注。
+这里的含义是：
+
+- `kind` 说明它是官方、发行版默认还是第三方 `sdk`
+- `targets` / `publish` 说明它适用哪些装配场景
+- `fills` 只是清单级摘要，真正的实现关系仍然以源码中的 `[fill("...")]` 为准
+
+如果后续 target 模型支持更细粒度的 vendor / specification，也应继续放在 `sdk-vendor` 侧表达，而不是写进源码特性标注。
+
+## 什么是有效依赖闭包
+
+planner 不应只看“项目显式写在 `dependencies` 里的包”，而应计算当前构建真正可见的有效依赖闭包：
+
+1. 项目显式依赖
+2. 工作区或发行版默认携带的 `std.adaptor.*`
+3. 当前第三方构建器按平台隐式注入的默认 `sdk`
+4. 这些包继续展开后的传递依赖
+
+因此，“应用项目没写 `tencent.wechat.sdk`”并不等于“当前构建看不见 `tencent.wechat.sdk`”。
+
+对 `wechat`、`unity` 这类第三方平台，默认 `sdk` 通常由平台方自己的构建器注入；只有在以下情况才建议应用项目显式写出：
+
+1. 锁定特定版本
+2. 测试候选版本
+3. 覆盖构建器默认注入
+4. 同一平台下显式切换不同 `sdk` 变体
 
 ## Planner 的职责
 
-planner 需要在现有“收集所有依赖源码”的基础上，再增加一层“可见 provider 过滤”。
+planner 需要在现有“收集所有依赖源码”的基础上，再增加一层“可见 `fill` 过滤”。
 
 当前最小职责如下：
 
 1. 解析当前项目 manifest
 2. 确定当前 `CanonicalTarget`
-3. 计算依赖闭包
-4. 过滤出与当前 target 匹配的 `sdk vendor` 包
-5. 把这些包中的 provider 声明暴露给符号解析器
+3. 从显式依赖、发行版默认依赖和构建器注入规则计算有效依赖闭包
+4. 过滤出与当前 target / publish 匹配的 `sdk` 包
+5. 把这些包中的 `fill` 声明暴露给符号解析器
+6. 若存在冲突，再读取项目侧 `sdk.bind` 做显式消歧
 
 ## 推荐装配流程
 
 ```text
 项目 manifest
     ↓
-workspace 依赖闭包
+target profile / publish format
     ↓
-按 target / publish / abi 过滤 sdk 包
+第三方构建器注入默认 sdk
     ↓
-收集 provider 声明
+有效依赖闭包
     ↓
-为每个 port 计算候选集
+按 `sdk-vendor` / target / publish / abi 过滤 `sdk` 包
+    ↓
+收集 `fill` 声明
+    ↓
+为每个 `port` 计算候选集
     ↓
 冲突检查
     ↓
 唯一绑定
 ```
 
-## Provider 可见性规则
+## `fill` 可见性规则
 
-### 规则 1：只在当前依赖闭包中查找
+### 规则 1：只在当前有效依赖闭包中查找
 
-provider 必须来自当前项目的依赖闭包，不能从 workspace 任意扫描。
+`fill` 必须来自当前构建的有效依赖闭包，不能从 workspace 任意扫描。
 
 理由：
 
 1. 保证构建可重复
 2. 避免不同 vendor 包互相污染
-3. 保证项目显式依赖才生效
+3. 允许第三方构建器隐式注入默认 `sdk`
+4. 保持“显式依赖 + 隐式注入”统一进入同一套候选集
 
 ### 规则 2：必须通过 target 过滤
 
-即使某个 provider 在依赖闭包里，只要它不适用当前 target，就视为不可见。
+即使某个 `fill` 在有效依赖闭包里，只要它不适用当前 target，就视为不可见。
 
-### 规则 3：默认不猜测优先级
+### 规则 3：必须通过 publish 过滤
 
-多个 provider 同时可见时，planner 不按包名、目录名、时间戳或导入顺序猜测优先级。
+像 `wechat` 这种平台不能只按 `arch == wasm32` 判断；若 publish format 不匹配，也必须视为不可见。
 
-必须显式选择。
+### 规则 4：默认自动参与装配
+
+只要某个 `sdk` 包进入有效依赖闭包，且其 `sdk-vendor` 与当前 target / publish 匹配，planner 就应自动把它纳入候选集。
+
+### 规则 5：默认不猜测优先级
+
+多个 `fill` 同时可见时，planner 不按包名、目录名、时间戳或导入顺序猜测优先级。
+
+此时才要求显式选择。
 
 ## 显式选择机制
 
-当多个 provider 都满足条件时，项目 manifest 可以显式绑定：
+当多个 `fill` 都满足条件时，项目 manifest 可以显式绑定：
 
 ```von
-bindings: {
-    "std.port.net.request": "tencent.wechat.net.wechat_request"
+sdk: {
+    bind: {
+        "std.net.get": "tencent.wechat.sdk.net.get"
+    }
 }
 ```
 
-这里的含义不是“运行时注入”，而是“编译期把这个 port 绑定到指定 provider”。
+这里的含义不是“运行时注入”，而是：
+
+1. 默认候选集来自有效依赖闭包自动收集
+2. `bind` 只在冲突时明确把某个 `port` 绑定到指定 `fill`
 
 ### 绑定字段规则
 
-1. key 必须是稳定 port 路径
-2. value 必须是当前依赖闭包中的 provider 路径
-3. 若 value 指向的 provider 不存在，报错
-4. 若 value 与 port 签名不兼容，报错
+1. key 必须是稳定 `std` 入口路径
+2. value 必须是当前有效依赖闭包中的 `fill` 路径
+3. 若 value 指向的 `fill` 不存在，报错
+4. 若 value 与 `port` 签名不兼容，报错
 
-## 推荐的 `legion.von` 扩展
+## 推荐的 `legion.von` 形态
 
-### Provider 包
+### 第三方 `sdk` 包
 
 ```von
 {
-    name: "tencent.wechat.sdk.net",
-    description: "腾讯维护的 WeChat 网络 SDK",
+    name: "tencent.wechat.sdk",
+    description: "腾讯维护的 WeChat Mini Game SDK",
+    dependencies: {
+        "std": "workspace"
+    },
+    sdk-vendor: {
+        kind: "third-party-sdk",
+        targets: ["wasm32-unknown-browser-wasm"],
+        publish: ["mini-game"],
+        fills: ["std.net.get", "std.console.write_line"]
+    }
+}
+```
+
+### 应用项目
+
+```von
+{
+    name: "my-wechat-game",
     dependencies: {
         "std": "workspace"
     },
@@ -154,17 +217,16 @@ bindings: {
 }
 ```
 
-### 应用项目
+这里故意不显式写 `tencent.wechat.sdk`。默认情况下，腾讯自己的微信小游戏构建器应当按平台把它注入当前构建的有效依赖闭包。
+
+如果要锁版本或测试候选版本，才显式改写为：
 
 ```von
 {
     name: "my-wechat-game",
     dependencies: {
         "std": "workspace",
-        "tencent.wechat.sdk.net": "1.0.0"
-    },
-    bindings: {
-        "std.port.net.request": "tencent.wechat.net.wechat_request"
+        "tencent.wechat.sdk": "1.2.3"
     },
     build: [
         {
@@ -174,6 +236,62 @@ bindings: {
     ]
 }
 ```
+
+### 冲突时的应用项目
+
+只有在多个 `fill` 同时命中时，才需要显式写：
+
+```von
+{
+    name: "my-wechat-game",
+    dependencies: {
+        "std": "workspace",
+        "tencent.wechat.sdk": "1.2.3",
+        "sdk.browser.net": "workspace"
+    },
+    sdk: {
+        bind: {
+            "std.net.get": "tencent.wechat.sdk.net.get"
+        }
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            publish: ["mini-game"]
+        }
+    ]
+}
+```
+
+### 发行版默认 `sdk`
+
+发行版还应继续携带一组官方默认 `sdk`，典型就是现有的 `std.adaptor.*`：
+
+```von
+{
+    name: "std.adaptor.wasm",
+    dependencies: {
+        "std": "workspace"
+    },
+    sdk-vendor: {
+        kind: "distribution-default",
+        targets: ["wasm32-unknown-browser-wasm"],
+        publish: ["web"],
+        fills: ["std.net.get", "std.console.write_line"]
+    }
+}
+```
+
+这样即使用户没有单独引入第三方 `sdk`，也仍然能依赖发行版自带默认实现完成普通应用开发。
+
+## 第三方平台的边界
+
+对像 `wechat`、`unity` 这样的第三方平台，还需要额外强调一条边界：
+
+- `sdk` 只负责能力绑定
+- `legion` 只负责通用编译与中间产物输出
+- 平台工程组织、打包、预览、上传与发布由平台方自己的第三方构建器处理
+- 这个构建器不是 `legion` 插件，只是共享 `nyar` 的基础 build 体系
 
 ## 与 target profile 的关系
 
@@ -189,16 +307,16 @@ target profile 可以提供“默认需要哪些能力族”的建议，但不�
 - `browser -> sdk.browser`
 - `mini-game -> tencent.wechat.sdk`
 
-后者会把官方目标模型与特定厂商强耦合。
+前者属于能力族建议，后者则把官方目标模型与特定厂商强耦合。
 
 ## Publish format 的作用
 
 像 `wechat` 这样的宿主往往不只是 target 问题，还和发布格式相关：
 
 - 同样是 `wasm/js` 族
-- browser web app 与小程序 mini game 的宿主 API 完全不同
+- browser web app 与 mini game 的宿主 API 完全不同
 
-因此，planner 过滤 provider 时，至少要考虑：
+因此，planner 过滤 `sdk` / `fill` 时，至少要考虑：
 
 1. `arch`
 2. `abi`
@@ -210,20 +328,20 @@ target profile 可以提供“默认需要哪些能力族”的建议，但不�
 
 ## 诊断要求
 
-planner 相关错误应该把“为什么这个 provider 不可见”说清楚：
+planner 相关错误应该把“为什么这个 `fill` 不可见”说清楚：
 
-- 未进入依赖闭包
+- 未进入有效依赖闭包
 - target 不匹配
 - publish format 不匹配
-- 被显式 binding 覆盖
-- 多个 provider 冲突
+- 被显式 `sdk.bind` 覆盖
+- 多个 `fill` 冲突
 
 ## 迁移原则
 
 旧系统若仍然存在 `std` 直接依赖 `std.adaptor.*` 的逻辑，应分三步迁移：
 
-1. 先为能力建立 port
-2. 再把旧 adaptor 声明成 provider
-3. 最后从 `std` 中移除硬编码宿主分支
+1. 先把现有 `std` 入口标注为 `port`
+2. 再把旧 adaptor 声明成 `fill`
+3. 最后把选择逻辑迁移到 planner 与 `sdk.bind`
 
 只有这样，planner 才能真正接管装配，而不是继续为历史结构擦屁股。

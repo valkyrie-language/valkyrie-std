@@ -4,7 +4,7 @@
 
 在 `sdk vendor` 体系中，zero cost 的含义是：
 
-> 选择 provider 的成本只存在于编译期，不存在于运行时。
+> 选择 `fill` 的成本只存在于编译期，不存在于运行时。
 
 最终产物的调用路径应当等价于“开发者手写调用具体宿主绑定函数”。
 
@@ -12,7 +12,7 @@
 
 ### 1. 编译期静态解析
 
-port 到 provider 的映射必须在编译期确定。运行时二进制中不应残留“等会儿再决定调用谁”的逻辑。
+`port` 到 `fill` 的映射必须在编译期确定。运行时二进制中不应残留“等会儿再决定调用谁”的逻辑。
 
 ### 2. 普通符号调用
 
@@ -41,8 +41,8 @@ port 到 provider 的映射必须在编译期确定。运行时二进制中不�
 ### 运行时注册表
 
 ```v
-register("std.port.net.request", wechat_request)
-call_by_name("std.port.net.request", req)
+register("std.net.request", wechat_request)
+call_by_name("std.net.request", req)
 ```
 
 问题：
@@ -62,7 +62,7 @@ client.request(req)
 
 - 运行时动态分派
 - 有对象模型成本
-- provider 选择不再是构建期行为
+- `fill` 选择不再是构建期行为
 
 ### 反射 / DLR / JS 动态路径拼接
 
@@ -73,7 +73,7 @@ invoke(runtime_name, method_name, req)
 问题：
 
 - 无法进行编译期签名校验
-- 无法静态裁剪无用 provider
+- 无法静态裁剪无用 `fill`
 
 ## 正确做法
 
@@ -82,7 +82,7 @@ invoke(runtime_name, method_name, req)
 源码中允许存在：
 
 - 抽象 port 调用
-- provider 声明
+- `fill` 声明
 - 底层宿主特性标注
 
 ### 解析阶段
@@ -90,7 +90,7 @@ invoke(runtime_name, method_name, req)
 在符号解析阶段完成：
 
 1. 找到 port
-2. 过滤可见 provider
+2. 过滤可见 `fill`
 3. 唯一绑定
 4. 直接改写调用目标
 
@@ -113,23 +113,23 @@ invoke(runtime_name, method_name, req)
 
 - 诊断信息最完整
 - 类型签名还完整可见
-- 后续 IR 无需理解 provider 系统
+- 后续 IR 无需理解 `fill` 系统
 
 ### 要求 2：后端不做兜底
 
-后端只负责生成目标代码，不参与 provider 选择。
+后端只负责生成目标代码，不参与 `fill` 选择。
 
 如果到了 backend 才发现：
 
-- 缺 provider
-- 多 provider
+- 缺 `fill`
+- 多个 `fill`
 - 签名不匹配
 
 说明前面的语义层设计已经失守。
 
 ### 要求 3：死代码可删除
 
-未被选中的 provider 即使在依赖闭包中存在，也必须能够在后续阶段被裁剪，不应强制进入最终产物。
+未被选中的 `fill` 即使在有效依赖闭包中存在，也必须能够在后续阶段被裁剪，不应强制进入最终产物。
 
 ## 典型展开示例
 
@@ -138,7 +138,7 @@ invoke(runtime_name, method_name, req)
 ```v
 micro get(url: utf8): utf8 {
     let req = Request.get(url)
-    let resp = std.port.net.request(req)
+    let resp = std.net.request(req)
     return resp.text()
 }
 ```
@@ -162,7 +162,7 @@ micro __wx_request(req: i32): i32
 
 在最终代码里，没有：
 
-- provider 查找表
+- `fill` 查找表
 - 条件分发器
 - 运行时绑定层
 
@@ -170,7 +170,7 @@ micro __wx_request(req: i32): i32
 
 ## 与模板 / 元代码的边界
 
-模板展开可以协助生成样板代码，但它不能代替编译期 provider 解析。
+模板展开可以协助生成样板代码，但它不能代替编译期 `fill` 解析。
 
 如果系统依赖模板在 `std` 中生成一堆：
 
@@ -184,10 +184,10 @@ micro __wx_request(req: i32): i32
 
 一个 `sdk vendor` 方案若想声称 zero cost，至少要通过以下检查：
 
-1. provider 是否在编译期唯一确定
+1. `fill` 是否在编译期唯一确定
 2. 最终产物里是否还残留动态分派结构
-3. 未使用的 provider 是否可被裁剪
-4. backend 是否无需理解 provider 选择逻辑
+3. 未使用的 `fill` 是否可被裁剪
+4. backend 是否无需理解 `bind` 选择逻辑
 5. `std` 是否不再直接 `match arch` 选择宿主实现
 
 只要其中一项不成立，就不能称为 zero cost `sdk` 体系。

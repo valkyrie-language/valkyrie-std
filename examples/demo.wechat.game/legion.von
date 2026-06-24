@@ -1,0 +1,21 @@
+{
+    name: "demo.wechat.game",
+    version: "0.1.0",
+    description: "微信小游戏构建流示例 -- 编译器产物交给微信小游戏工具链继续构建",
+    auto_link: {
+        core: true,
+        std: false
+    },
+    dependencies: {
+        "std": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            publish: ["mini-game"],
+            source_map: true,
+            typescript: true,
+            wat: true
+        }
+    ]
+}

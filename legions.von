@@ -58,6 +58,8 @@
         "examples/test.unite_compact",
         "examples/test.module_system",
         "examples/test.wasm_loop",
+        "examples/demo.wechat.game",
+        "examples/demo.unity.game",
         "projects/core",
         "projects/nyar",
         "projects/std",
@@ -78,6 +80,8 @@
         "projects/std.adaptor.wasip2",
         "projects/std.adaptor.wasm",
         "projects/std.adaptor.windows",
+        "projects/tencent.wechat.sdk",
+        "projects/unity.engine.sdk",
         "projects/legion.tools"
     ],
     workspace: {
