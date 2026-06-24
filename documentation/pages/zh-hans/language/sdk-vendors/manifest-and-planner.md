@@ -2,17 +2,17 @@
 
 ## 设计定位
 
-特性标注只声明“`port` 与 `fill` 的关系”，并不决定当前构建能看见哪些实现。这个职责属于：
+特性标注只声明“`host_contract` 与 `host_provider` 的关系”，并不决定当前构建能看见哪些实现。这个职责属于：
 
 1. `legion.von`
 2. target profile
 3. planner
 4. 第三方构建器的默认 `sdk` 注入策略
-5. 冲突时的项目侧 `sdk.bind` 显式消歧
+5. 选中实现后的宿主绑定属性由 `nyar` 在后续阶段单独收集处理
 
 因此，`sdk vendor` 的核心原则是：
 
-> 源码声明语义，`sdk-vendor` 声明 `sdk` 身份，planner 基于有效依赖闭包自动装配，项目侧 `sdk` 字段只在冲突、锁版本或测试版本时显式介入。
+> 源码声明语义，`sdk-vendor` 声明 `sdk` 身份，planner 基于有效依赖闭包自动装配；若需要锁版本、测试版本或覆盖默认注入，则通过显式依赖收窄候选闭包。
 
 ## 为什么 target 选择不能写进源码
 
@@ -22,10 +22,10 @@ target 是构建环境信息，而不是源码语义。
 
 1. 同一份源码必须重复嵌入大量平台矩阵
 2. 第三方 `sdk` 包很难复用
-3. 一个 `fill` 既要声明能力，又要内嵌发布逻辑
+3. 一个 `host_provider` 既要声明能力，又要内嵌发布逻辑
 4. 语言层与构建系统层混在一起
 
-因此，`fill` 的“是否参与当前构建”必须由 manifest、planner 与第三方构建器共同判定。
+因此，`host_provider` 的“是否参与当前构建”必须由 manifest、planner 与第三方构建器共同判定。
 
 ## Manifest 应表达什么
 
@@ -59,8 +59,7 @@ dependencies: {
 sdk-vendor: {
     kind: "third-party-sdk",
     targets: ["wasm32-unknown-browser-wasm"],
-    publish: ["mini-game"],
-    fills: ["std.net.get", "std.console.write_line"]
+    publish: ["mini-game"]
 }
 ```
 
@@ -68,7 +67,7 @@ sdk-vendor: {
 
 - `kind` 说明它是官方、发行版默认还是第三方 `sdk`
 - `targets` / `publish` 说明它适用哪些装配场景
-- `fills` 只是清单级摘要，真正的实现关系仍然以源码中的 `[fill("...")]` 为准
+- 真正的实现关系不再写入 manifest 摘要，而是完全以源码中的 `[host_provider("...")]` 为准
 
 如果后续 target 模型支持更细粒度的 vendor / specification，也应继续放在 `sdk-vendor` 侧表达，而不是写进源码特性标注。
 
@@ -92,7 +91,7 @@ planner 不应只看“项目显式写在 `dependencies` 里的包”，而应�
 
 ## Planner 的职责
 
-planner 需要在现有“收集所有依赖源码”的基础上，再增加一层“可见 `fill` 过滤”。
+planner 需要在现有“收集所有依赖源码”的基础上，再增加一层“可见 `host_provider` 过滤”。
 
 当前最小职责如下：
 
@@ -100,8 +99,8 @@ planner 需要在现有“收集所有依赖源码”的基础上，再增加一
 2. 确定当前 `CanonicalTarget`
 3. 从显式依赖、发行版默认依赖和构建器注入规则计算有效依赖闭包
 4. 过滤出与当前 target / publish 匹配的 `sdk` 包
-5. 把这些包中的 `fill` 声明暴露给符号解析器
-6. 若存在冲突，再读取项目侧 `sdk.bind` 做显式消歧
+5. 把这些包中的 `host_provider` 声明暴露给符号解析器
+6. 若候选集唯一，则该实现进入后续 `nyar` 宿主绑定处理阶段
 
 ## 推荐装配流程
 
@@ -116,20 +115,20 @@ target profile / publish format
     ↓
 按 `sdk-vendor` / target / publish / abi 过滤 `sdk` 包
     ↓
-收集 `fill` 声明
+收集 `host_provider` 声明
     ↓
-为每个 `port` 计算候选集
+为每个 `host_contract` 计算候选集
     ↓
 冲突检查
     ↓
 唯一绑定
 ```
 
-## `fill` 可见性规则
+## `host_provider` 可见性规则
 
 ### 规则 1：只在当前有效依赖闭包中查找
 
-`fill` 必须来自当前构建的有效依赖闭包，不能从 workspace 任意扫描。
+`host_provider` 必须来自当前构建的有效依赖闭包，不能从 workspace 任意扫描。
 
 理由：
 
@@ -140,7 +139,7 @@ target profile / publish format
 
 ### 规则 2：必须通过 target 过滤
 
-即使某个 `fill` 在有效依赖闭包里，只要它不适用当前 target，就视为不可见。
+即使某个 `host_provider` 在有效依赖闭包里，只要它不适用当前 target，就视为不可见。
 
 ### 规则 3：必须通过 publish 过滤
 
@@ -152,33 +151,9 @@ target profile / publish format
 
 ### 规则 5：默认不猜测优先级
 
-多个 `fill` 同时可见时，planner 不按包名、目录名、时间戳或导入顺序猜测优先级。
+多个 `host_provider` 同时可见时，planner 不按包名、目录名、时间戳或导入顺序猜测优先级。
 
-此时才要求显式选择。
-
-## 显式选择机制
-
-当多个 `fill` 都满足条件时，项目 manifest 可以显式绑定：
-
-```von
-sdk: {
-    bind: {
-        "std.net.get": "tencent.wechat.sdk.net.get"
-    }
-}
-```
-
-这里的含义不是“运行时注入”，而是：
-
-1. 默认候选集来自有效依赖闭包自动收集
-2. `bind` 只在冲突时明确把某个 `port` 绑定到指定 `fill`
-
-### 绑定字段规则
-
-1. key 必须是稳定 `std` 入口路径
-2. value 必须是当前有效依赖闭包中的 `fill` 路径
-3. 若 value 指向的 `fill` 不存在，报错
-4. 若 value 与 `port` 签名不兼容，报错
+此时不再引入额外项目级 `bind` 配置，而是要求通过显式依赖、锁版本或构建器默认注入策略把候选集收窄到唯一实现。
 
 ## 推荐的 `legion.von` 形态
 
@@ -194,8 +169,7 @@ sdk: {
     sdk-vendor: {
         kind: "third-party-sdk",
         targets: ["wasm32-unknown-browser-wasm"],
-        publish: ["mini-game"],
-        fills: ["std.net.get", "std.console.write_line"]
+        publish: ["mini-game"]
     }
 }
 ```
@@ -239,7 +213,7 @@ sdk: {
 
 ### 冲突时的应用项目
 
-只有在多个 `fill` 同时命中时，才需要显式写：
+只有在多个 `host_provider` 同时命中时，才需要通过显式依赖收窄候选集：
 
 ```von
 {
@@ -248,11 +222,6 @@ sdk: {
         "std": "workspace",
         "tencent.wechat.sdk": "1.2.3",
         "sdk.browser.net": "workspace"
-    },
-    sdk: {
-        bind: {
-            "std.net.get": "tencent.wechat.sdk.net.get"
-        }
     },
     build: [
         {
@@ -276,8 +245,7 @@ sdk: {
     sdk-vendor: {
         kind: "distribution-default",
         targets: ["wasm32-unknown-browser-wasm"],
-        publish: ["web"],
-        fills: ["std.net.get", "std.console.write_line"]
+        publish: ["web"]
     }
 }
 ```
@@ -316,7 +284,7 @@ target profile 可以提供“默认需要哪些能力族”的建议，但不�
 - 同样是 `wasm/js` 族
 - browser web app 与 mini game 的宿主 API 完全不同
 
-因此，planner 过滤 `sdk` / `fill` 时，至少要考虑：
+因此，planner 过滤 `sdk` / `host_provider` 时，至少要考虑：
 
 1. `arch`
 2. `abi`
@@ -328,20 +296,20 @@ target profile 可以提供“默认需要哪些能力族”的建议，但不�
 
 ## 诊断要求
 
-planner 相关错误应该把“为什么这个 `fill` 不可见”说清楚：
+planner 相关错误应该把“为什么这个 `host_provider` 不可见”说清楚：
 
 - 未进入有效依赖闭包
 - target 不匹配
 - publish format 不匹配
-- 被显式 `sdk.bind` 覆盖
-- 多个 `fill` 冲突
+- 候选闭包未被收窄到唯一实现
+- 多个 `host_provider` 冲突
 
 ## 迁移原则
 
 旧系统若仍然存在 `std` 直接依赖 `std.adaptor.*` 的逻辑，应分三步迁移：
 
-1. 先把现有 `std` 入口标注为 `port`
-2. 再把旧 adaptor 声明成 `fill`
-3. 最后把选择逻辑迁移到 planner 与 `sdk.bind`
+1. 先把现有 `std` 入口标注为 `host_contract`
+2. 再把旧 adaptor 声明成 `host_provider`
+3. 最后把选择逻辑迁移到 planner 与有效依赖闭包筛选
 
 只有这样，planner 才能真正接管装配，而不是继续为历史结构擦屁股。

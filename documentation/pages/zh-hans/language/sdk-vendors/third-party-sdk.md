@@ -6,7 +6,7 @@
 
 1. 独立发布自己的 `sdk`
 2. 通过 `sdk-vendor` 声明适用平台
-3. 通过 `[fill("...")]` 填充 `std` 稳定入口
+3. 通过 `[host_provider("...")]` 提供 `std` 稳定入口
 4. 由自己的第三方构建器隐式注入默认版本
 5. 在需要锁版本或测试版本时，被应用项目显式写出
 
@@ -24,7 +24,7 @@
 它应该负责：
 
 1. 提供宿主 API 绑定
-2. 用 `[fill("...")]` 严格填充 `std` 入口
+2. 用 `[host_provider("...")]` 严格提供 `std` 入口
 3. 用 `sdk-vendor` 声明 target / publish 适用范围
 4. 导出平台专有 API，供用户显式调用
 
@@ -68,11 +68,11 @@ projects/
 ```v
 namespace std.net;
 
-[port]
+[host_contract]
 micro get(url: utf8) -> utf8
 ```
 
-关键点不是新开一个 `std.port.net.get`，而是直接把现有 `std.net.get` 视为可填充入口。
+关键点不是新开一个 `std.host_contract.net.get`，而是直接把现有 `std.net.get` 视为可由宿主实现的稳定入口。
 
 ## `tencent.wechat.sdk`
 
@@ -87,11 +87,7 @@ micro get(url: utf8) -> utf8
     sdk-vendor: {
         kind: "third-party-sdk",
         targets: ["wasm32-unknown-browser-wasm"],
-        publish: ["mini-game"],
-        fills: [
-            "std.net.get",
-            "std.console.write_line"
-        ]
+        publish: ["mini-game"]
     }
 }
 ```
@@ -101,7 +97,7 @@ micro get(url: utf8) -> utf8
 ```v
 namespace tencent.wechat.sdk.net;
 
-[fill("std.net.get")]
+[host_provider("std.net.get")]
 micro get(url: utf8) -> utf8 {
     return __wechat_net_get(url)
 }
@@ -131,11 +127,7 @@ micro __wechat_net_get(url: utf8): utf8
     sdk-vendor: {
         kind: "third-party-sdk",
         targets: ["clr-microsoft-unknown-managed"],
-        publish: ["unity-player"],
-        fills: [
-            "std.net.get",
-            "std.console.write_line"
-        ]
+        publish: ["unity-player"]
     }
 }
 ```
@@ -145,7 +137,7 @@ micro __wechat_net_get(url: utf8): utf8
 ```v
 namespace unity.engine.sdk.net;
 
-[fill("std.net.get")]
+[host_provider("std.net.get")]
 micro get(url: utf8) -> utf8 {
     return __unity_net_get(url)
 }
@@ -217,26 +209,16 @@ dependencies: {
 }
 ```
 
-## 什么时候才需要 `sdk.bind`
+## 什么时候才会出现冲突
 
-只有冲突时。
+当多个 `host_provider` 同时可见时，就会出现冲突。
 
 例如某个项目同时可见：
 
 - `tencent.wechat.sdk`
 - `std.adaptor.wasm`
 
-并且它们都为 `std.net.get` 提供可见 `fill`，这时编译器不能猜谁优先，才需要项目自己写：
-
-```von
-sdk: {
-    bind: {
-        "std.net.get": "tencent.wechat.sdk.net.get"
-    }
-}
-```
-
-这里的 `sdk.bind` 不是日常必填项，而是冲突解决器。
+并且它们都为 `std.net.get` 提供可见 `host_provider`，这时编译器不能猜谁优先，必须通过显式依赖、锁版本或调整默认注入策略来继续收窄候选闭包。
 
 ## 与 `std.adaptor.*` 的关系
 
@@ -245,7 +227,7 @@ sdk: {
 - 普通项目没有第三方 `sdk` 时，仍然需要发行版默认实现
 - 微信小游戏项目可以用 `tencent.wechat.sdk`
 - Unity 游戏项目可以用 `unity.engine.sdk`
-- 默认 `adaptor` 和专用 `sdk` 可以共存，但冲突时必须显式消歧
+- 默认 `adaptor` 和专用 `sdk` 可以共存，但冲突时必须把候选闭包继续收窄
 
 ## 一句话总结
 

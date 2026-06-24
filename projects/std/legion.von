@@ -13,8 +13,7 @@
         "std.adaptor.linux": { version: "workspace", abi: "native" },
         "std.adaptor.macos": { version: "workspace", abi: "native" },
         "std.adaptor.wasm": { version: "workspace", abi: "wasm" },
-        "std.adaptor.wasip1": { version: "workspace", abi: "wasip1" },
-        "std.adaptor.wasip2": { version: "workspace", abi: "wasip2" }
+        "std.adaptor.wasi": { version: "workspace", abi: "wasi" }
     },
     build: [
         {

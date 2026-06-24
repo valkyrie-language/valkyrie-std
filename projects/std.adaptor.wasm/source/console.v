@@ -1,7 +1,25 @@
 # std.web_sdk: Console API
 # [js_builtin] 直接映射 JS 内置全局对象，无依赖
 # console 是副作用函数，不标注 pure
-# JS 字符串内部为 UTF-16，所有字符串参数标注为 utf16
+# 字符串 contract 统一优先使用 utf8，由底层绑定承担宿主桥接
+
+[host_provider("std.console.write")]
+micro write(message: utf8): unit {
+    let host_message: utf16 = utf8_to_utf16(message)
+    console_log(host_message)
+}
+
+[host_provider("std.console.write_line")]
+micro write_line(message: utf8): unit {
+    let host_message: utf16 = utf8_to_utf16(message)
+    console_log(host_message)
+}
+
+[host_provider("std.console.error_line")]
+micro error_line(message: utf8): unit {
+    let host_message: utf16 = utf8_to_utf16(message)
+    console_error(host_message)
+}
 
 #region 日志
 

@@ -1,4 +1,4 @@
-﻿# std.web_sdk: 控制台 IO
+# std.web_sdk: 控制台 IO
 # 封装 console / performance / timer API 为统一 print 接口
 # 浏览器端 JS 自动换行，print 即为 println
 # 编码：内部 utf8 → JS 端 utf16
@@ -33,10 +33,17 @@ micro read_line(): utf8 {
 
 #region 计时
 
+[host_provider("std.io.now")]
 micro time_ms(): i64 {
     return i64(perf_now())
 }
 
+[host_provider("std.io.monotonic")]
+micro monotonic_ms(): i64 {
+    return i64(perf_now())
+}
+
+[host_provider("std.io.sleep")]
 micro sleep_ms(ms: i32): unit {
     set_timeout(0, ms)
 }

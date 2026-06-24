@@ -39,7 +39,7 @@ Valkyrie 语言是面向 ECS、游戏引擎与 Web 全栈的领域特定语言�
 | [语言约定](conventions.md) | 关键字选择、命名规范、设计决策 |
 | [破坏性变更管理](breaking-changes.md) | 变更级别、过渡策略、迁移工具 |
 | [诊断代码](diagnostic-codes.md) | 编译器诊断代码参考 |
-| [SDK Vendor 体系](sdk-vendors/) | `sdk`、`std.adaptor.*`、第三方 vendor、`port / bind / fill` 装配模型 |
+| [SDK Vendor 体系](sdk-vendors/) | `sdk`、`std.adaptor.*`、第三方 vendor、`host_contract / bind / host_provider` 装配模型 |
 
 ## 其他入口
 

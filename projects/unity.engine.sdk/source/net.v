@@ -1,8 +1,8 @@
 namespace unity.engine.sdk.net;
 
-# Unity 网络能力填充
+# Unity 网络能力宿主提供
 
-[fill("std.net.get")]
+[host_provider("std.net.get")]
 micro get(url: utf8): utf8 {
     return __unity_request_get(url)
 }

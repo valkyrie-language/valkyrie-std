@@ -11,11 +11,7 @@
         host: "engine",
         kind: "platform-sdk",
         targets: ["clr-microsoft-unknown-managed"],
-        publish: ["unity-player"],
-        fills: [
-            "std.net.get",
-            "std.console.write_line"
-        ]
+        publish: ["unity-player"]
     },
     build: [
         {

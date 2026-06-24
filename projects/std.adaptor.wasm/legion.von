@@ -5,6 +5,12 @@
     dependencies: {
         "core": "workspace"
     },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "browser",
+        kind: "platform-sdk",
+        targets: ["wasm32-unknown-browser-wasm"]
+    },
     build: [
         {
             target: "wasm32-unknown-browser-wasm",

@@ -5,6 +5,12 @@
     dependencies: {
         "core": "workspace"
     },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "clr",
+        kind: "platform-sdk",
+        targets: ["clr-microsoft-unknown-managed"]
+    },
     engines: {
         vcc: ">=0.1.0"
     },

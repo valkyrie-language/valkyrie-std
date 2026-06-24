@@ -1,51 +1,19 @@
 namespace std.net;
 
 # std.net: http - HTTP 客户端
-# 编译时根据 arch 委托 adaptor 实现
+# 稳定 contract 优先使用 utf8，由宿主 provider 负责下沉到底层绑定
 
-micro get(url: utf8): utf8 {
-    <% match arch %>
-        <% case "clr" %>
-        return std.adaptor.dotnet.net.http_get_string_async(url)
-        <% case "wasm32" %>
-        let handle: i32 = std.adaptor.wasm.fetch.http_fetch(url)
-        return std.adaptor.wasm.fetch.response_text(handle)
-        <% else %>
-        return ""
-    <% end match %>
-}
+[host_contract]
+micro get(url: utf8): utf8
 
-micro post(url: utf8, body: utf8): utf8 {
-    <% match arch %>
-        <% case "clr" %>
-        return std.adaptor.dotnet.net.http_post_async(url, 0)
-        <% case "wasm32" %>
-        let handle: i32 = std.adaptor.wasm.fetch.http_fetch(url)
-        return std.adaptor.wasm.fetch.response_text(handle)
-        <% else %>
-        return ""
-    <% end match %>
-}
+[host_contract]
+micro post(url: utf8, body: utf8): utf8
 
-micro put(url: utf8, body: utf8): utf8 {
-    <% match arch %>
-        <% case "wasm32" %>
-        let handle: i32 = std.adaptor.wasm.fetch.http_fetch(url)
-        return std.adaptor.wasm.fetch.response_text(handle)
-        <% else %>
-        return ""
-    <% end match %>
-}
+[host_contract]
+micro put(url: utf8, body: utf8): utf8
 
-micro delete(url: utf8): utf8 {
-    <% match arch %>
-        <% case "wasm32" %>
-        let handle: i32 = std.adaptor.wasm.fetch.http_fetch(url)
-        return std.adaptor.wasm.fetch.response_text(handle)
-        <% else %>
-        return ""
-    <% end match %>
-}
+[host_contract]
+micro delete(url: utf8): utf8
 
 micro get_json(url: utf8): Option<Value> {
     let text: utf8 = get(url)

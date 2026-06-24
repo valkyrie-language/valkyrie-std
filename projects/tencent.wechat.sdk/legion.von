@@ -11,11 +11,7 @@
         host: "wechat",
         kind: "platform-sdk",
         targets: ["wasm32-unknown-browser-wasm"],
-        publish: ["mini-game"],
-        fills: [
-            "std.net.get",
-            "std.console.write_line"
-        ]
+        publish: ["mini-game"]
     },
     build: [
         {

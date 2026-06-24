@@ -1,8 +1,8 @@
 namespace tencent.wechat.sdk.net;
 
-# 微信小游戏网络能力填充
+# 微信小游戏网络能力宿主提供
 
-[fill("std.net.get")]
+[host_provider("std.net.get")]
 micro get(url: utf8): utf8 {
     return __wx_request_get(url)
 }

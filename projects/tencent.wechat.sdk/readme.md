@@ -4,14 +4,14 @@
 
 ## 目标
 
-- 为少量 `std` 的稳定入口提供微信小游戏侧 `fill`
+- 为少量 `std` 的稳定入口提供微信小游戏侧 `host_provider`
 - 通过 `sdk-vendor` 描述宿主适用范围
 - 在微信小游戏目标下支持无感自动装配
 - 为微信小游戏专有能力提供直接宿主绑定
 
 ## 当前范围
 
-`fill`：
+`host_provider`：
 
 - `std.net.get`
 - `std.console.write_line`

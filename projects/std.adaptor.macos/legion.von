@@ -5,6 +5,12 @@
     dependencies: {
         "core": "workspace"
     },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "macos",
+        kind: "platform-sdk",
+        targets: ["aarch64-apple-darwin"]
+    },
     build: [
         {
             target: "nyar"

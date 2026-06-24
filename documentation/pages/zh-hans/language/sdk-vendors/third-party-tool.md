@@ -104,7 +104,7 @@ Unity 侧更适合表现为插件型接管，推荐流程也类似，只是后�
 第三方构建器不应：
 
 1. 修改 `std` 语义
-2. 绕过 planner 直接硬改 `fill`
+2. 绕过 planner 直接硬改 `host_provider`
 3. 在运行时决定绑定关系
 4. 要求用户在业务源码里手写平台胶水
 
@@ -128,30 +128,22 @@ dependencies: {
 }
 ```
 
-## 与 `sdk.bind` 的关系
+## 与 `bind` 的关系
 
-第三方构建器负责把默认 `sdk` 放进候选集，但不负责替用户猜冲突结果。
+第三方构建器负责把默认 `sdk` 放进候选集，但不负责替 planner 猜冲突结果。
 
 如果当前有效依赖闭包同时看见：
 
 - `tencent.wechat.sdk`
 - `std.adaptor.wasm`
 
-并且两者都填充 `std.net.get`，那仍然必须由项目写出：
-
-```von
-sdk: {
-    bind: {
-        "std.net.get": "tencent.wechat.sdk.net.get"
-    }
-}
-```
+并且两者都提供 `std.net.get` 的宿主实现，那就说明当前有效依赖闭包还没有收窄到唯一实现。
 
 也就是说：
 
 - 构建器负责“把谁带进来”
 - planner 负责“看见哪些实现”
-- `sdk.bind` 负责“冲突时选哪一个”
+- `bind` 负责“选中实现之后如何接到最终宿主符号上”
 
 ## 一句话总结
 

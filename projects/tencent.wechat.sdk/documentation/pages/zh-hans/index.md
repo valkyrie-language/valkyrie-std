@@ -7,7 +7,7 @@
 - `std.net.get`
 - `std.console.write_line`
 
-这些入口在微信小游戏宿主下的 `fill`，以及微信小游戏专有宿主绑定：
+这些入口在微信小游戏宿主下的 `host_provider`，以及微信小游戏专有宿主绑定：
 
 - `tencent.wechat.sdk.storage.get_text`
 - `tencent.wechat.sdk.auth.login`

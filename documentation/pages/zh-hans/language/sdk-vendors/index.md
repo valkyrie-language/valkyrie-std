@@ -4,12 +4,12 @@ Valkyrie 的 `sdk` 体系用于承载“宿主平台 / 运行时 / 厂商 API �
 
 ## 设计目标
 
-1. `std` 保持现有语义入口，例如 `std.net.get`、`std.console.write_line`，不新增一层 `std.port.*` 命名体系。
+1. `std` 保持现有语义入口，例如 `std.net.get`、`std.console.write_line`，不新增一层 `std.host_contract.*` 命名体系。
 2. `sdk` 负责宿主绑定，允许官方维护，也允许第三方或 vendor 自行维护。
 3. `sdk` 的适配信息使用独立的 `sdk-vendor` 字段表达，不污染通用 `build` 体系。
 4. 默认候选集来自有效依赖闭包，而不是只来自项目显式依赖；构建器可以按平台隐式注入默认 `sdk`。
-5. 显式写出 `sdk` 依赖主要用于锁版本、测试版本、覆盖默认注入或冲突消歧。
-6. `port`、`bind`、`fill` 是三套正交能力：`port` 定义插槽，`bind` 选择实现，`fill` 提供实现。
+5. 显式写出 `sdk` 依赖主要用于锁版本、测试版本、覆盖默认注入或收窄候选闭包。
+6. `host_contract`、`bind`、`host_provider` 是三套正交能力：`host_contract` 定义宿主契约，`host_provider` 提供实现，`bind` 承载底层宿主绑定属性。
 7. 最终产物只保留静态解析后的具体调用路径，保证 zero cost。
 
 ## 主题导览
@@ -17,7 +17,7 @@ Valkyrie 的 `sdk` 体系用于承载“宿主平台 / 运行时 / 厂商 API �
 | 文档 | 说明 |
 |:---|:---|
 | [分层模型](layering.md) | `std`、`sdk`、`std.adaptor.*`、第三方 `sdk` 与第三方构建器的职责边界 |
-| [Port、Bind、Fill 与特性标注](attributes-and-ports.md) | `port`、`bind`、`fill` 三种能力及其特性标注语义 |
+| [Host 与特性标注](hosts-and-attributes.md) | 先说明 `host_contract`、`host_provider`、`bind`，再说明特性标注如何承载这些语义 |
 | [Manifest 与 Planner](manifest-and-planner.md) | `legion.von`、`sdk-vendor`、有效依赖闭包与装配规则 |
 | [第三方 SDK](third-party-sdk.md) | 非官方 `sdk` 的发布、命名、注入策略与 `wechat` / `unity` 示例 |
 | [第三方构建器](third-party-tool.md) | 第三方平台如何提供自己的构建器，并隐式注入默认 `sdk` |
@@ -27,9 +27,9 @@ Valkyrie 的 `sdk` 体系用于承载“宿主平台 / 运行时 / 厂商 API �
 ## 一句话原则
 
 - `std` 暴露稳定函数入口。
-- `port` 标记哪些入口可被宿主填充。
-- `fill` 声明哪个函数严格实现某个 `port`。
-- `bind` 只在冲突时决定当前项目选择哪个 `fill`。
+- `host_contract` 标记哪些入口可由宿主提供方实现。
+- `host_provider` 声明哪个函数严格实现某个 `host_contract`。
+- `bind` 指的是底层宿主绑定属性，例如 `[clr]`、`[jvm]`、`[js_builtin]`、`[wasi]`。
 - `sdk-vendor` 描述 `sdk` 自身适用范围。
 - 第三方构建器可以隐式注入默认 `sdk`。
 - 编译器在语义期静态完成绑定。
@@ -43,16 +43,16 @@ Valkyrie 的 `sdk` 体系用于承载“宿主平台 / 运行时 / 厂商 API �
 1. 保留 `std.adaptor.*` 作为发行版默认 `sdk` 集合。
 2. 允许第三方平台通过自己的构建器隐式注入专用 `sdk`。
 3. 允许应用项目在需要时显式引入特定 `sdk` 锁版本或覆盖默认实现。
-4. 逐步把旧 `adaptor` 收敛到统一的 `port / bind / fill` 协议下。
+4. 逐步把旧 `adaptor` 收敛到统一的 `host_contract / bind / host_provider` 协议下。
 
 ## 最小心智模型
 
 ```text
 std 稳定函数入口
     ↓
-port 标记
+host_contract 标记
     ↓
-fill 实现
+host_provider 实现
     ↓
 有效依赖闭包
     ↓
@@ -60,7 +60,7 @@ fill 实现
     ↓
 planner 过滤可见 sdk
     ↓
-项目侧 bind 消歧
+底层宿主 bind 属性
     ↓
 编译期静态绑定
     ↓
@@ -79,7 +79,7 @@ planner 过滤可见 sdk
 
 本设计不试图：
 
-1. 在运行时动态切换 `fill`。
+1. 在运行时动态切换 `host_provider`。
 2. 提供 Java 风格 ServiceLoader / `.NET` 反射式插件系统。
 3. 让单个二进制在运行时同时装配多套宿主能力。
 4. 让 `std` 自动联网下载第三方平台支持。

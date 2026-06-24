@@ -1,8 +1,8 @@
 namespace tencent.wechat.sdk.console;
 
-# 微信小游戏控制台能力填充
+# 微信小游戏控制台能力宿主提供
 
-[fill("std.console.write_line")]
+[host_provider("std.console.write_line")]
 micro write_line(message: utf8): unit {
     __console_log(message)
 }
