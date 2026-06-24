@@ -4,15 +4,14 @@ Valkyrie `WASI` 平台 `SDK`，统一承接 `WASI Component Model` 下的宿主�
 
 ## 目标
 
-- 不再区分 `wasip1` / `wasip2`
-- 不再考虑已淘汰的 `wasip1`
+- 统一采用单一 `wasi` 目标口径
+- 不再考虑已淘汰的 `WASI Preview 1`
 - 所有新实现都以 `WASI Component Model` 为准
 
 ## 当前范围
 
 - `std.io.now`
 - `std.io.monotonic`
-- `std.adaptor.wasi.lifecycle`：组件实例上下文、资源作用域与能力权限模型
 
 后续会继续补齐：
 
@@ -31,5 +30,5 @@ vcc build --target wasi
 
 - `host_provider` 从源码属性收集
 - 底层 `bind` 继续由 `nyar` 收集
-- `std.adaptor.wasi` 当前不再发明不存在的底层导入签名，只有仓库中已经真实存在的 `wasi` bind 才会落到 provider
+- `std.adaptor.wasi` 当前只基于仓库中已经真实存在的 `wasi` bind 落 provider，不再发明不存在的底层导入签名
 - 字符串稳定 contract 继续优先使用 `utf8`

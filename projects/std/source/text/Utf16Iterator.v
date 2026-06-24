@@ -36,12 +36,12 @@ imply Utf16Iterator: std.iterator.Iterator {
                 let low: u32 = (second as u32) - 0xDC00
                 let code_point: u32 = 0x10000 + (high << 10) + low
                 self._offset = self._offset + 2
-                return Some(__char_from_u16(code_point as u16))
+                return Some(code_point as u16 as char)
             }
         }
 
         self._offset = self._offset + 1
-        return Some(__char_from_u16(first))
+        return Some(first as char)
     }
 
     private micro code_unit_length(self) -> usize {
@@ -49,14 +49,7 @@ imply Utf16Iterator: std.iterator.Iterator {
     }
 
     private micro code_unit_at(self, offset: usize) -> u16 {
-        <% match arch %>
-            <% case "clr" %>
-            return __utf16_clr_char_at(self._text, offset as isize) as u16
-            <% case "jvm" %>
-            return __utf16_jvm_char_at(self._text, offset as isize) as u16
-            <% else %>
-            return self._text._repr[offset]
-        <% end match %>
+        return __utf16_host_char_at(self._text, offset as isize)
     }
 
     private micro is_high_surrogate(self, value: u16) -> bool {
@@ -68,11 +61,5 @@ imply Utf16Iterator: std.iterator.Iterator {
     }
 }
 
-[clr("System.Runtime", "System.String", "get_Chars"), pure]
-private micro __utf16_clr_char_at(value: utf16, index: isize): char { }
-
-[clr("System.Runtime", "System.Convert", "ToChar"), pure]
-private micro __char_from_u16(value: u16): char { }
-
-[jvm("java.lang.String", "charAt"), pure]
-private micro __utf16_jvm_char_at(value: utf16, index: isize): char { }
+[host_contract]
+micro __utf16_host_char_at(value: utf16, index: isize): u16

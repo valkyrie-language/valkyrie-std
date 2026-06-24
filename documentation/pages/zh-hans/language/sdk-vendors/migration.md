@@ -170,20 +170,25 @@ std.net.request(req)
 2. `std.io.print` / `std.io.read` / `std.terminal` 也已改成稳定入口调用或 `host_contract`，继续把平台选择从 `std` 中外移
 3. `std.adaptor.clr` / `std.adaptor.jvm` / `std.adaptor.wasm` / `std.adaptor.nyar` / `std.adaptor.windows` / `std.adaptor.linux` / `std.adaptor.macos` 已补入第一批 `host_provider`
 4. `std contract` 涉及字符串时继续以 `utf8` 为稳定入口；浏览器侧 `js_builtin` 仍保持宿主真实字符串语义，显式转换只能出现在 provider 代码里，不能落到 `bind` 层
-5. `std.adaptor.wasip1` 与 `std.adaptor.wasip2` 已从默认工作区依赖、workspace 成员与磁盘工程目录中移除，新增单一 `std.adaptor.wasi` 作为 `WASI component model` 收口入口
+5. 历史双栈 `WASI` 适配目录已从默认工作区依赖、workspace 成员与磁盘工程目录中移除，新增单一 `std.adaptor.wasi` 作为 `WASI component model` 收口入口
 6. `sdk-vendor` 继续保留宿主元数据，但不再声明 `host_providers` 摘要；`host_provider` 与 `bind` 统一由源码属性收集
 7. `valkyrie.rs` 已同步接入 `sdk-vendor` manifest 解析，并把 `wasi` ABI 收敛为单一口径；`legion` planner 也已开始按 `sdk-vendor.targets` 过滤可见依赖
 8. `std.math.basic` 已完成第一批收口：`abs` / `max` / `min` / `clamp` / `lerp` 回归纯标准库实现，`sqrt` / `pow` / `floor` / `ceil` / `round` / `sin` / `cos` / `tan` / `log` / `log10` 已改为稳定 `host_contract`
 9. `std.adaptor.clr.math` / `std.adaptor.jvm.math` / `std.adaptor.wasm.math` 已补入对应 `host_provider`，并把宿主底层 bind 保留在 adaptor 层
 10. `std.crypto.hash` 已清掉遗留 `match arch`；其中 `random_bytes` / `random_uuid` 已改为稳定 `host_contract`，浏览器侧已通过 `std.adaptor.wasm.crypto` 接入第一批 provider
 11. `legion` planner 已开始从源码闭包扫描 `[host_contract]` 与 `[host_provider("...")]`，并在规划阶段执行 provider 指向合法性校验及唯一性冲突诊断
-12. 工具链文档 `toolchain/legion.md` 与开发者文档 `developer/target-triples.md` 中残留的 `wasip1` / `wasip2` 公开口径已清理为单一 `wasi` / `WASI Component Model`
-13. `std.adaptor.wasi` 当前除已有时间 provider 外，新增了 `lifecycle` 纯源码骨架，用于收口组件实例上下文、资源作用域与能力权限模型；在真实 `wasi` bind 尚未补齐前，不再伪造不存在的底层导入签名
-14. 目前 `std` 中仍剩余 17 个文件、126 处 `match arch`，主要集中在 `collection` / `text` / `math.random` / `async` 模块
+12. 工具链文档 `toolchain/legion.md` 与开发者文档 `developer/target-triples.md` 中残留的历史 `WASI Preview` 公开口径已清理为单一 `wasi` / `WASI Component Model`
+13. `std.adaptor.wasi` 当前仍只保留基于真实 `wasi` bind 的时间 provider；属性名已从过渡态 `wasi_p2` 统一清理为单一 `wasi`，并明确后续扩展必须建立在真实绑定落盘的前提上
+14. `std.math.random.Random` 已改成内部 `host_contract` 收口，CLR / JVM 真实绑定与 WASM / Nyar / native fallback 语义均已迁到对应 adaptor provider，`math` 模块中的 `match arch` 已清零
+15. `std.text.Utf16Text` / `std.text.Utf16Iterator` 已移除全部 `match arch`，并把原有 CLR / JVM 字符串 bind 下沉到 `std.adaptor.clr` / `std.adaptor.jvm`，其余目标暂时严格保留既有 fallback 语义
+16. `std.text.Utf8Iterator` 中残留的 `__char_from_u16` CLR bind 也已移除，统一改为直接字符转换，避免继续把底层宿主 bind 塞在 `std`
+17. `std.collection.Array` / `std.collection.ArrayList` 已完成第一批收口：类级 `clr` / `jvm` runtime 等同标记继续保留在 `std`，方法级宿主分支已改为内部 `host_contract`，其中默认回退实现直接留在 contract body 中，`clr` / `jvm` 覆盖实现则下沉到 `std.adaptor.clr/source/collection/*` 与 `std.adaptor.jvm/source/collection/*` 镜像目录
+18. `std.collections.HashMap` / `std.collections.HashSet` 也已切到方法级 `host_contract`，默认回退继续直接操作 `SwissTable` / `SwissSet`，`clr` / `jvm` 侧改为顶层 `host_provider(std::collections::Type::method)` 形式，避免 adaptor 反向读取 `std` 内部结构，也避免字符串符号影响 IDE 跳转
+19. 目前 `std` 中仍剩余 12 个文件、95 处 `match arch`，全部集中在 `collection` / `async` 模块
 
 下一批继续推进：
 
-1. 继续清理 `std.text` 与 `std.math.random` 中剩余的 `match arch`，优先把 `Utf16Text` / `Utf16Iterator` 的宿主边界重新拆清
+1. 继续清理 `std.collection` 与 `std.async` 中剩余的 `match arch`
 2. 为 `std.adaptor.wasi` 基于真实存在的 `wasi` bind 继续补齐 `console` / `fs` / `net` / `crypto` provider，而不是伪造导入签名
 3. 在 `legion` planner 中继续细化 host 校验结果的下游消费链路，让编译驱动能够直接读取选中的 provider 清单
 4. 继续清理其他文档与工具链残留的历史 ABI 口径

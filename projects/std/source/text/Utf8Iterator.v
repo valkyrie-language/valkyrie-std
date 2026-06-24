@@ -55,7 +55,7 @@ imply Utf8Iterator: std.iterator.Iterator {
         }
 
         self._offset = self._offset + width
-        return Some(__char_from_u16(code_point as u16))
+        return Some(code_point as u16 as char)
     }
 
     private micro char_width(self, first: u8) -> usize {
@@ -78,6 +78,3 @@ imply Utf8Iterator: std.iterator.Iterator {
         return 1
     }
 }
-
-[clr("System.Runtime", "System.Convert", "ToChar"), pure]
-private micro __char_from_u16(value: u16): char { }

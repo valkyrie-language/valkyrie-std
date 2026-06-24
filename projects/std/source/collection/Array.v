@@ -6,14 +6,7 @@ class Array<T> {}
 
 imply Array<T> {
     micro length(self): usize {
-        <% match arch %>
-            <% case "clr" %>
-            return __array_clr_length::<T>(self)
-            <% case "jvm" %>
-            return __array_jvm_length::<T>(self)
-            <% else %>
-            return __array_nyar_length::<T>(self)
-        <% end match %>
+        return __array_host_length::<T>(self)
     }
 
     micro is_empty(self): bool {
@@ -25,14 +18,7 @@ imply Array<T> {
             return None
         }
 
-        <% match arch %>
-            <% case "clr" %>
-            return Some(__array_clr_get::<T>(self, index))
-            <% case "jvm" %>
-            return Some(__array_jvm_get::<T>(self, index))
-            <% else %>
-            return Some(self[index])
-        <% end match %>
+        return Some(__array_host_get::<T>(self, index))
     }
 
     micro first(self): Option<T> {
@@ -112,17 +98,12 @@ imply ArrayIterator<T>: std.iterator.Iterator {
     }
 }
 
-[clr("System.Runtime", "System.Array", "get_Length"), pure]
-private micro __array_clr_length<T>(array: Array<T>): usize { }
+[host_contract]
+private micro __array_host_length<T>(array: Array<T>): usize {
+    return array.length
+}
 
-[clr("System.Runtime", "System.Array", "GetValue"), pure]
-private micro __array_clr_get<T>(array: Array<T>, index: usize): T { }
-
-[jvm("java.lang.reflect.Array", "getLength"), pure]
-private micro __array_jvm_length<T>(array: Array<T>): usize { }
-
-[jvm("java.lang.reflect.Array", "get"), pure]
-private micro __array_jvm_get<T>(array: Array<T>, index: usize): T { }
-
-[vm("__nyar_length")]
-private micro __array_nyar_length<T>(array: Array<T>): usize { }
+[host_contract]
+private micro __array_host_get<T>(array: Array<T>, index: usize): T {
+    return array[index]
+}
