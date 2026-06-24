@@ -2,52 +2,52 @@ namespace std.adaptor.clr.math;
 
 # 数学 API
 
-[host_provider("std.math.sqrt")]
+[host_provider(std::math::sqrt)]
 micro sqrt(value: f64): f64 {
     return math_sqrt(value)
 }
 
-[host_provider("std.math.pow")]
+[host_provider(std::math::pow)]
 micro pow(base: f64, exp: f64): f64 {
     return math_pow(base, exp)
 }
 
-[host_provider("std.math.floor")]
+[host_provider(std::math::floor)]
 micro floor(value: f64): f64 {
     return math_floor(value)
 }
 
-[host_provider("std.math.ceil")]
+[host_provider(std::math::ceil)]
 micro ceil(value: f64): f64 {
     return math_ceiling(value)
 }
 
-[host_provider("std.math.round")]
+[host_provider(std::math::round)]
 micro round(value: f64): f64 {
     return math_round(value)
 }
 
-[host_provider("std.math.sin")]
+[host_provider(std::math::sin)]
 micro sin(value: f64): f64 {
     return math_sin(value)
 }
 
-[host_provider("std.math.cos")]
+[host_provider(std::math::cos)]
 micro cos(value: f64): f64 {
     return math_cos(value)
 }
 
-[host_provider("std.math.tan")]
+[host_provider(std::math::tan)]
 micro tan(value: f64): f64 {
     return math_tan(value)
 }
 
-[host_provider("std.math.log")]
+[host_provider(std::math::log)]
 micro log(value: f64): f64 {
     return math_log(value)
 }
 
-[host_provider("std.math.log10")]
+[host_provider(std::math::log10)]
 micro log10(value: f64): f64 {
     return math_log10(value)
 }

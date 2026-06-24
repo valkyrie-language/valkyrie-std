@@ -3,19 +3,19 @@
 # console 是副作用函数，不标注 pure
 # 字符串 contract 统一优先使用 utf8，由底层绑定承担宿主桥接
 
-[host_provider("std.console.write")]
+[host_provider(std::console::write)]
 micro write(message: utf8): unit {
     let host_message: utf16 = utf8_to_utf16(message)
     console_log(host_message)
 }
 
-[host_provider("std.console.write_line")]
+[host_provider(std::console::write_line)]
 micro write_line(message: utf8): unit {
     let host_message: utf16 = utf8_to_utf16(message)
     console_log(host_message)
 }
 
-[host_provider("std.console.error_line")]
+[host_provider(std::console::error_line)]
 micro error_line(message: utf8): unit {
     let host_message: utf16 = utf8_to_utf16(message)
     console_error(host_message)

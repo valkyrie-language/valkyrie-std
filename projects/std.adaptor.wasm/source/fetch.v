@@ -3,7 +3,7 @@
 # fetch 有副作用（网络 IO），不标注 pure
 # 字符串 contract 统一优先使用 utf8，由底层绑定承担宿主桥接
 
-[host_provider("std.net.get")]
+[host_provider(std::net::get)]
 micro get(url: utf8): utf8 {
     let host_url: utf16 = utf8_to_utf16(url)
     let handle: i32 = http_fetch(host_url)
@@ -11,7 +11,7 @@ micro get(url: utf8): utf8 {
     return utf16_to_utf8(response)
 }
 
-[host_provider("std.net.post")]
+[host_provider(std::net::post)]
 micro post(url: utf8, body: utf8): utf8 {
     let host_url: utf16 = utf8_to_utf16(url)
     let handle: i32 = http_fetch(host_url)
@@ -19,7 +19,7 @@ micro post(url: utf8, body: utf8): utf8 {
     return utf16_to_utf8(response)
 }
 
-[host_provider("std.net.put")]
+[host_provider(std::net::put)]
 micro put(url: utf8, body: utf8): utf8 {
     let host_url: utf16 = utf8_to_utf16(url)
     let handle: i32 = http_fetch(host_url)
@@ -27,7 +27,7 @@ micro put(url: utf8, body: utf8): utf8 {
     return utf16_to_utf8(response)
 }
 
-[host_provider("std.net.delete")]
+[host_provider(std::net::delete)]
 micro delete(url: utf8): utf8 {
     let host_url: utf16 = utf8_to_utf16(url)
     let handle: i32 = http_fetch(host_url)

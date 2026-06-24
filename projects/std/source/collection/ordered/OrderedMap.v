@@ -14,15 +14,8 @@ class OrderedMap<K, V> {
 }
 
 imply OrderedMap<K, V>: Map<K, V> {
+    [host_contract]
     micro get(self, key: K): Option<V> {
-        <% match arch %>
-            <% case "jvm" %>
-        if !__ordered_map_jvm_contains_key(self, key) {
-            return None
-        }
-
-        return Some(__ordered_map_jvm_get(self, key))
-            <% else %>
         let slot_option: Option<usize> = self.find_slot(key)
         if slot_option.is_none() {
             return None
@@ -34,21 +27,10 @@ imply OrderedMap<K, V>: Map<K, V> {
         }
 
         return Some(entry.value)
-        <% end match %>
     }
 
+    [host_contract]
     micro insert(mut self, key: K, value: V): Option<V> {
-        <% match arch %>
-            <% case "jvm" %>
-        if __ordered_map_jvm_contains_key(self, key) {
-            let old: V = __ordered_map_jvm_get(self, key)
-            __ordered_map_jvm_put(self, key, value)
-            return Some(old)
-        }
-
-        __ordered_map_jvm_put(self, key, value)
-        return None
-            <% else %>
         let slot_option: Option<usize> = self.find_slot(key)
         if slot_option.is_some() {
             let slot: usize = slot_option.unwrap()
@@ -70,20 +52,10 @@ imply OrderedMap<K, V>: Map<K, V> {
         self._indices.insert(key, slot)
         self._count = self._count + 1
         return None
-        <% end match %>
     }
 
+    [host_contract]
     micro remove(mut self, key: K): Option<V> {
-        <% match arch %>
-            <% case "jvm" %>
-        if !__ordered_map_jvm_contains_key(self, key) {
-            return None
-        }
-
-        let old: V = __ordered_map_jvm_get(self, key)
-        __ordered_map_jvm_remove(self, key)
-        return Some(old)
-            <% else %>
         let slot_option: Option<usize> = self.find_slot(key)
         if slot_option.is_none() {
             return None
@@ -102,23 +74,15 @@ imply OrderedMap<K, V>: Map<K, V> {
         })
         self._count = self._count - 1
         return Some(entry.value)
-        <% end match %>
     }
 
+    [host_contract]
     micro contains_key(self, key: K): bool {
-        <% match arch %>
-            <% case "jvm" %>
-        return __ordered_map_jvm_contains_key(self, key)
-            <% else %>
         return self.find_slot(key).is_some()
-        <% end match %>
     }
 
+    [host_contract]
     micro keys(self): List<K> {
-        <% match arch %>
-            <% case "jvm" %>
-        return __ordered_map_jvm_list_from_any::<K>(__ordered_map_jvm_keys(self))
-            <% else %>
         return self._entries
             .into_iterator()
             .filter(micro(entry: OrderedMapEntry<K, V>) -> bool {
@@ -128,14 +92,10 @@ imply OrderedMap<K, V>: Map<K, V> {
                 return entry.key
             })
             .collect_array_list()
-        <% end match %>
     }
 
+    [host_contract]
     micro values(self): List<V> {
-        <% match arch %>
-            <% case "jvm" %>
-        return __ordered_map_jvm_list_from_any::<V>(__ordered_map_jvm_values(self))
-            <% else %>
         return self._entries
             .into_iterator()
             .filter(micro(entry: OrderedMapEntry<K, V>) -> bool {
@@ -145,36 +105,25 @@ imply OrderedMap<K, V>: Map<K, V> {
                 return entry.value
             })
             .collect_array_list()
-        <% end match %>
     }
 
+    [host_contract]
     micro length(self): usize {
-        <% match arch %>
-            <% case "jvm" %>
-        return __ordered_map_jvm_length(self)
-            <% else %>
         return self._count
-        <% end match %>
     }
 
     micro is_empty(self): bool {
         return self.length() == 0
     }
 
+    [host_contract]
     micro clear(mut self) -> unit {
-        <% match arch %>
-            <% case "jvm" %>
-        __ordered_map_jvm_clear(self)
-            <% else %>
         self._indices.clear()
         self._entries.clear()
         self._count = 0
-        <% end match %>
     }
 
     micro iterator(self, f: micro(K, V) -> unit) -> unit {
-        <% match arch %>
-            <% case "jvm" %>
         let keys: List<K> = self.keys()
         let mut i: usize = 0
         while i < keys.length() {
@@ -182,31 +131,17 @@ imply OrderedMap<K, V>: Map<K, V> {
             f(key, self.get(key).unwrap())
             i = i + 1
         }
-            <% else %>
-        self._entries
-            .into_iterator()
-            .filter(micro(entry: OrderedMapEntry<K, V>) -> bool {
-                return entry.active
-            })
-            .for_each(micro(entry: OrderedMapEntry<K, V>) -> unit {
-                f(entry.key, entry.value)
-            })
-        <% end match %>
     }
 }
 
 imply OrderedMap<K, V> {
+    [host_contract]
     micro new(capacity: usize): Self {
-        <% match arch %>
-            <% case "jvm" %>
-        return __ordered_map_jvm_new::<K, V>(capacity)
-            <% else %>
         return Self {
             _indices: HashMap::new(capacity),
             _entries: ArrayList::new(capacity),
             _count: 0,
         }
-        <% end match %>
     }
 
     micro find_slot(self, key: K): Option<usize> {
@@ -223,33 +158,3 @@ imply OrderedMap<K, V> {
         return None
     }
 }
-
-[jvm("java.util.LinkedHashMap", "<init>")]
-private micro __ordered_map_jvm_new<K, V>(capacity: usize): OrderedMap<K, V> { }
-
-[jvm("java.util.LinkedHashMap", "containsKey"), pure]
-private micro __ordered_map_jvm_contains_key<K, V>(map: OrderedMap<K, V>, key: K): bool { }
-
-[jvm("java.util.LinkedHashMap", "get"), pure]
-private micro __ordered_map_jvm_get<K, V>(map: OrderedMap<K, V>, key: K): V { }
-
-[jvm("java.util.LinkedHashMap", "put")]
-private micro __ordered_map_jvm_put<K, V>(map: OrderedMap<K, V>, key: K, value: V): any { }
-
-[jvm("java.util.LinkedHashMap", "remove")]
-private micro __ordered_map_jvm_remove<K, V>(map: OrderedMap<K, V>, key: K): any { }
-
-[jvm("java.util.LinkedHashMap", "keySet"), pure]
-private micro __ordered_map_jvm_keys<K, V>(map: OrderedMap<K, V>): any { }
-
-[jvm("java.util.LinkedHashMap", "values"), pure]
-private micro __ordered_map_jvm_values<K, V>(map: OrderedMap<K, V>): any { }
-
-[jvm("java.util.LinkedHashMap", "size"), pure]
-private micro __ordered_map_jvm_length<K, V>(map: OrderedMap<K, V>): usize { }
-
-[jvm("java.util.LinkedHashMap", "clear")]
-private micro __ordered_map_jvm_clear<K, V>(map: OrderedMap<K, V>): unit { }
-
-[jvm("java.util.ArrayList", "<init>")]
-private micro __ordered_map_jvm_list_from_any<T>(items: any): ArrayList<T> { }

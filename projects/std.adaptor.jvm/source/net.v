@@ -2,22 +2,22 @@ namespace std.adaptor.jvm.net;
 
 # 网络 API
 
-[host_provider("std.net.get")]
+[host_provider(std::net::get)]
 micro get(url: utf8): utf8 {
     return __http_get(url)
 }
 
-[host_provider("std.net.post")]
+[host_provider(std::net::post)]
 micro post(url: utf8, body: utf8): utf8 {
     return __http_post(url, body)
 }
 
-[host_provider("std.net.put")]
+[host_provider(std::net::put)]
 micro put(url: utf8, body: utf8): utf8 {
     return __http_put(url, body)
 }
 
-[host_provider("std.net.delete")]
+[host_provider(std::net::delete)]
 micro delete(url: utf8): utf8 {
     return __http_delete(url)
 }

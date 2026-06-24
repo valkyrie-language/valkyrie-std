@@ -5,7 +5,7 @@ namespace std.adaptor.wasm.crypto;
 # getRandomValues 有副作用（填充随机值），randomUUID 有副作用
 # JS 字符串内部为 UTF-16，所有字符串参数标注为 utf16
 
-[host_provider("std.crypto.random_bytes")]
+[host_provider(std::crypto::random_bytes)]
 micro random_bytes(len: i32): utf8 {
     if len > 0 {
         crypto_random(0, len)
@@ -14,7 +14,7 @@ micro random_bytes(len: i32): utf8 {
     return ""
 }
 
-[host_provider("std.crypto.random_uuid")]
+[host_provider(std::crypto::random_uuid)]
 micro random_uuid(): utf8 {
     let host_value: utf16 = crypto_uuid()
     return utf16_to_utf8(host_value)

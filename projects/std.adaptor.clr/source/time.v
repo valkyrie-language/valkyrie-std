@@ -1,16 +1,16 @@
 namespace std.adaptor.clr.time;
 
-[host_provider("std.io.now")]
+[host_provider(std::io::now)]
 micro now(): i64 {
     return __environment_tick_count64()
 }
 
-[host_provider("std.io.monotonic")]
+[host_provider(std::io::monotonic)]
 micro monotonic(): i64 {
     return __environment_tick_count64()
 }
 
-[host_provider("std.io.sleep")]
+[host_provider(std::io::sleep)]
 micro sleep(ms: i32): unit {
     __thread_sleep(ms)
 }

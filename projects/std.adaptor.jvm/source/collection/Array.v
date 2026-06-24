@@ -1,11 +1,11 @@
 namespace std.adaptor.jvm.collection;
 
-[host_provider("std.collection.__array_host_length")]
+[host_provider(std::collection::__array_host_length)]
 private micro array_host_length<T>(array: std.collection.Array<T>): usize {
     return __array_jvm_length::<T>(array)
 }
 
-[host_provider("std.collection.__array_host_get")]
+[host_provider(std::collection::__array_host_get)]
 private micro array_host_get<T>(array: std.collection.Array<T>, index: usize): T {
     return __array_jvm_get::<T>(array, index)
 }

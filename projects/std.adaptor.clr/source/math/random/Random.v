@@ -1,21 +1,21 @@
 namespace std.adaptor.clr.math.random;
 
-[host_provider("std.math.random.__host_new")]
+[host_provider(std::math::random::__host_new)]
 micro host_new() -> std.math.random.Random {
     return __random_clr_new()
 }
 
-[host_provider("std.math.random.__host_with_seed")]
+[host_provider(std::math::random::__host_with_seed)]
 micro host_with_seed(seed: i32) -> std.math.random.Random {
     return __random_clr_with_seed(seed)
 }
 
-[host_provider("std.math.random.__host_next_i32")]
+[host_provider(std::math::random::__host_next_i32)]
 micro host_next_i32(random: std.math.random.Random, max_exclusive: i32) -> i32 {
     return __random_clr_next_i32(random, max_exclusive)
 }
 
-[host_provider("std.math.random.__host_next_f64")]
+[host_provider(std::math::random::__host_next_f64)]
 micro host_next_f64(random: std.math.random.Random) -> f64 {
     return __random_clr_next_f64(random)
 }

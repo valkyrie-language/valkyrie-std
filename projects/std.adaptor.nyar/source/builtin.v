@@ -16,17 +16,17 @@ micro print_i32(value: i32): i32
 [vm("print")]
 private micro print_utf8(value: utf8): utf8
 
-[host_provider("std.console.write")]
+[host_provider(std::console::write)]
 micro write(message: utf8): unit {
     print_utf8(message)
 }
 
-[host_provider("std.console.write_line")]
+[host_provider(std::console::write_line)]
 micro write_line(message: utf8): unit {
     println_utf8(message)
 }
 
-[host_provider("std.console.error_line")]
+[host_provider(std::console::error_line)]
 micro error_line(message: utf8): unit {
     println_utf8(message)
 }
@@ -44,17 +44,17 @@ micro sleep_ms(ms: i32): i32
 [vm("get_time")]
 private micro __get_time(): i64
 
-[host_provider("std.io.now")]
+[host_provider(std::io::now)]
 micro get_time(): i64 {
     return __get_time()
 }
 
-[host_provider("std.io.monotonic")]
+[host_provider(std::io::monotonic)]
 micro monotonic_time(): i64 {
     return __get_time()
 }
 
-[host_provider("std.io.sleep")]
+[host_provider(std::io::sleep)]
 micro sleep(ms: i32): unit {
     sleep_ms(ms)
 }

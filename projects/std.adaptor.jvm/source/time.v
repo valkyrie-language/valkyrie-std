@@ -1,16 +1,16 @@
 namespace std.adaptor.jvm.time;
 
-[host_provider("std.io.now")]
+[host_provider(std::io::now)]
 micro now(): i64 {
     return __system_current_time_millis()
 }
 
-[host_provider("std.io.monotonic")]
+[host_provider(std::io::monotonic)]
 micro monotonic(): i64 {
     return __system_nano_time()
 }
 
-[host_provider("std.io.sleep")]
+[host_provider(std::io::sleep)]
 micro sleep(ms: i32): unit {
     __thread_sleep(ms)
 }

@@ -3,37 +3,37 @@
 # NSLog 自动追加换行，并使用 UTF-8 编码，无需额外转换
 # 编码：内部 utf8 → macOS Foundation utf8（直接传递）
 
-[host_provider("std.console.write")]
+[host_provider(std::console::write)]
 micro print(msg: utf8) {
     darwin_ns_log(msg)
 }
 
-[host_provider("std.console.write_line")]
+[host_provider(std::console::write_line)]
 micro print_line(msg: utf8) {
     darwin_ns_log(msg)
 }
 
-[host_provider("std.console.error_line")]
+[host_provider(std::console::error_line)]
 micro print_err(msg: utf8) {
     darwin_ns_log(msg)
 }
 
-[host_provider("std.console.read_line")]
+[host_provider(std::console::read_line)]
 micro read_line(): utf8 {
     return ""
 }
 
-[host_provider("std.io.now")]
+[host_provider(std::io::now)]
 micro time_ms(): i64 {
     return 0
 }
 
-[host_provider("std.io.monotonic")]
+[host_provider(std::io::monotonic)]
 micro monotonic_ms(): i64 {
     return 0
 }
 
-[host_provider("std.io.sleep")]
+[host_provider(std::io::sleep)]
 micro sleep_ms(ms: i32) {
     return
 }

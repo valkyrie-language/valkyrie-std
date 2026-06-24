@@ -1,66 +1,66 @@
 namespace std.adaptor.jvm.text;
 
-[host_provider("std.text.__utf16_host_length")]
+[host_provider(std::text::__utf16_host_length)]
 micro host_length(value: std.text.utf16): isize {
     return __utf16_jvm_length(value)
 }
 
-[host_provider("std.text.__utf16_host_sub_string")]
+[host_provider(std::text::__utf16_host_sub_string)]
 micro host_sub_string(value: std.text.utf16, start: isize, count: isize): std.text.utf16 {
     return __utf16_jvm_substring(value, start, start + count)
 }
 
-[host_provider("std.text.__utf16_host_concat")]
+[host_provider(std::text::__utf16_host_concat)]
 micro host_concat(value: std.text.utf16, other: std.text.utf16): std.text.utf16 {
     return __utf16_jvm_concat(value, other)
 }
 
-[host_provider("std.text.__utf16_host_contains")]
+[host_provider(std::text::__utf16_host_contains)]
 micro host_contains(value: std.text.utf16, other: std.text.utf16): bool {
     return __utf16_jvm_contains(value, other)
 }
 
-[host_provider("std.text.__utf16_host_starts_with")]
+[host_provider(std::text::__utf16_host_starts_with)]
 micro host_starts_with(value: std.text.utf16, prefix: std.text.utf16): bool {
     return __utf16_jvm_starts_with(value, prefix)
 }
 
-[host_provider("std.text.__utf16_host_ends_with")]
+[host_provider(std::text::__utf16_host_ends_with)]
 micro host_ends_with(value: std.text.utf16, suffix: std.text.utf16): bool {
     return __utf16_jvm_ends_with(value, suffix)
 }
 
-[host_provider("std.text.__utf16_host_index_of")]
+[host_provider(std::text::__utf16_host_index_of)]
 micro host_index_of(value: std.text.utf16, other: std.text.utf16): isize {
     return __utf16_jvm_index_of(value, other)
 }
 
-[host_provider("std.text.__utf16_host_trim")]
+[host_provider(std::text::__utf16_host_trim)]
 micro host_trim(value: std.text.utf16): std.text.utf16 {
     return __utf16_jvm_trim(value)
 }
 
-[host_provider("std.text.__utf16_host_to_lower")]
+[host_provider(std::text::__utf16_host_to_lower)]
 micro host_to_lower(value: std.text.utf16): std.text.utf16 {
     return __utf16_jvm_to_lower(value)
 }
 
-[host_provider("std.text.__utf16_host_to_upper")]
+[host_provider(std::text::__utf16_host_to_upper)]
 micro host_to_upper(value: std.text.utf16): std.text.utf16 {
     return __utf16_jvm_to_upper(value)
 }
 
-[host_provider("std.text.__utf16_host_replace")]
+[host_provider(std::text::__utf16_host_replace)]
 micro host_replace(value: std.text.utf16, old_value: std.text.utf16, new_value: std.text.utf16): std.text.utf16 {
     return __utf16_jvm_replace(value, old_value, new_value)
 }
 
-[host_provider("std.text.__utf16_host_equals")]
+[host_provider(std::text::__utf16_host_equals)]
 micro host_equals(value: std.text.utf16, other: std.text.utf16): bool {
     return __utf16_jvm_equals(value, other)
 }
 
-[host_provider("std.text.__utf16_host_char_at")]
+[host_provider(std::text::__utf16_host_char_at)]
 micro host_char_at(value: std.text.utf16, index: isize): u16 {
     return __utf16_jvm_char_at(value, index) as u16
 }
