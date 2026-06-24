@@ -3,34 +3,15 @@
 namespace std.io;
 
 micro read_line(): utf8 {
-    <% match arch %>
-        <% case "clr" %>
     return std.console.read_line()
-        <% case "jvm" %>
-    return std.console.read_line()
-        <% else %>
-    return ""
-    <% end match %>
 }
 
 micro read_all(): utf8 {
-    <% match arch %>
-        <% case "clr" %>
-    return std.adaptor.dotnet.io.file_read_all_text("")
-        <% else %>
-    return ""
-    <% end match %>
+    return read_file_text("")
 }
 
 micro read_char(): i32 {
-    <% match arch %>
-        <% case "clr" %>
     return std.console.read_char()
-        <% case "jvm" %>
-    return std.console.read_char()
-        <% else %>
-    return 0
-    <% end match %>
 }
 
 micro read_int(): Option<i32> {

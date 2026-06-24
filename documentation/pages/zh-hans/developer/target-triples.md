@@ -134,8 +134,7 @@ arch-impl-spec[-abi]
 | `gnu` | GNU ABI（Linux 等） | `x86_64`, `aarch64` |
 | `msvc` | Microsoft ABI（Windows 原生） | `x86_64`, `aarch64` |
 | `wasm` | 标准 WebAssembly 二进制模块 | `wasm32`, `wasm64` |
-| `wasip1` | WASI Preview 1 | `wasm32` |
-| `wasip2` | WASI Preview 2 / Component Model | `wasm32` |
+| `wasi` | WASI Component Model | `wasm32` |
 | `managed` | 标准托管执行（JIT 加载） | `clr`, `jvm` |
 | `nativeaot` | .NET NativeAOT 预编译 | `clr` |
 | `il2cpp` | Unity IL2CPP 转译 C++ | `clr` |
@@ -206,8 +205,7 @@ arch-impl-spec[-abi]
 
 | CanonicalTarget | 含义 | 常用运行约定 |
 |:---|:---|:---|
-| `wasm32-unknown-wasi-wasip1` | WASI Preview 1 | 入口 `_start` |
-| `wasm32-unknown-wasi-wasip2` | WASI Preview 2 / Component Model | 按 component model 生成入口 |
+| `wasm32-unknown-wasi-wasi` | WASI Component Model | 按 component model 生成入口 |
 
 ### 6.6 原生平台
 
@@ -254,8 +252,8 @@ arch-impl-spec[-abi]
 
 ### 7.4 WASI
 
-- `wasip1` 入口 `_start`，`std.io.print` 绑定 `fd_write`
-- `wasip2` 采用 component model 入口，不能假定 `wasi_snapshot_preview1`
+- `wasi` 采用 component model 入口，不能假定 `wasi_snapshot_preview1`
+- 标准系统能力通过组件导入暴露，不再沿用 Preview 1 的 `_start` / `fd_write` 假设
 
 ---
 
@@ -271,8 +269,7 @@ arch-impl-spec[-abi]
 | `node` | `wasm32-node-unknown-wasm` |
 | `deno` | `wasm32-deno-unknown-wasm` |
 | `bun` | `wasm32-bun-unknown-wasm` |
-| `wasip1` | `wasm32-unknown-wasi-wasip1` |
-| `wasip2` | `wasm32-unknown-wasi-wasip2` |
+| `wasi` | `wasm32-unknown-wasi-wasi` |
 | `clr` | `clr-microsoft-unknown-managed` |
 | `jvm` | `jvm-openjdk-unknown-managed` |
 
@@ -300,7 +297,7 @@ arch-impl-spec[-abi]
 
 - `wasm` 精确指代 `.wasm` 二进制模块
 - 文本格式 WAT、JS glue、WASI 接口都由其他维度处理，不堆积在 ABI 一词上
-- `wasip1`、`wasip2` 作为更具体的 ABI 继续使用
+- `wasi` 作为统一 ABI 标识，直接表达 `WASI Component Model`
 
 ---
 

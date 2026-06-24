@@ -101,10 +101,10 @@ vcc build --target wasm
 # 编译为 NyarVM（所有平台通用）
 vcc build --target nyar
 
-# 编译为 WASI Preview 2
-vcc build --arch wasm32 --os wasi --abi wasip2
+# 编译为 WASI Component Model
+vcc build --target wasi
 ```
 
 ## 📌 状态
 
-✅ Web API 绑定已覆盖 10 个模块，包含 60+ API 函数。 🚧 WASI Preview 1/2 专用绑定待补充（文件系统、网络等）。
+✅ Web API 绑定已覆盖 10 个模块，包含 60+ API 函数。 🚧 `WASI Component Model` 侧能力由 `std.adaptor.wasi` 独立承接。

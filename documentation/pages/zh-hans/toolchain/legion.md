@@ -68,7 +68,7 @@ main = "source/main.v"
 # 构建目标列表，每个元素指定一个 canonical triple
 [build]
 {target: "wasm32-unknown-browser"}
-{target: "wasm32-unknown-wasi-wasip1"}
+{target: "wasm32-unknown-wasi-wasi"}
 
 [dependencies]
 some-package = "^1.0"
@@ -113,8 +113,7 @@ tag = "latest"
 | `node` | `wasm32-unknown-node` | WebAssembly（Node.js） |
 | `deno` | `wasm32-unknown-deno` | WebAssembly（Deno） |
 | `bun` | `wasm32-unknown-bun` | WebAssembly（Bun） |
-| `wasip1` | `wasm32-unknown-wasi-wasip1` | WASI Preview 1 |
-| `wasip2` | `wasm32-unknown-wasi-wasip2` | WASI Preview 2 |
+| `wasi` | `wasm32-unknown-wasi-wasi` | WASI Component Model |
 | `clr` | `clr-microsoft-windows` | .NET CLR 程序集 |
 | `jvm` | `jvm-openjdk-linux` | JVM 类文件 |
 | `native` | 宿主平台对应的 canonical triple | 原生二进制 |
@@ -127,7 +126,7 @@ tag = "latest"
 [build]
 {target: "wasm32-unknown-browser"}
 {target: "wasm32-unknown-node"}
-{target: "wasm32-unknown-wasi-wasip1"}
+{target: "wasm32-unknown-wasi-wasi"}
 {target: "clr-unity-windows-il2cpp"}
 ```
 

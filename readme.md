@@ -54,8 +54,7 @@ valkyrie.v/
 │   │   ├── std.adaptor.linux/
 │   │   ├── std.adaptor.macos/
 │   │   ├── std.adaptor.nyar/
-│   │   ├── std.adaptor.wasip1/
-│   │   ├── std.adaptor.wasip2/
+│   │   ├── std.adaptor.wasi/
 │   │   ├── std.adaptor.wasm/
 │   │   └── std.adaptor.windows/
 │   └── (无 examples — 标准库的正确性由 bootstrap.v 的 examples 间接验证)

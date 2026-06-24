@@ -1,44 +1,21 @@
 namespace std.crypto;
 
 # std.crypto: hash 模块：哈希与随机数
-# 编译时根据 arch 委托 adaptor 实现
 
 micro sha256(data: utf8): utf8 {
-    <% match arch %>
-        <% else %>
-        return ""
-    <% end match %>
+    return ""
 }
 
 micro md5(data: utf8): utf8 {
-    <% match arch %>
-        <% else %>
-        return ""
-    <% end match %>
+    return ""
 }
 
 micro hmac_sha256(key: utf8, data: utf8): utf8 {
-    <% match arch %>
-        <% else %>
-        return ""
-    <% end match %>
+    return ""
 }
 
-micro random_bytes(len: i32): utf8 {
-    <% match arch %>
-        <% case "wasm32" %>
-        std.adaptor.wasm.crypto.crypto_random(0, len)
-        return ""
-        <% else %>
-        return ""
-    <% end match %>
-}
+[host_contract]
+micro random_bytes(len: i32): utf8
 
-micro random_uuid(): utf8 {
-    <% match arch %>
-        <% case "wasm32" %>
-        return std.adaptor.wasm.crypto.crypto_uuid()
-        <% else %>
-        return ""
-    <% end match %>
-}
+[host_contract]
+micro random_uuid(): utf8
