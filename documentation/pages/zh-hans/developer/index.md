@@ -2,98 +2,42 @@
 
 ## 项目结构
 
-```
-Valkyrie.cs/
+```text
+valkyrie.v/
+├── documentation/              文档
+├── examples/                   示例与冒烟工程
 ├── projects/
-│   ├── Asgard/                     # VOA 全栈框架（编译器、开发服务器、SSG）
-│   ├── Asgard.Api/                 # VOA API 定义
-│   ├── Legion/                     # 包管理器核心
-│   ├── Legion.Registry/            # 注册表抽象基类
-│   ├── Legion.Registry.Conda/      # Conda 注册表适配器
-│   ├── Legion.Registry.Jsr/        # JSR 注册表适配器
-│   ├── Legion.Registry.Maven/      # Maven 注册表适配器
-│   ├── Legion.Registry.Npm/        # NPM 注册表适配器
-│   ├── Legion.Registry.Nuget/      # NuGet 注册表适配器
-│   ├── Legion.Registry.Valhalla/   # Valhalla 注册表适配器
-│   ├── Valhalla/                   # 注册表共享核心
-│   ├── Valhalla.Client/            # 注册表客户端
-│   ├── Valhalla.Config/            # 注册表配置
-│   ├── Valhalla.Server/            # 注册表服务端
-│   ├── Valkyrie/                   # 核心工作区服务
-│   ├── Valkyrie.Compiler/          # 编译主线：HIR→MIR→LIR→多目标
-│   ├── Valkyrie.Formatter/         # 代码格式化
-│   ├── Valkyrie.Highlight/         # 语法高亮
-│   ├── Valkyrie.Interpreter/       # 运行时（ValkyrieRuntime、增量编译、热重载）
-│   ├── Valkyrie.LSP/               # 语言服务器协议
-│   ├── Valkyrie.Linter/            # 静态代码检查
-│   ├── Valkyrie.Tests/             # 语言/编译器测试
-│   ├── Asgard.Tests/               # VOA 测试
-│   ├── Legion.Tests/               # 包管理测试
-│   └── Valhalla.Tests/             # 注册表测试
-├── tools/
-│   ├── vcc/                        # VCC CLI（编译与运行）
-│   ├── legion/                      # Legion CLI（包管理命令）
-│   └── asgard/                      # Asgard CLI（VOA 构建/开发服务器）
-├── examples/
-│   └── runtime/
-│       └── voa-runtime.js          # VOA 前端运行时
-├── documentation/                  # 本文档
-└── Valkyrie.slnx
+│   ├── core/                   语言核心 primitive 与基础类型
+│   ├── std/                    统一语义标准库
+│   ├── std.adaptor.*/          宿主与平台绑定
+│   ├── std.data.binary.*/      目标格式模型与编解码
+│   ├── nyar.vm.*/              执行引擎与运行模型
+│   ├── legion.tools/           工程工具链
+│   ├── asgard/                 上层前端框架
+│   └── atlas/                  上层应用框架
+├── scripts/                    自举与工具脚本
+└── legions.von                 workspace 入口
 ```
 
-## 26 个项目的职责
-
-| 项目 | 职责 |
-|:---|:---|
-| **Asgard** | VOA 全栈框架：编译器、开发服务器、SSG |
-| **Asgard.Api** | VOA API 定义和共享契约 |
-| **Legion** | 包管理器核心（依赖解析、构建编排、安全审计） |
-| **Legion.Registry** | 注册表抽象基类和工厂 |
-| **Legion.Registry.Conda** | Conda 注册表适配器 |
-| **Legion.Registry.Jsr** | JSR 注册表适配器 |
-| **Legion.Registry.Maven** | Maven 注册表适配器 |
-| **Legion.Registry.Npm** | NPM 注册表适配器 |
-| **Legion.Registry.Nuget** | NuGet 注册表适配器 |
-| **Legion.Registry.Valhalla** | Valhalla 注册表适配器 |
-| **Valhalla** | 注册表共享核心库 |
-| **Valhalla.Client** | 下载、安装、锁文件校验 |
-| **Valhalla.Config** | 配置模型 |
-| **Valhalla.Server** | HTTP 服务端 |
-| **Valkyrie** | 核心工作区服务 |
-| **Valkyrie.Compiler** | 新编译主线：HIR→MIR→LIR→多目标 |
-| **Valkyrie.Formatter** | 代码格式化 |
-| **Valkyrie.Highlight** | 语法高亮 |
-| **Valkyrie.Interpreter** | 运行时（ValkyrieRuntime、增量编译、热重载） |
-| **Valkyrie.LSP** | 语言服务器协议 |
-| **Valkyrie.Linter** | 静态代码检查 |
-| **Valkyrie.Tests** | 语言/编译器测试 |
-| **Asgard.Tests** | VOA 框架测试 |
-| **Legion.Tests** | 包管理器测试 |
-| **Valhalla.Tests** | 注册表测试 |
-
-## 构建
-
-```bash
-dotnet build
-dotnet test
-```
-
-## 关键设计文档
+## 设计文档
 
 - [架构详解](architecture.md)
-- [Target Contract Spec](target-contract-spec.md)
+- [Canonical Target 规范](target-triples.md)
+- [编译管线逐阶段详解](../maintainer/compilation.md)
+- [目标家族契约](../maintainer/target-family-contract.md)
 
-## 开发环境
+## 贡献前先记住
 
-- .NET SDK
-- Rider 或 VS Code
-- 同级目录需有 Oak.cs、Acorn.cs、NyarVM.cs
+- 统一的是语义主线，不是统一物理 `IR`
+- `std` 只表达统一语义，平台差异放到 `std.adaptor.*`
+- target 必须按 family 分流，不继续维护“所有后端都能吃”的兼容壳
+- 后端必须先 `validate` 再 `compile`
+- 交付成功的标准是完整 `ArtifactSet`，不是单一主文件
 
 ## 代码审查清单
 
-- [ ] 遵循 [编码规范](coding-conventions.md)
-- [ ] 遵循 [依赖规则](dependency-rules.md)
-- [ ] 编写测试覆盖新功能
-- [ ] 全部现有测试通过
-- [ ] 文档注释完整（中文，XML 文档注释格式）
-- [ ] 无 console.log / TODO 残留
+- [ ] 没有把平台特判塞进 `std`
+- [ ] 没有把语言语义下沉到后端或工具层
+- [ ] 没有引入新的统一大 `IR` 或统一大对象
+- [ ] 文档与代码边界一致
+- [ ] 示例或测试覆盖新边界

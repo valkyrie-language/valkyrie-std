@@ -1,64 +1,53 @@
 # CLR 后端
 
-## 概述
+## 定位
 
-CLR 后端将 `GenerateModule` 翻译为 .NET CIL（Common Intermediate Language），输出 `.dll` 或 `.exe` 程序集。利用 CLR 的类型系统和 GC。
+`CLR` family 面向 .NET 运行时、IL 和元数据系统。它适合复用 CLR 的对象模型、GC 和程序集生态，但仍然必须保持 family 边界清晰。
 
-## 管线
+## 输入前提
 
-```
-GenerateModule
-  │
-  ├── CLR Backend
-  │     ├── 指令翻译：GenerateInstruction → CIL 指令
-  │     ├── 对象布局：利用 CLR 类型系统
-  │     └── GC 策略：利用 CLR GC
-  │
-  ▼
-ClrModuleData (使用 Acorn.Clr.Data)
-  │
-  ├── Acorn.Clr.Encode
-  │
-  ▼
-.dll / .exe (二进制程序集)
-```
+进入 `CLR` 后端前，应当已经完成：
 
-## 类型映射
+- 语义闭合
+- `Partition`
+- `CLR` family 专属 lowering
+- CLR 入口、程序集、元数据与宿主依赖的整理
 
-| Valkyrie 类型 | CLR 映射 |
-|:---|:---|
-| `class` | .NET class |
-| `structure` | .NET readonly struct |
-| `enums` / `flags` | .NET enum |
-| `union` / `unite` | 抽象基类 + 嵌套子类 |
-| `trait` | .NET interface |
-| 原始类型 | .NET 原始类型（`Int32`、`Double` 等） |
+## Validate
 
-## 指令映射
+`Validate` 阶段重点确认：
 
-| GenerateInstruction | CIL 对应 |
-|:---|:---|
-| 算术/逻辑运算 | CIL 算术/逻辑指令 |
-| `CallStatic` | `call` |
-| `CallWitness` | `callvirt`（通过接口分派） |
-| `CallDynamic` | `callvirt`（通过 TypeInfo） |
-| 内存读写 | `ldfld` / `stfld` |
-| 控制流 | CIL 分支指令 |
+- 当前输入能否合法映射到 CLR 类型系统和 IL 约束
+- 调用语义、尾调用、虚调用和入口方式是否满足 CLR family 契约
+- 所需宿主能力是否已经通过 adaptor 或 family 输入明确表达
 
-## Witness Table 在 CLR 上
+如果某项能力在 CLR 上没有稳定承载方式，必须编译期失败。
 
-CLR 后端类似 JVM 后端，利用 CLR 的虚方法分派机制。trait 编译为 .NET interface，`CallWitness` 映射为对 interface 方法的 `callvirt` 调用。
+## Compile
 
-## 入口点
+`Compile` 阶段负责：
 
-`EntryPolicy` 为 CLR 后端生成 `Main` 入口方法。
+- 生成程序集、类型、方法体和元数据
+- 将 family 输入翻译为 IL 与相关结构
+- 准备编码和打包所需的目标产物
 
-## `[clr]` FFI 支持
+## Family 特性
 
-Valkyrie 的 `[clr("Type", "Method")]` 注解允许直接调用 .NET 方法。CLR 后端为这些调用生成 `call` 指令，不经过桥接层。
+- 可以利用 CLR GC 和托管对象模型
+- 可以利用程序集、元数据和现成运行时工具链
+- 适合生成 `.dll`、`.exe` 等托管交付物
 
-详见 [js-ffi.md](../js-ffi.md)。
+## 交付物
 
-## GC 集成
+典型交付物包括：
 
-CLR 后端完全依赖 .NET GC，Valkyrie 的 `class` 类型直接映射为托管对象，享受 .NET 自动内存管理。
+- `.dll`
+- `.exe`
+- 程序集清单与元数据
+- 最终 `ArtifactSet`
+
+## 风险边界
+
+- 禁止让 CLR 专属元数据结构泄漏成公共编译模型
+- 禁止把 CLR 能力当成所有后端都必须共享的基础设施
+- 禁止在 IL 生成阶段兜底修补上游遗漏的语言语义

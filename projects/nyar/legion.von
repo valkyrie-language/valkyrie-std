@@ -1,5 +1,5 @@
 {
-    name: "nyar-core",
+    name: "nyar",
     version: "workspace",
     description: "Nyar 核心库 — 目标三元组、构建矩阵、编译上下文等基础设施",
     type: "library",

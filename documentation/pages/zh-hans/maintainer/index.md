@@ -1,111 +1,78 @@
-# Valkyrie 编译器内部原理
+# Valkyrie 维护者文档
 
-## 编译管线（一张图）
+## 先读什么
 
-```
-源码(.v)
-  │
-  ├─ ① Oak.Valkyrie ──────── 文本解码：Lexer → Parser → AST
-  ▼
-CompilationUnit (AST)
-  │
-  ├─ ② MetaStager ────────── 元节点消除、宏展开 → Stage 0 AST
-  ▼
-Stage 0 AST
-  │
-  ├─ ③ TypeChecker ───────── 三个 Pass：声明收集 → 声明检查 → 体检查
-  ▼                           ← trait 结构推导在此发生
-SemanticModel                 ← 方法分派决议在此发生
-  │                           ← 类继承展开在此发生
-  ├─ ④ HirBuilder ────────── AST + SemanticModel → HIR
-  ▼
-HIR（已解析符号的高层 IR）
-  │
-  ├─ ⑤ HirToMirLowerer ───── HIR → EGraph<IKun>
-  ▼                           ← ? 在此展开为 match
-EGraph<IKun>                  ← .await 在此展开为 perform
-  │                           ← 模式匹配在此编译为决策树
-  ├─ ⑥ Nyar.Optimizer ────── 方言降级、部分求值、成本模型提取
-  ▼
-IKunTree（最优程序）
-  │
-  ├─ ⑦ IkunTreeToLirLowerer ─ IKunTree → GenerateModule
-  ▼                           ← 协程状态机在此生成
-GenerateModule（Nyar Standard IR）
-  │
-  ├─ ⑧ Backend ───────────── 代码生成：LIR → 目标平台数据结构
-  │   ├─ NyarVM  → .nyar
-  │   ├─ WASM    → .wasm
-  │   ├─ JVM     → .class
-  │   ├─ CLR     → .dll/.exe
-  │   └─ Native  → .elf/.exe/.dylib
-  │
-  ├─ ⑨ Acorn ─────────────── 二进制编码 → byte[]
-  │
-  ├─ ⑩ Packaging ─────────── 入口包装、sidecar 资产
-  ▼
-ArtifactSet（可执行产物）
+如果你要理解 `valkyrie.v` 的长期架构，建议按下面顺序阅读：
+
+1. [架构详解](../developer/architecture.md)
+2. [编译管线逐阶段详解](compilation.md)
+3. [目标家族契约](target-family-contract.md)
+4. [后端概览](backends/index.md)
+
+## 编译主线
+
+```text
+Source
+  -> Parse
+  -> Meta
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Target Lowering Lane
+  -> Backend Input
+  -> Validate
+  -> Backend Compile
+  -> Encode
+  -> Package
+  -> ArtifactSet
 ```
 
-> **核心约束**：①②③④⑤⑥⑦是语义主线，所有 target 共享。分叉从⑧开始。
+核心约束：
 
-## 从哪开始读
+- `Parse -> Partition` 是所有 target 共享的语义主线。
+- target 分叉从 `Partition` 开始，而不是从后端内部偷偷开始。
+- 后端必须先 `validate` 再 `compile`。
+- 不允许重新长出统一大 `IR` 或统一大 backend。
 
-### 路径 A：理解编译器全貌（推荐新手）
+## 阅读路径
 
-按数字顺序读：
+### 路径 A：理解整体架构
 
-1. [compilation.md](compilation.md) — 逐阶段详解，每阶段回答"输入是什么、输出是什么、做了什么"
-2. [meta-stager.md](meta-stager.md) — 多阶段编程，宏展开机制
-3. [type-checker.md](type-checker.md) — 类型检查三 Pass
-4. [trait-resolution.md](trait-resolution.md) — trait 结构推导算法
-5. [hir-types.md](hir-types.md) — HIR 类型系统
-6. [lir-lowering.md](lir-lowering.md) — LIR 降级与代码生成
-7. [multi-file.md](multi-file.md) — 多文件编译
-8. [backends/](backends/) — 五大后端
+- [编译管线逐阶段详解](compilation.md)
+- [目标家族契约](target-family-contract.md)
+- [Canonical Target 规范](../developer/target-triples.md)
 
-### 路径 B：理解某个语言特性如何编译
+### 路径 B：理解语言语义如何落入主线
 
-直接从特性跳入，每个文档都标注了在管线中的位置：
+- [类型检查](type-checker.md)
+- [HIR 类型](hir-types.md)
+- [模式匹配](pattern-case.md)
+- [多文件编译](multi-file.md)
 
-| 想了解 | 看这个 |
-|:---|:---|
-| trait 如何自动推导 | [trait-resolution.md](trait-resolution.md) |
-| `receiver.method()` 如何分派 | [method-dispatch.md](method-dispatch.md) |
-| class 继承如何展开 | [class-inheritance.md](class-inheritance.md) |
-| `match` 如何编译为跳转 | [pattern-lowering.md](pattern-lowering.md) |
-| `?` / `catch` / `resume` 如何降级 | [effect-compilation.md](effect-compilation.md) |
-| `.await` / `.awake` / `.block` 如何变成状态机 | [async-compilation.md](async-compilation.md) |
-| AWSL 模板如何变成 GGScript IR | [awsl-ir.md](awsl-ir.md) |
+### 路径 C：理解目标分流与后端
 
-### 路径 C：开发新后端
-
-从 [backends/index.md](backends/index.md) 开始，其中描述了后端的统一入口接口和职责边界。然后挑一个已有后端作为参考实现。
+- [后端概览](backends/index.md)
+- [CLR 后端](backends/clr.md)
+- [JVM 后端](backends/jvm.md)
+- [WASM 后端](backends/wasm.md)
+- [Native 后端](backends/native.md)
 
 ## 分层约束
 
-| 层级 | 做什么 | 不做什么 |
+| 层级 | 负责什么 | 不负责什么 |
 |:---|:---|:---|
-| HIR | 语言语义：符号、类型、入口 | ABI、宿主入口、文件格式 |
-| MIR | 等价变换、部分求值、优化 | target 特定 imports |
-| LIR | 调用约定、控制流、codegen 结构 | .wasm/.class/.dll 编码、sidecar |
-| Backend | 指令翻译、内存布局、GC | 语义分析、优化、二进制编码 |
+| `Semantics` | 名称、类型、语言事实闭合 | 目标 ABI、宿主包装 |
+| `HIR/MIR` | 语言语义与中层分析 | 文件格式、sidecar |
+| `Partition/Lane` | target family 分流与承接 | 语言级 resolve |
+| `Backend` | 指令选择、布局、metadata | 语义补洞 |
+| `Encode/Package` | 二进制编码与交付 | 前端语义 |
 
-## 项目结构
+## 当前长期方向
 
-```
-Valkyrie.cs/projects/
-├── Valkyrie/               CLI 入口
-├── Valkyrie.Runtime/       管线编排、AST→IKun 转换
-├── Valkyrie.TypeChecker/   类型检查器
-├── VoaCore/                核心库
-├── VoaRouter/              文件路由
-├── VoaEffect/              Effect 系统
-├── VoaApi/                 API Routes
-├── VoaAuth/                认证
-├── VoaI18n/                国际化
-├── VoaAnalytics/           埋点
-├── VoaSeo/                 SEO
-├── Valkyrie.ToolChains/    CLI / DevServer / Compiler / PWA
-└── Asgard.Tests/           测试套件
-```
+- 统一语义主线
+- target family 分流
+- family 专用 `Backend Input`
+- 后端 `validate + compile`
+- 统一 `ArtifactSet` 交付

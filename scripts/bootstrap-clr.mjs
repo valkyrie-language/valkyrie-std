@@ -11,9 +11,9 @@
  *   5. v1 / v2 可比较
  *
  * 流程：
- *   1. 用上一代编译器（NyarVM.cs legion）编译 valkyrie.v/projects/legion.tools → v1
+ *   1. 用外部 seed 编译器编译 valkyrie.v/projects/legion.tools → v1
  *   2. 验证 v1 产物的 `--version` / `--help`
- *   3. 用 v1 产物再次编译同一份源码 → v2
+ *   3. 严格使用 `legion.tools` 产出的 `legion.exe` 再次编译同一份源码 → v2
  *   4. 比对 v1 与 v2 的产物
  *
  * 用法：
@@ -41,7 +41,9 @@ const LEVEL2_SKIPPED_REASON = '由于上游门禁未通过，`v1.clr -> v2.clr` 
 
 const BOOTSTRAP_PROJECT = 'projects/legion.tools';
 const BOOTSTRAP_PROJECT_DIR = path.join(ROOT_DIR, BOOTSTRAP_PROJECT);
+const REMOVED_MICRO_COMPILER_PROJECT = 'projects/micro_compiler';
 const TARGET_TRIPLE = 'clr-microsoft-unknown-managed';
+const MODULE_GUARD_SKIPPED_REASON = '由于模块系统前置门未通过，`seed -> v1.clr` 未执行。';
 
 // ─────────────────────────────────────────────────────────────
 // 工具函数
@@ -207,6 +209,126 @@ function writeReport(outputRoot, payload) {
     const reportPath = path.join(outputRoot, 'bootstrap-report.json');
     fs.writeFileSync(reportPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
     return reportPath;
+}
+
+function escapeRegex(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function hasWorkspaceDependency(manifestText, dependencyName) {
+    const pattern = new RegExp(`"${escapeRegex(dependencyName)}"\\s*:\\s*\\{[\\s\\S]*?version\\s*:\\s*"workspace"`, 'm');
+    return pattern.test(manifestText);
+}
+
+function workspaceIncludesMember(workspaceText, memberPath) {
+    const pattern = new RegExp(`"${escapeRegex(memberPath)}"`);
+    return pattern.test(workspaceText);
+}
+
+function validateModuleSystem(verbose) {
+    console.log('\n══════════════════════════════════════════════════');
+    console.log('  模块系统前置门');
+    console.log('══════════════════════════════════════════════════\n');
+
+    const paths = {
+        workspaceManifest: path.join(ROOT_DIR, 'legions.von'),
+        legionToolsManifest: path.join(ROOT_DIR, 'projects', 'legion.tools', 'legion.von'),
+        nyarManifest: path.join(ROOT_DIR, 'projects', 'nyar', 'legion.von'),
+        stdManifest: path.join(ROOT_DIR, 'projects', 'std', 'legion.von'),
+        buildContext: path.join(ROOT_DIR, 'projects', 'legion.tools', 'source', 'build_context.v'),
+    };
+    const removedMicroCompilerDir = path.join(ROOT_DIR, 'projects', 'micro_compiler');
+
+    const errors = [];
+    for (const [name, filePath] of Object.entries(paths)) {
+        if (!fs.existsSync(filePath)) {
+            errors.push(`缺少必要文件：${name} -> ${filePath}`);
+        }
+    }
+    if (errors.length > 0) {
+        return { success: false, errors };
+    }
+
+    const workspaceText = fs.readFileSync(paths.workspaceManifest, 'utf8');
+    const legionToolsText = fs.readFileSync(paths.legionToolsManifest, 'utf8');
+    const nyarText = fs.readFileSync(paths.nyarManifest, 'utf8');
+    const stdText = fs.readFileSync(paths.stdManifest, 'utf8');
+    const buildContextText = fs.readFileSync(paths.buildContext, 'utf8');
+
+    if (!/name\s*:\s*"legion\.tools"/.test(legionToolsText)) {
+        errors.push('`projects/legion.tools/legion.von` 的 `name` 不是 `legion.tools`');
+    }
+    if (!/auto_link\s*:\s*\{[\s\S]*?core\s*:\s*true[\s\S]*?std\s*:\s*false[\s\S]*?\}/m.test(legionToolsText)) {
+        errors.push('`legion.tools` 未保持 `auto_link: { core: true, std: false }`');
+    }
+    for (const dependencyName of ['nyar', 'std', 'std.data.text.von']) {
+        if (!hasWorkspaceDependency(legionToolsText, dependencyName)) {
+            errors.push(`` + '`legion.tools` 缺少显式 workspace 依赖：' + dependencyName);
+        }
+    }
+
+    if (!/name\s*:\s*"nyar"/.test(nyarText)) {
+        errors.push('`projects/nyar/legion.von` 的 `name` 不是 `nyar`');
+    }
+    if (!/auto_link\s*:\s*\{[\s\S]*?core\s*:\s*true[\s\S]*?std\s*:\s*true[\s\S]*?\}/m.test(nyarText)) {
+        errors.push('`nyar` 未保持 `auto_link: { core: true, std: true }`');
+    }
+    if (!/name\s*:\s*"std"/.test(stdText)) {
+        errors.push('`projects/std/legion.von` 的 `name` 不是 `std`');
+    }
+
+    for (const memberPath of ['projects/legion.tools', 'projects/nyar', 'projects/std', 'examples/test.module_system']) {
+        if (!workspaceIncludesMember(workspaceText, memberPath)) {
+            errors.push(`workspace 未显式包含成员：${memberPath}`);
+        }
+    }
+    if (workspaceIncludesMember(workspaceText, REMOVED_MICRO_COMPILER_PROJECT)) {
+        errors.push(`workspace 仍包含已废弃项目：${REMOVED_MICRO_COMPILER_PROJECT}`);
+    }
+    if (fs.existsSync(removedMicroCompilerDir)) {
+        errors.push(`已废弃作弊工程仍存在：${removedMicroCompilerDir}`);
+    }
+
+    if (!buildContextText.includes('using nyar;')) {
+        errors.push('`build_context.v` 未显式 `using nyar;`');
+    }
+    for (const requiredSymbol of [
+        'micro legion_parse_canonical_target(target: utf8) -> CanonicalTarget {',
+        'return parse_target(canonical)',
+        'return format_target(parsed)',
+        'return default_target()',
+    ]) {
+        if (!buildContextText.includes(requiredSymbol)) {
+            errors.push(`build_context 缺少模块系统契约片段：${requiredSymbol}`);
+        }
+    }
+
+    if (verbose) {
+        console.log(`workspace manifest: ${paths.workspaceManifest}`);
+        console.log(`legion.tools manifest: ${paths.legionToolsManifest}`);
+        console.log(`nyar manifest: ${paths.nyarManifest}`);
+        console.log(`std manifest: ${paths.stdManifest}`);
+        console.log(`build context: ${paths.buildContext}`);
+    }
+
+    if (errors.length > 0) {
+        console.log('模块系统前置门失败：');
+        for (const error of errors) {
+            console.log(`  - ${error}`);
+        }
+        return { success: false, errors };
+    }
+
+    console.log('模块系统前置门通过：');
+    console.log('  - `legion.tools` 已显式依赖 `nyar`、`std`、`std.data.text.von`');
+    console.log('  - workspace 已显式包含 `legion.tools` / `nyar` / `std` / `test.module_system`');
+    console.log('  - `micro_compiler` 已从 workspace 与源码树中移除');
+    console.log('  - `build_context.v` 通过 `using nyar;` 显式导入跨模块类型与函数');
+    return {
+        success: true,
+        errors: [],
+        detail: '`legion.tools -> nyar/std` 模块依赖、workspace 成员、`micro_compiler` 清退与显式导入契约均已满足',
+    };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -595,11 +717,38 @@ function main() {
     console.log(`自举项目：${BOOTSTRAP_PROJECT}`);
     console.log(`目标三元组：${TARGET_TRIPLE}\n`);
 
+    const moduleSystemResult = validateModuleSystem(options.verbose);
+    if (!moduleSystemResult.success) {
+        const gates = [
+            createGate('模块系统前置门', '未通过', shortenText(moduleSystemResult.errors.join('；'), 400)),
+            createGate('上一代编译器入口', '跳过', '模块系统前置门未通过'),
+            createGate('源码 -> v1.clr', '跳过', MODULE_GUARD_SKIPPED_REASON),
+            createGate('v1 --version', '跳过', '源码 -> v1.clr 未执行'),
+            createGate('v1 --help', '跳过', '源码 -> v1.clr 未执行'),
+            createGate('v1 -> v2.clr', '跳过', LEVEL2_SKIPPED_REASON),
+            createGate('v1 / v2 比对', '跳过', '由于上游门禁未通过，比对未执行'),
+        ];
+        const blockers = moduleSystemResult.errors.map(error => `模块系统前置门失败：${error}`);
+        const reportPath = writeReport(outputRoot, {
+            success: false,
+            gates,
+            blockers,
+            previousLegion: null,
+            moduleSystem: moduleSystemResult,
+            v1: { success: false, outputDir: null, hash: null, runtime: { version: false, help: false } },
+            v2: { attempted: false, success: false, outputDir: null, compared: false, match: false, reason: LEVEL2_SKIPPED_REASON },
+        });
+        printGateSummary(gates);
+        console.log(`\n报告已写入：${reportPath}`);
+        process.exit(1);
+    }
+
     // 查找 legion
     const autoBuiltLegionRoot = path.join(outputRoot, '_previous_legion');
     const legionPath = options.legion ? path.resolve(options.legion) : ensurePreviousLegion(outputRoot, options.verbose);
     if (!legionPath) {
         const gates = [
+            createGate('模块系统前置门', '通过', moduleSystemResult.detail),
             createGate('上一代编译器入口', '未通过', '未找到可用 `legion`，且无法从 `NyarVM.cs` 自动构建'),
             createGate('源码 -> v1.clr', '跳过', '上一代编译器入口未就绪'),
             createGate('v1 --version', '跳过', '源码 -> v1.clr 未完成'),
@@ -608,7 +757,7 @@ function main() {
             createGate('v1 / v2 比对', '跳过', '由于上游门禁未通过，比对未执行'),
         ];
         const blockers = ['上一代编译器入口未就绪'];
-        const reportPath = writeReport(outputRoot, { gates, blockers, success: false });
+        const reportPath = writeReport(outputRoot, { gates, blockers, success: false, previousLegion: null, moduleSystem: moduleSystemResult });
         printGateSummary(gates);
         console.error('\n错误：找不到上一代 legion CLI');
         console.error('请设置 --legion / LEGION_PATH，或保证 NyarVM.cs 可用以便脚本自动构建上一代 legion');
@@ -645,6 +794,7 @@ function main() {
     console.log('══════════════════════════════════════════════════\n');
 
     console.log(`上一代编译器入口：通过`);
+    console.log(`模块系统前置门：${moduleSystemResult.success ? '通过' : '未通过'}`);
     console.log(`源码 -> v1.clr：${v1Result.success ? '通过' : '未通过'}`);
     console.log(`v1 --version：${v1Result.success ? (v1VersionPassed ? '通过' : '未通过') : '跳过'}`);
     console.log(`v1 --help：${v1Result.success ? (v1HelpPassed ? '通过' : '未通过') : '跳过'}`);
@@ -672,6 +822,7 @@ function main() {
     }
 
     const gates = [
+        createGate('模块系统前置门', moduleSystemResult.success ? '通过' : '未通过', moduleSystemResult.detail || shortenText(moduleSystemResult.errors.join('；'), 400)),
         createGate('上一代编译器入口', '通过', previousCompilerDetail),
         createGate('源码 -> v1.clr', v1Result.success ? '通过' : '未通过', v1Result.success ? `产物目录：${v1Result.outputDir}` : v1Result.error),
         createGate('v1 --version', v1Result.success ? (v1VersionPassed ? '通过' : '未通过') : '跳过', v1Result.success ? (v1VersionPassed ? '退出码 0' : shortenText(v1Result.runtime?.version?.stderr || v1Result.runtime?.version?.stdout || '执行失败')) : '源码 -> v1.clr 未通过'),
@@ -689,6 +840,7 @@ function main() {
         gates,
         blockers,
         previousLegion: legionPath,
+        moduleSystem: moduleSystemResult,
         v1: {
             success: v1Result.success,
             outputDir: v1Result.outputDir,

@@ -1,361 +1,280 @@
 # 架构详解
 
-## 设计目标
+## 目标
 
-Valkyrie 的稳定架构目标如下：
+`valkyrie.v` 的长期架构只追求三件事：
 
-- `Oak` 只负责文本解码与编码，输出带完整 `TextSpan` �?AST
-- `Valkyrie` 只负责语言前端、语义分析、前�?lowering 与编译管线编�?- `Nyar` 只负责分析优化、方言降级、最优程序提取与目标数据结构生成
-- `Acorn` 只负责目标格式编码，不重复实现语言语义
-- `Legion` 只负�?workspace、build graph、缓存、dist 与日志汇�?- `NyarVM`、`JVM`、`CLR`、`WASM Browser/Node/Deno/Bun`、`WASI P1`、`WASI P2` 共用同一条语义主线，只在 ABI、入口包装和交付层分�?
-## 现状问题
+- 语言语义长期稳定，不因为新增 target 而被反向污染。
+- target 能持续扩展，不靠统一大 `IR`、统一大 backend 或 emit 兜底补语义。
+- 交付物可运行、可调试、可验证，而不只是“生成了一个文件”。
 
-当前实现与目标结构存在以下偏差：
+这套架构明确拒绝两类失败路线：
 
-- `ValkyrieRuntime` 同时承担了编排、AST lowering、标准库特判、后端调用和产物拼装
-- `Valkyrie.Runtime.csproj` �?`Converter/**` 从编译中移除，直接破坏了 “Valkyrie 持有前端转换职责�?的边�?- `WasmBackend` 已经开始承载入口、imports、memory �?JS glue 压力，继续叠加语言语义会让回归风险快速上�?- “生成文件�?仍然被当作成功条件，而不是“宿主可以正确加载、启动、调用和调试�?
-## 分层总览
+- 把所有 target 硬塞进一份统一物理 `IR`，最后演变成新的 `god ir`。
+- 把语义、lowering、编码、打包、入口包装和宿主绑定塞进同一个大对象或大模块，最后演变成 `god object`。
 
-Valkyrie 的主线应固定为：
+## 核心原则
 
-`AST -> HIR -> MIR -> LIR -> multi target`
+### 1. 统一的是语义主线，不是统一物理 `IR`
 
-其中�?
-- `HIR` 表示带已解析符号与类型信息的高层语义表示
-- `MIR` 表示面向优化�?`IKun/EGraph` 中间表示
-- `LIR` 表示面向后端�?`NyarVM Standard IR`，当前可落在 `Nyar.Assembler.GenerateModule`
+`valkyrie.v` 允许所有 target 共用一条语义主线，但不要求共用一份最终低层表示。
 
-### 新项目切分图
+固定主线如下：
 
 ```text
-                           Valkyrie.cs
-┌──────────────────────────────────────────────────────────────────────�?�?Legion                                                              �?�? CanonicalTriple / Workspace / BuildGraph / Cache / Dist            �?└───────────────────────────────┬──────────────────────────────────────�?                                �?BuildPlan
-                                �?┌──────────────────────────────────────────────────────────────────────�?�?Valkyrie.Compiler                                                   �?�? Parse -> Semantics -> HIR -> MIR(EGraph) -> Extract -> LIR         �?�? CanonicalTripleRegistry -> Backend Select -> Backend Generate      �?�? Packaging -> ArtifactSet                                            �?└───────────────┬──────────────────────────────────────┬───────────────�?                �?LIR / Nyar Standard IR               �?ArtifactSet
-                �?                                     �?┌──────────────────────────────�?     ┌────────────────────────────────�?�?Valkyrie.Runtime             �?     �?Host Contract                  �?�? NyarStandardRuntime         �?     �?Browser / Node / Deno / Bun    �?�? Load(.nyar / LIR)           �?     �?JVM / CLR / WASI P1 / WASI P2  �?�? Run(module, function, args) �?     �?launcher / sidecar / manifest  �?└───────────────┬──────────────�?     └────────────────────────────────�?                �?                �?┌──────────────────────────────────────────────────────────────────────�?�?NyarVM                                                              �?�? Nyar Standard IR / NyarModule / VM / JIT / Runtime Builtins        �?└──────────────────────────────────────────────────────────────────────�?```
+Source -> Parse -> Semantics -> HIR -> MIR -> Optimize -> Partition
+       -> Target Lowering Lane -> Backend Input -> Validate -> Compile
+       -> Encode -> Package -> ArtifactSet
+```
 
-| 层级 | 组件 | 唯一职责 |
-|:---|:---|:---|
-| 工程�?| `Legion` | 工程发现、workspace 解析、build graph、缓存、target 选择、dist 落盘 |
-| 文本�?| `Oak.Valkyrie` | 源码 `->` Token `->` AST，保�?`TextSpan` 与语法诊�?|
-| 语义�?| `Valkyrie.TypeChecker` + `Valkyrie.Analyzer` | 名称解析、类型检查、属性解释、入口识别、模块依赖语义，构建 `SemanticModel` |
-| `HIR` �?| `Valkyrie.Compiler.Hir` | `CompilationUnit + SemanticModel -> Resolved HIR` |
-| `MIR` �?| `Valkyrie.Compiler.Mir` + `Nyar.Optimizer` | `HIR -> EGraph<IKun>`，执行方言降级、PE、重写、提�?|
-| `LIR` �?| `Valkyrie.Compiler.Lir` + `Nyar.Assembler` | `IKunTree -> GenerateModule`，形成统一 `NyarVM Standard IR` |
-| 后端�?| `Nyar.Assembler.*` | `LIR ->` 目标数据结构 |
-| 编码�?| `Acorn.*` | 目标数据结构 `->` 二进制编�?|
-| 交付�?| `Packaging` | sidecar、launcher、manifest、调试资产、宿主桥�?|
-| 运行时层 | `Valkyrie.Runtime` + `NyarVM` | 加载 `Nyar Standard IR` / `.nyar`，执行模块与宿主内建 |
+其中：
 
-## 标准编译流程
+- `HIR` 是高层语义表示。
+- `MIR` 是中层分析与优化表示。
+- `Partition` 是 target family 分区点。
+- `Backend Input` 是各 target family 自己的低层输入，不要求统一成一份共享物理模型。
 
-### `1. BuildPlan`
+### 2. 语义必须在前端闭合
 
-`Legion` 读取 `workspace`、`legion.von`、依赖图、target triple、优化级别和调试选项，产出统一�?`BuildPlan`�?
-### `2. Parse`
+下列事实必须在进入 target lane 之前闭合：
 
-`Oak.Valkyrie` 负责词法与语法分析，输出 `CompilationUnit` 与文本诊断�?
-### `3. Semantics`
+- 名称解析
+- 类型检查
+- 入口识别
+- `trait / imply` 满足
+- `row` 方法约束满足
+- `class / unite` 名义关系
+- effect 约束与能力边界
+- 文本类型收敛
 
-语义层执行符号收集、类型检查、属性解释、入口分析和模块导入绑定，输�?`SemanticModel`�?
-### `4. Build HIR`
+后端不得重新做这些判断，也不得在 emit 阶段偷偷补语义。
 
-`HIR` 只表达语言语义，不表达 target ABI，不直接拼装 backend 指令�?
-`HIR` 至少应具备：
+### 3. target family 必须前置分流
 
-- 已解析符号引�?- 已绑定类型信�?- 逻辑入口信息
-- 标准库语义调�?- 显式控制流结�?
-### `5. Lower To MIR`
+`Partition` 之后必须进入明确的 target family 路线，而不是继续维护“所有后端都能吃”的兼容壳。
 
-`HIR` 降级�?`MIR`，推荐直接落�?`EGraph<IKun>`�?
+当前长期 family 至少包括：
+
+- `NyarVM`
+- `CLR`
+- `JVM`
+- `WASM Browser/Node`
+- `WASI`
+- `Native`
+- `Shader`（预留）
+
+### 4. 后端先 `validate`，再 `compile`
+
+每个后端都必须显式声明：
+
+- 自己吃什么输入
+- 自己不吃什么输入
+- 哪些开放语义必须在进入前静态化
+- 哪些缺口必须编译期硬失败
+
+不允许“先生成点东西再说”。
+
+### 5. 标准库语义与宿主绑定分离
+
+`std` 只定义统一语义，宿主差异必须收口到 adaptor 层。
+
+例如：
+
+- `std.io.print`
+- `std.fs.read_all_text`
+- `std.time.now`
+- `std.net.http`
+
+这些能力应先作为稳定语义存在，再由 `std.adaptor.*` 绑定到不同宿主。
+
+## 五层结构
+
+### 语言层
+
+语言层负责：
+
+- 语法解析
+- 语义分析
+- 类型系统
+- `HIR`
+- `MIR`
+
+语言层不负责：
+
+- 目标 ABI
+- 文件格式
+- 入口包装
+- sidecar
+- 宿主胶水
+
+### 优化与分区层
+
 这一层负责：
 
-- 消除语法�?- 统一表达式与控制流语�?- �?PE �?E-Graph 优化准备等价表示
+- 静态化
+- 去虚化
+- 规则重写
+- 常量折叠
+- 体积预算
+- 模块拆分
+- target family 分区
 
-### `6. Optimize MIR`
+这一层不负责：
 
-`Nyar.Optimizer` �?`MIR` 上执行：
+- 目标文件编码
+- 宿主包装
+- 平台专用导入清单
 
-- 方言降级
-- 部分求�?- 规则重写
-- 成本模型提取
+`Optimize` 可以使用 `EGraph`，也可以使用其他机制；但它只是优化基础设施，不是语言真相本身。
 
-即使当前没有优化规则，也必须经过 `EGraph -> Extractor` 这条主线，不能直接从 AST 进入后端�?
-### `7. Lower To LIR`
+### target lane 层
 
-�?`IKunTree` 降级到统一 `LIR`。当前建议把 `Nyar.Assembler.GenerateModule` 正式定义�?`NyarVM Standard IR` 的承载结构�?
+每个 target family 一条独立 lane：
+
+- lane 只做本 family 需要的 lowering
+- lane 不重新解释语言语义
+- lane 产出 family 专用 `Backend Input`
+- lane 之间不共享统一物理终态
+
+### 编码与格式层
+
 这一层负责：
 
-- �?`IKunTree` 变成稳定�?codegen IR
-- 保持对多后端共享
-- 不掺入宿�?packaging 细节
+- 二进制格式数据模型
+- 编码
+- 解码
+- 结构校验
 
-### `8. Backend Select`
+它不负责：
 
-根据 `CanonicalTriple` 解析出的目标契约选择 `NyarVM`、`JVM`、`CLR` �?`WASM` 后端�?
-### `9. Backend Generate`
+- 名称解析
+- 类型推导
+- trait 选择
+- 标准库绑定
 
-`Nyar.Assembler.*` 把统一 `LIR` 生成�?`NyarModuleData`、`JvmClassFileData`、`ClrModuleData`、`WasmModuleData` 等目标数据结构�?
-### `10. Encode`
+### 交付与工具层
 
-编码阶段统一委托 `Acorn`，不得在 `Valkyrie` �?`Nyar` 内重复实现目标格式编码器�?
-### `11. Package`
+这一层负责：
 
-交付层按 profile 生成 `.js`、`.d.ts`、`.map`、launcher、manifest �?sidecar 资产�?
-### `12. Validate`
+- workspace
+- build graph
+- 缓存
+- `CanonicalTarget`
+- `ArtifactSet`
+- `RunContract`
+- sidecar 产物
+- 验证记录
 
-验证阶段执行目标相关校验，例�?JVM 类合法性、CLR IL 有效性、WASM imports/exports/memory 约束和入口签名检查�?
-### `13. Dist`
+它不负责：
 
-最终由 `Legion` �?`ArtifactSet` 输出 `dist` 目录，并汇总调试资产、校验记录与运行契约�?
-## 层间输入输出
+- 前端语义
+- target lowering
+- 文件格式编码
 
-| 上游 | 下游 | 数据 |
-|:---|:---|:---|
-| `Oak` | `Semantics` | `CompilationUnit + TextSpan` |
-| `Semantics` | `HIR` | `CompilationUnit + SemanticModel` |
-| `HIR` | `MIR` | `Resolved HIR` |
-| `MIR` | `Optimizer` | `EGraph<IKun>` |
-| `Optimizer` | `LIR` | `IKunTree` |
-| `LIR` | `Backend` | `GenerateModule` / `NyarVM Standard IR` |
-| `Backend` | `Acorn` | 目标数据结构 |
-| `Acorn` | `Packaging` | 主二进制字节 + 元数�?|
-| `Packaging` | `Legion` | `ArtifactSet` |
+## 仓库职责映射
 
-## `CanonicalTriple` 原则
+### `projects/core`
 
-target 身份必须只围�?`CanonicalTriple` 建模，不再引入额外的内部目标身份层�?
-因此 target 选择不能继续仅依�?`Arch`，必须至少经过两步：
+只放语言固有 primitive、marker、基础类型与核心约束。
 
-1. `Legion` / 工程层解析为 `CanonicalTriple`
-2. `Valkyrie.Compiler` / `Packaging` �?triple 注册表查出目标契�?
-围绕 `CanonicalTriple` 的目标契约至少需要以下维度：
+### `projects/std`
 
-| 字段 | 说明 |
-|:---|:---|
-| `BackendFamily` | `NyarVM` / `JVM` / `CLR` / `WASM` |
-| `HostKind` | `nyarvm` / `jdk` / `dotnet` / `browser` / `node` / `deno` / `bun` / `wasi-p1` / `wasi-p2` |
-| `AbiProfile` | 目标 ABI 或组件模�?|
-| `OutputKind` | `Module` / `Executable` / `Library` / `Component` |
-| `EntryPolicy` | 逻辑入口到物理入口的生成规则 |
-| `StdLibBindingPolicy` | 标准库语义到宿主 API 的绑定规�?|
-| `DebugArtifactPolicy` | 调试资产输出策略 |
+只放统一语义标准库，不直接承载平台差异。
 
-典型目标如下�?
-| `CanonicalTriple` | `BackendFamily` | `HostKind` |
-|:---|:---|:---|
-| `nyarvm-standard` | `NyarVM` | `nyarvm` |
-| `jvm-openjdk-linux` | `JVM` | `jdk` |
-| `clr-microsoft-windows` | `CLR` | `dotnet` |
-| `wasm32-unknown-browser` | `WASM` | `browser` |
-| `wasm32-unknown-node` | `WASM` | `node` |
-| `wasm32-unknown-deno` | `WASM` | `deno` |
-| `wasm32-unknown-bun` | `WASM` | `bun` |
-| `wasm32-unknown-wasi-wasip1` | `WASM` | `wasi-p1` |
-| `wasm32-unknown-wasi-wasip2` | `WASM` | `wasi-p2` |
+### `projects/std.adaptor.*`
 
-## 入口与标准库绑定
+只放宿主绑定与平台能力映射。
 
-### 入口点模�?
-入口需要分成两层：
+当前这层是长期商业竞争力的重要来源之一，因为它决定同一套语言语义能否稳定落到多个宿主。
 
-1. 语义层识别逻辑入口，例�?`[main]`、显式导出、模块启动约�?2. target contract 层根�?`EntryPolicy` 生成物理入口
+### `projects/std.data.binary.*`
 
-因此�?
-- `JVM` �?`main(String[] args)` 属于 packaging / ABI �?- `CLR` �?`Main` 属于 packaging / ABI �?- `WASM Browser/Node/Deno/Bun` 默认导出逻辑入口，不自动变成 `_start`
-- `WASI P1` �?`_start` 属于包装规则，不属于 AST lowering
-- `WASI P2` 需要按 component/world 约定生成入口
+只放目标格式数据模型与编解码契约，不反向承担语言语义。
 
-### 标准库绑定层
+### `projects/nyar.vm.*`
 
-前端只表达统一语义，例�?`std.io.print`、`std.fs.read_all_text`、`std.time.now`�?
-这些调用应在 `HIR` 中成为稳定语义节点，�?`MIR/LIR` 中继续保持“统一语义名”，直到 `StdLibBindingPolicy` 才绑定到宿主 API�?
-绑定策略由独立策略对象提供：
+只放执行引擎、运行模型或目标家族运行约定。
 
-| 统一语义 | 绑定位置 |
-|:---|:---|
-| `std.io.print` | `StdLibBindingPolicy` |
-| `std.fs.read_all_text` | `StdLibBindingPolicy` |
-| `std.time.now` | `StdLibBindingPolicy` |
+### `projects/legion.tools`
 
-禁止在各 backend 内长期维护零散的 `if (print)`、`if (wasi)`、`if (web)` 特判�?
+只放工程工具链能力，不反向长成编译器核心。
+
+### `projects/asgard` 与 `projects/atlas`
+
+属于上层框架，不参与定义底层编译边界。
+
+## 标准编译主线
+
+```text
+Source
+  -> Parse
+  -> Meta
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Family Lane
+  -> Backend Input
+  -> Validate
+  -> Backend Compile
+  -> Encode
+  -> Package
+  -> ArtifactSet
+```
+
+这条主线里最重要的分界线有三处：
+
+- `Semantics` 之后，语言真相必须闭合。
+- `Partition` 之后，target family 必须分流。
+- `Validate` 之后，后端只允许消费合法输入。
+
+## `CanonicalTarget` 原则
+
+整个仓库内部只认 `CanonicalTarget`，不再维护第二套并行目标身份。
+
+围绕 `CanonicalTarget` 需要稳定派生出：
+
+- `BackendFamily`
+- `HostKind`
+- `AbiProfile`
+- `OutputKind`
+- `EntryPolicy`
+- `StdLibBindingPolicy`
+- `DebugArtifactPolicy`
+
+这保证 target 差异是显式契约，而不是散落在后端里的 `if/else`。
+
 ## `ArtifactSet` 原则
 
-`ValkyrieRuntime` 应该只接收统一�?`ArtifactSet`，而不是自己拼装文件列表�?
-建议字段如下�?
-| 字段 | 说明 |
-|:---|:---|
-| `PrimaryArtifact` | 主产�?|
-| `SidecarArtifacts` | sidecar 资产 |
-| `DebugArtifacts` | 调试资产 |
-| `ValidationRecords` | 目标验证结果 |
-| `RunContract` | 宿主加载和运行契�?|
+编译成功的定义不是“生成了主文件”，而是产出一组完整交付物：
 
-## `Valkyrie.Compiler` 类级蓝图
+- `PrimaryArtifact`
+- `SidecarArtifacts`
+- `DebugArtifacts`
+- `ValidationRecords`
+- `RunContract`
 
-### 门面�?
-`ValkyrieCompiler` 作为新的编译门面，内部阶段固定为 `HIR/MIR/LIR`�?
-```csharp
-public sealed class ValkyrieCompiler
-{
-    public IReadOnlyList<GreenLeafNode> Lex(string source);
-    public CompilationUnit Parse(IReadOnlyList<GreenLeafNode> tokens);
-    public SemanticModel Analyze(CompilationUnit ast, BuildPlan plan);
-    public HirModule BuildHir(CompilationUnit ast, SemanticModel semantics, BuildPlan plan);
-    public MirModule BuildMir(HirModule hir, BuildPlan plan);
-    public LirModule BuildLir(MirModule mir, BuildPlan plan);
-    public ArtifactSet CompileToTarget(string source, BuildPlan plan);
-}
-```
+未来所有 target 都应以这组结果作为交付统一面，而不是各自拼目录。
 
-### `Pipeline/`
+## 永久禁止事项
 
-`Pipeline/` 负责组织编译过程，不包含语言�?lowering 实现�?
-| 类型 | 职责 |
-|:---|:---|
-| `BuildPlan` | 输入的工程、target、优化级别、调试选项 |
-| `CompilationContext` | 当前编译共享状态与诊断聚合 |
-| `CompilerPipeline` | 串联 parse、semantics、HIR、MIR、LIR、backend、packaging |
-| `ArtifactSet` | 统一交付结果 |
-| `RunContract` | 宿主加载、入口和验证命令 |
+- 禁止重新发明“所有 target 共用的唯一低层 `IR`”
+- 禁止在后端里补做语言级 resolve
+- 禁止让 `std` 本体长出 `windows / wasi / jvm / browser` 特判
+- 禁止让 `legion.tools` 反向依赖编译器内部细节
+- 禁止把 `std.data.binary.*` 反向提升成语言语义层
+- 禁止用 emit 层兜底修补上游遗漏的语义事实
+- 禁止为了支持一个新 target 污染所有公共数据结构
 
-### `Hir/`
+## 一句话架构
 
-`Hir/` 承接 `AST + SemanticModel -> Resolved HIR`�?
-| 类型 | 职责 |
-|:---|:---|
-| `HirModule` | 模块级高层语义表�?|
-| `HirFunction` | 带解析符号和类型的函�?|
-| `HirSymbolRef` | 已绑定的符号引用 |
-| `HirTypeRef` | 已绑定的类型引用 |
-| `HirBuilder` | AST �?HIR 的构建器 |
+`valkyrie.v` 的长期路线不是“做一个比 `MLIR` 更大的统一系统”，而是：
 
-### `Mir/`
-
-`Mir/` 承接 `HIR -> EGraph<IKun>` 与优化结果：
-
-| 类型 | 职责 |
-|:---|:---|
-| `MirModule` | `EGraph<IKun>` 与根节点、优化元数据 |
-| `HirToMirLowerer` | `HIR -> EGraph<IKun>` |
-| `MirOptimizationPipeline` | 封装 `LoweringPass`、PE、重写、提�?|
-| `MirExtractionResult` | `IKunTree` 与优化统计信�?|
-
-### `Lir/`
-
-`Lir/` 承接 `IKunTree -> GenerateModule`�?
-| 类型 | 职责 |
-|:---|:---|
-| `LirModule` | `GenerateModule` 的运行时语义包装 |
-| `IkunTreeToLirLowerer` | `IKunTree -> GenerateModule` |
-| `LirFunctionBuilder` | 函数�?codegen IR 构建 |
-| `LirIntrinsicResolver` | 统一语义�?`LIR` intrinsic 的解�?|
-
-### `Targets/`
-
-`Targets/` 统一承载 target 差异�?
-| 类型 | 职责 |
-|:---|:---|
-| `TargetContract` | 围绕 `CanonicalTriple` 的完整目标契�?|
-| `CanonicalTripleRegistry` | triple 或别名到目标契约的解�?|
-| `EntryPolicy` | 逻辑入口到物理入口的包装 |
-| `StdLibBindingPolicy` | 统一语义到宿�?API 的绑�?|
-| `DebugArtifactPolicy` | 调试资产选择 |
-
-### `Packaging/`
-
-`Packaging/` 专门负责 sidecar 和宿主胶水生成：
-
-| 类型 | 职责 |
-|:---|:---|
-| `ITargetPackager` | target packaging 抽象 |
-| `NyarVmPackager` | `.nyar` �?manifest、symbols、运行契�?|
-| `JvmPackager` | `MANIFEST.MF`、launcher、入口包�?|
-| `ClrPackager` | `runtimeconfig`、`deps`、入口包�?|
-| `BrowserWasmPackager` | `.js`、`.d.ts`、Browser imports 清单 |
-| `NodeWasmPackager` | Node 宿主胶水�?imports 清单 |
-| `DenoWasmPackager` | Deno 宿主胶水�?imports 清单 |
-| `BunWasmPackager` | Bun 宿主胶水�?imports 清单 |
-| `WasiP1Packager` | `_start` 契约、WASI P1 sidecar |
-| `WasiP2Packager` | component/world 产物�?metadata |
-
-## `Valkyrie.Runtime` 运行时蓝�?
-`Valkyrie.Runtime` 不再承担新的编译主线，定位收敛为 `NyarVM` 执行封装层�?
-### 门面�?
-```csharp
-public sealed class NyarStandardRuntime
-{
-    public void Load(GenerateModule module);
-    public void LoadBytecode(byte[] bytes);
-    public Value Run(string moduleName, string functionName, params Value[] args);
-}
-```
-
-### 运行时职�?
-| 类型 | 职责 |
-|:---|:---|
-| `NyarStandardRuntime` | 面向 Valkyrie 的运行时门面 |
-| `ModuleLoader` | `GenerateModule` / `.nyar` 加载与校�?|
-| `RuntimeHost` | 内建函数、宿主对象与标准运行时能�?|
-| `ExecutionSession` | 模块装载、调用与生命周期 |
-
-### 严格边界
-
-- `Valkyrie.Runtime` 不再承担 `AST -> HIR -> MIR -> LIR`
-- `Valkyrie.Runtime` 不再负责 multi target packaging
-- `Valkyrie.Runtime` 只服�?`Nyar Standard IR` / `.nyar` 的加载与执行
-- 历史编译入口保留仅用于兼容迁移，逐步淘汰
-
-## 现有职责到新结构的映�?
-| 当前位置 | 当前职责 | 新归�?|
-|:---|:---|:---|
-| `ValkyrieRuntime.Lex/Parse/CheckTypes` | 历史编译门面 | 迁入 `Valkyrie.Compiler`，运行时侧仅保留兼容�?|
-| `ValkyrieRuntime.ConvertAstToAsm` | 直接 AST �?backend IR | 删除，改�?`AST -> HIR -> MIR -> LIR` |
-| `ProcessStatement` / `EmitExpression` | 语言�?lowering 细节 | 迁入 `Valkyrie.Compiler.Hir` / `Mir` / `Lir` |
-| `EmitPrintCall` | 标准库特�?| 先转�?`HIR` 统一语义调用，再�?`StdLibBindingPolicy` 绑定 |
-| `CompileToTarget` 内的 `if/else` 产物拼装 | 交付组装 | 迁入 `Valkyrie.Compiler.Packaging` |
-| `SelectBackend(target.Arch)` | 粗粒�?target 路由 | 升级�?`CanonicalTripleRegistry` |
-| `Valkyrie.Runtime.csproj` 排除 legacy `Converter/**` | 历史遗留原型 | 新实现不再放�?`Runtime`，逐步迁出�?`Compiler` |
-
-## 与其他项目的边界
-
-### `Valkyrie.TypeChecker`
-
-建议从“仅类型检查器”升级为语义分析中心，与 `Valkyrie.Analyzer` 一起稳定输�?`SemanticModel`�?
-### `Valkyrie.Compiler`
-
-承担新的正确编译主线，是 `AST -> HIR -> MIR -> LIR -> multi target` 的唯一门面�?
-### `Valkyrie.Runtime`
-
-收敛�?`NyarVM` 执行封装层，负责 `Nyar Standard IR` / `.nyar` 模块的装载、运行和宿主内建管理�?
-### `Nyar.Assembler.*`
-
-保持“目标数据结构生成”职责，不直接写文件，不直接处理完整 Web/WASI/JDK/BCL �?packaging 细节�?其中 `GenerateModule` 应被明确视为 `LIR` 承载结构，而不是让前端直接�?AST 编成后端指令�?
-### `Acorn.*`
-
-保持“唯一编码源”职责。任�?`.class`、`.wasm`、`.nyar`、`.dll` 编码都必须委托给 `Acorn`�?
-### `Legion`
-
-只处�?workspace、project、canonical triple、cache、dist，不参与前端 lowering，也不推断目标入口逻辑�?
-## 分阶段重构计�?
-| 阶段 | 目标 | 验收标准 |
-|:---|:---|:---|
-| `Phase 0` | 冻结交付契约 | 每个 target 都有明确的入口、imports、sidecar、验证命�?|
-| `Phase 1` | 新建 `Valkyrie.Compiler` 空骨�?| 架构图、目录与门面 API 固定 |
-| `Phase 2` | 建立 `SemanticModel` �?`HIR` | 前端不再直接猜参数与返回类型 |
-| `Phase 3` | 引入 `MIR(EGraph)` 主线 | 所�?target 至少共享 `HIR -> MIR -> Extract` |
-| `Phase 4` | 建立 `LIR(GenerateModule)` | backend 不再直接�?AST 或半成品 lowering |
-| `Phase 5` | 引入 `CanonicalTripleRegistry` 与标准库绑定 | `Browser/Node/Deno/Bun`、`WASI P1`、`WASI P2` 明确分离，绑定不再散�?|
-| `Phase 6` | 收缩 `Valkyrie.Runtime` �?`NyarVM` 封装 | 旧编译入口保留兼容层，新实现不再落在 `Runtime` |
-| `Phase 7` | 后端瘦身与验证闭�?| backend 返回统一 `ArtifactSet` 或等价结构，并有真实可运行样�?|
-
-## 严格禁止的方�?
-- 禁止继续�?`ValkyrieRuntime` 中堆叠更多表达式 lowering 分支
-- 禁止�?`WasmBackend` 内长期保留语言�?`print`、入口和宿主 glue 特判
-- 禁止�?`WASI P1` �?`WASI P2` 视为“只�?import 名”的同类目标
-- 禁止�?`Legion` 越过 `Valkyrie/Nyar/Acorn` 自行推断代码生成行为
-- 禁止每个 backend 各自维护一套标准库语义
+语义在前端闭合，target 在分区后分流，lane 产出各家 backend input，后端先 `validate` 再 `compile`，标准库语义与宿主绑定分离，最终统一交付为 `ArtifactSet`。
 
 ## 相关文档
 
-- 目标交付契约详见 [Target Contract Spec](target-contract-spec.md)
-- 依赖方向详见 [依赖规则](dependency-rules.md)
+- [编译管线逐阶段详解](../maintainer/compilation.md)
+- [目标家族契约](../maintainer/target-family-contract.md)
+- [Canonical Target 规范](target-triples.md)

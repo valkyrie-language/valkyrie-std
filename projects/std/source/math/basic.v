@@ -1,6 +1,6 @@
 namespace std.math;
 
-# std.math: basic �?基础数学函数
+# std.math: basic 模块：基础数学函数
 
 micro abs(value: f64): f64 {
     <% match arch %>

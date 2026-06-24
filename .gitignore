@@ -19,6 +19,9 @@ tools/
 *.class
 *.jar
 
+# Rust
+target/
+
 # V
 .legion/
 .cache/

@@ -1,7 +1,7 @@
 namespace std.crypto;
 
-# std.crypto: hash �?哈希与随机数
-# 编译时根�?arch 委托 adaptor 实现
+# std.crypto: hash 模块：哈希与随机数
+# 编译时根据 arch 委托 adaptor 实现
 
 micro sha256(data: utf8): utf8 {
     <% match arch %>

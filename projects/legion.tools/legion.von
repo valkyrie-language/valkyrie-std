@@ -4,9 +4,11 @@
     description: "Legion 构造工具",
     auto_link: {
         core: true,
-        std: true
+        std: false
     },
     dependencies: {
+        "nyar": { version: "workspace" },
+        "std": { version: "workspace" },
         "std.data.text.von": { version: "workspace" }
     },
     build: [

@@ -1,149 +1,103 @@
-# LIR 降级：类型映射与分派
+# LIR 降级边界
 
 ## 概述
 
-LIR（Low-level Intermediate Representation）是 MIR（EGraph + IKun）到 `GenerateModule`（Nyar Standard IR）的降级层。由 `LirBuilder` 完成转换。
+本文只讨论一件事：`LIR` 在 `valkyrie.v` 长期架构里到底负责什么，不负责什么。
+
+`LIR` 可以存在，但它绝不能重新膨胀成“所有 target 最终共用的一份物理终态”。真正稳定的只有语义边界，不是统一低层格式。
 
 ## 在管线中的位置
 
-```
-EGraph<IKun> → ⑥ Nyar.Optimizer → IKunTree → ⑦ IkunTreeToLirLowerer → GenerateModule → ⑧ Backend
+```text
+HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Family Lane Lowering
+  -> Backend Input
 ```
 
-LIR 消费优化后的线性 `IKunTree`，输出平台无关的 `GenerateModule`。不做 ABI 决策——对象布局和调用约定由各后端独立决定。
+如果某条路线仍然需要 `LIR`，它应该只是某个 lane 内部或相邻 lowering 阶段的低层表示，而不是重新取代 family 分流。
+
+## LIR 的职责
+
+- 承接已经闭合的语言语义
+- 把高层结构整理成更接近后端消费的低层表示
+- 保留调用、控制流、数据布局所需的低层事实
+- 为后续 family lowering 提供清晰边界
+
+## LIR 不负责的事
+
+- 不负责重新解释语言语义
+- 不负责替所有 family 发明一份统一终态
+- 不负责做目标 ABI、对象文件格式或宿主入口决策
+- 不负责把平台差异偷偷拖回公共层
 
 ## 文本类型纪律
 
-`Valkyrie` 是多后端语言，因此 `LIR` 禁止继续使用宽泛 `string`。
+`LIR` 不能继续保留模糊文本类型。进入这一层前，文本语义必须已经收敛为明确种类，例如：
 
-- `CLR` 常把文本落到宿主 `string`
-- `JVM` 常把文本落到 `java.lang.String`
-- `WASM` 往往更接近线性内存中的字节序列、句柄或偏移
+- `char`
+- `utf8`
+- `utf16`
+- `utf32`
+- `c_str`
 
-这些都只是目标表示，不是语言级统一语义。若在 `LIR` 里继续保留笼统 `string`，后端就会各自按自己的宿主习惯补语义，最终把编码、布局、默认值和调用约定搞乱。
+原因很简单：
 
-因此从 `LIR` 视角看，文本类型必须已经完全确定，只允许出现 `char`、`utf8`、`utf16`、`utf32`、`c_str` 这类正式类型名。
+- `CLR`、`JVM`、`WASM`、`Native` 对文本的承载方式根本不同
+- 宽泛文本名词一旦拖到后端，就会逼着各 family 自己补语义
+- 一旦后端各自补语义，公共层就会重新失去边界
 
-`literal_text` 与 `literal_char` 只是 `HIR` 之前的字面量占位概念：
+所以，模糊文本类型必须在更早阶段被消解；进入低层后，只允许携带已经定案的文本事实。
 
-- `literal_char` 在信息不足时默认收敛为 `char`
-- `literal_text` 在信息不足时默认收敛为 `utf8`
-- 若目标类型明确为 `char`，则 `"x"`、`"😀"` 这类单个文本元素的 `literal_text` 允许隐式收敛为 `char`
+## 调用分派纪律
 
-如果上游没有额外语义信息可供选择，默认文本类型应收敛为 `utf8`。这是 `Valkyrie` 的优选文本类型。
+进入低层后，调用事实必须已经明确到足够支持后续 lowering：
 
-所有文本类型都按不可变值处理。`LIR` 不支持把文本上的 `+=` 解释成原地修改；如果语言层允许文本拼接，也只能表现为“读取旧值并构造一个新文本值”，而不能伪装成可变缓冲区。
+- 这是静态调用
+- 这是见证分派
+- 这是动态分派
+- 这是否还需要额外静态化
 
-## 类型映射
+`LIR` 可以保留这些分派事实，但不能把“尚未决定该怎么调用”的开放语义继续往后拖。
 
-`LirBuilder.MapTypeNameToValueType` 将类型名映射为 `GenerateValueType`：
+## 类型信息纪律
 
-| 类型名 | GenerateValueType | 说明 |
-|:---|:---|:---|
-| `void` | Void | 空返回 |
-| `bool` | Bool | 布尔 |
-| `i8` | I8 | 有符号 8 位 |
-| `i16` | I16 | 有符号 16 位 |
-| `i32` | I32 | 有符号 32 位 |
-| `i64` | I64 | 有符号 64 位 |
-| `f32` | F32 | 单精度浮点 |
-| `f64` | F64 | 双精度浮点 |
-| `char` / `utf8` / `utf16` / `utf32` / `c_str` | 确定文本或字符表示 | 只接受确定文本类型，不接受宽泛 `string`，也不接受 `literal_*` |
-| 枚举 / 标志 | 底层整数类型 | 判值作为常量比较 |
-| 结构体 / unite | Struct | 值类型内联布局 |
-| 类 / union / trait | ExternRef | 引用类型 |
+`LIR` 可以保留低层必需的类型信息，例如：
 
-非基元类型（class、union、trait）映射为 `ExternRef`，其具体布局信息由 `LirTypeDef` 表提供。
+- 字段列表
+- 低层值类别
+- 对齐、大小或标签需求
+- GC 扫描所需的指针位置信息
+- 变体判别所需的最小事实
 
-如果上游仍把 legacy `string` 传入 `LIR`，应立即报错，而不是在这里默认归一化为某个编码。
+但这些信息的目标是服务后续 family lowering，而不是把所有平台布局统一塞进同一张万能表。
 
-## LirTypeDef
+## 与 Family Lane 的关系
 
-```csharp
-public sealed record LirTypeDef(
-    string Name,
-    GenerateValueType BaseType,
-    IReadOnlyList<LirFieldDef> Fields,
-    IReadOnlyList<int> GcPointerFieldIndices,
-    int? EnumUnderlyingType
-);
+`Partition` 之后，系统必须按 family 分流。此后如果还保留 `LIR`，也只能遵守下面的边界：
 
-public sealed record LirFieldDef(
-    string Name,
-    GenerateValueType Type,
-    int Offset,
-    int Size
-);
-```
+- `LIR` 不跨 family 维持伪统一
+- `LIR` 不要求所有后端都接受同一份结构
+- `LIR` 可以在某条 lane 里继续细化，但不能重新抬升成总线
 
-| 字段 | 说明 |
-|:---|:---|
-| `Name` | 类型名称 |
-| `BaseType` | LIR 基类型 |
-| `Fields` | 字段列表（含偏移和大小） |
-| `GcPointerFieldIndices` | GC 扫描时需追踪的字段索引 |
-| `EnumUnderlyingType` | 枚举的底层整数类型 |
+这意味着：
 
-类型定义表在 `LirModule` 构建时一并生成，供后端查询。LIR 不做 ABI 决策，对象布局由各后端自行完成。
+- `CLR` 可以有自己的低层输入路线
+- `JVM` 可以有自己的低层输入路线
+- `WASM` 和 `WASI` 可以共享 family 基础，但宿主差异仍需保留
+- `Native` 必须保留自己的对象格式与平台边界
 
-## 调用分派
+## 典型失败信号
 
-`EmitCall` 根据 `HirDispatchKind` 选择分派策略：
+只要出现下面任意一种情况，就说明 `LIR` 又在变成新的 `god ir`：
 
-### Static 分派
+- 为了支持一个新 target，要求所有既有路线一起改公共低层结构
+- 在 `LIR` 里引入只对单一 family 有意义的大量字段
+- 用 `LIR` 统一表达本应属于编码、打包或宿主装配层的细节
+- 让后端依赖 `LIR` 去补做本应已经闭合的语言语义
 
-直接按函数名调用，生成 `CallStatic "fully.qualified.method.name"`。
+## 一句话原则
 
-### Witness 分派
-
-通过槽索引间接调用，生成 `CallWitness slotIndex`。witness 绑定表在 `LirBuilder.Build()` 头部通过 `GenerateWitnessDispatchEntry` 注入到模块。
-
-```csharp
-module.AddWitnessEntry(new GenerateWitnessDispatchEntry(
-    binding.TraitName, binding.SlotIndex, binding.MethodName,
-    binding.TargetTypeName, binding.ImplementationFunctionName));
-```
-
-这是静态全局表，运行时通过 `(TraitName, SlotIndex)` 键查找 `(TargetTypeName, ImplementationFunctionName)`。
-
-### Dynamic 分派
-
-`dyn Trait` 对象由胖指针（对象指针 + TypeInfo 指针）构成。分派流程：
-
-```
-obj → TypeInfo → witness_table[slotIndex] → func_ptr → call
-```
-
-对应的 LIR 指令序列：
-
-```
-LoadTypeInfo obj → type_info
-LoadSlot type_info slotIndex → func_ptr
-CallIndirect func_ptr (obj, args...)
-```
-
-HIR 层负责标记 `DispatchKind.Dynamic` 并记录 trait 和槽位信息，LIR 层生成间接调用指令，运行时层实现 TypeInfo 加载和函数指针跳转。
-
-## 复合类型的 LIR 降级要求
-
-| 类型 | LIR 应保留的信息 |
-|:---|:---|
-| `class` | 字段列表、每个字段的偏移和类型、GC 位图、父类型 |
-| `structure` | 字段列表、对齐约束、总大小 |
-| `enums` | 底层整数类型、判值到名称映射 |
-| `flags` | 底层整数类型、位值到名称映射 |
-| `union` | 变体列表、每个变体的字段、TypeInfo 判值 |
-| `unite` | 变体列表、标签字段类型和位置、最大变体大小 |
-
-## LIR 的边界
-
-LIR 是平台无关的低级 IR，不做 ABI 决策：
-
-| LIR 做 | LIR 不做 |
-|:---|:---|
-| 类型信息的数据描述 | 内存分配决策 |
-| 调用约定统一表达 | `.wasm`/`.class`/`.dll` 编码 |
-| 控制流结构 | 宿主入口包装 |
-| GC 位图标记 | sidecar 资产生成 |
-
-对文本类型也遵循同一条边界：`LIR` 负责携带确定文本语义，后端只负责把它映射到目标平台表示，不能在后端重新发明宽泛 `string`。
+`LIR` 可以是低层过渡表示，但不能是新的终极统一格式；真正稳定的边界仍然是 `Partition -> Family Lane -> Backend Input -> Validate -> Compile`。

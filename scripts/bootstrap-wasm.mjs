@@ -26,7 +26,6 @@
  *   - 本脚本用于“诚实失败”的真实验收，不再把半完成状态记为成功
  *   - 当前正确产物名应为 `legion.mjs` / `legion.wasm`
  *   - 若实际仍输出 `legion_tools.*`，脚本会把它标记为已知错误产物，而不是误记为通过
- *   - 当前脚本仅用于实验性排查，不属于 `CLR / NuGet` 源头自举发布门
  */
 
 import fs from 'fs';
@@ -37,7 +36,6 @@ import crypto from 'crypto';
 const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]):\//, '$1:/'));
 const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
 const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
-const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
 
 // ─────────────────────────────────────────────────────────────
 // 配置
@@ -126,24 +124,6 @@ function hasManifestParseError(output) {
     return MANIFEST_PARSE_ERROR_PATTERN.test(output);
 }
 
-function legionLauncherCandidates(baseDir) {
-    return [
-        path.join(baseDir, 'legion.exe'),
-        path.join(baseDir, 'legion'),
-        path.join(baseDir, 'legion.dll'),
-    ];
-}
-
-function resolveLegionLauncher(baseDir) {
-    for (const candidate of legionLauncherCandidates(baseDir)) {
-        if (fs.existsSync(candidate)) {
-            return candidate;
-        }
-    }
-
-    return null;
-}
-
 function findLegion() {
     const envPath = process.env.LEGION_PATH;
     if (envPath && fs.existsSync(envPath)) {
@@ -151,10 +131,10 @@ function findLegion() {
     }
 
     const candidates = [
-        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion')),
-        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion-tool')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
+        path.join(ROOT_DIR, 'dist', 'legion', 'legion.exe'),
+        path.join(ROOT_DIR, 'dist', 'legion-tool', 'legion.exe'),
+        path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0', 'legion.exe'),
+        path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0', 'legion.exe'),
     ];
     for (const c of candidates) {
         if (fs.existsSync(c)) {
@@ -162,39 +142,6 @@ function findLegion() {
         }
     }
     return null;
-}
-
-function ensurePreviousLegion(outputRoot, verbose) {
-    const existing = findLegion();
-    if (existing) {
-        return existing;
-    }
-
-    if (!fs.existsSync(NYARVM_DIR) || !fs.existsSync(LEGION_CSPROJ)) {
-        return null;
-    }
-
-    const toolOutputDir = path.join(outputRoot, '_previous_legion');
-    if (fs.existsSync(toolOutputDir)) {
-        fs.rmSync(toolOutputDir, { recursive: true, force: true });
-    }
-    fs.mkdirSync(toolOutputDir, { recursive: true });
-
-    console.log('未找到现成的上一代 legion，正在从 NyarVM.cs 构建...');
-    const publishResult = runCommand(
-        `dotnet publish "${LEGION_CSPROJ}" -c Release --nologo -o "${toolOutputDir}" -p:UseAppHost=true`,
-        { cwd: NYARVM_DIR, silent: !verbose, timeout: 300000 }
-    );
-
-    if (!publishResult.success) {
-        console.error('错误：自动构建上一代 legion 失败');
-        if (publishResult.stderr) {
-            console.error(publishResult.stderr.slice(0, 4000));
-        }
-        return null;
-    }
-
-    return resolveLegionLauncher(toolOutputDir);
 }
 
 function collectFiles(dir, extensions) {
@@ -426,19 +373,19 @@ function compileV2(v1Result, outputDir, verbose) {
 // 比对
 // ─────────────────────────────────────────────────────────────
 
-⍝ v1 / v2 比对规则（固化结论）
+/// v1 / v2 比对规则（固化结论）
 ///
-⍝ 必须比对（不一致则阻断）：
-⍝   - .wasm 文件：核心 WASM 模块产物，是自举一致性的主要判定依据
-⍝   - run-contract.txt：运行契约，必须完全一致
+/// 必须比对（不一致则阻断）：
+///   - .wasm 文件：核心 WASM 模块产物，是自举一致性的主要判定依据
+///   - run-contract.txt：运行契约，必须完全一致
 ///
-⍝ 允许差异（不阻断）：
-⍝   - .mjs：胶水代码可能随宿主装配策略调整
+/// 允许差异（不阻断）：
+///   - .mjs：胶水代码可能随宿主装配策略调整
 ///
-⍝ 阻断条件：
-⍝   - 任一 .wasm 文件哈希不一致 → 阻断
-⍝   - run-contract.txt 不一致 → 阻断
-⍝   - 产物清单结构不一致（多了或少了 .wasm 文件）→ 阻断
+/// 阻断条件：
+///   - 任一 .wasm 文件哈希不一致 → 阻断
+///   - run-contract.txt 不一致 → 阻断
+///   - 产物清单结构不一致（多了或少了 .wasm 文件）→ 阻断
 
 function compareArtifacts(v1Result, v2Result) {
     console.log('\n══════════════════════════════════════════════════');
@@ -590,16 +537,16 @@ function main() {
     console.log('╔══════════════════════════════════════════════════════════╗');
     console.log('║             WASM 自举验证                               ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
-    console.log('说明：当前发布门仅承认 `CLR / NuGet` 源头自举；本脚本只用于手工排查 WASM 后端现状。\n');
 
     console.log(`输出根目录：${outputRoot}`);
     console.log(`自举项目：${BOOTSTRAP_PROJECT}`);
     console.log(`目标三元组：${TARGET_TRIPLE}\n`);
 
-    const legionPath = options.legion ? path.resolve(options.legion) : ensurePreviousLegion(outputRoot, options.verbose);
+    const legionPath = options.legion ? path.resolve(options.legion) : findLegion();
     if (!legionPath) {
         console.error('错误：找不到上一代 legion CLI');
-        console.error('请设置 --legion / LEGION_PATH，或保证 NyarVM.cs 可用以便脚本自动构建上一代 legion');
+        console.error('请先运行 build-legion.mjs 或 install-legion-tool.mjs');
+        console.error('或使用 --legion 参数指定路径');
         process.exit(1);
     }
 
@@ -638,7 +585,7 @@ function main() {
     if (!expectedEntryReady || !v1RuntimePassed) {
         blockers.push('未进入 `v1 -> v2`：Level 1 入口契约或运行验收未通过');
     } else if (!v2Result) {
-        blockers.push('v1 -> v2 未执行或未产出有效结果');
+        blockers.push('v1 -> v2 尚未接线');
     } else if (compareResult.skipped) {
         blockers.push('v1 / v2 比对被跳过');
     } else if (!compareResult.match) {

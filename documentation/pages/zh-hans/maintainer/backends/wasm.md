@@ -1,66 +1,65 @@
 # WASM 后端
 
-## 概述
+## 定位
 
-WASM 后端将 `GenerateModule` 翻译为 WebAssembly 指令，输出 `.wasm` 二进制。目标平台包括浏览器、Node.js、Deno、Bun 和 WASI。
+`WASM` family 面向 WebAssembly 生态，但它本身不是单一目标。浏览器、`Node`、`WASI` 等宿主差异必须在 family 内部分层处理，不能重新长成一个跨所有 target 的统一大后端。
 
-## 管线
+## 输入前提
 
-```
-GenerateModule
-  │
-  ├── WASM Backend
-  │     ├── 指令翻译：GenerateInstruction → WASM 操作码
-  │     ├── 对象布局：线性内存中手动管理偏移
-  │     └── GC 策略：依赖宿主 GC（JS GC 或 WASM GC 提案）
-  │
-  ▼
-WasmModuleData (使用 Acorn.Wasm.Data)
-  │
-  ├── Acorn.Wasm.Encode
-  │
-  ▼
-.wasm (二进制)
-```
+进入 `WASM` 后端前，应当已经完成：
 
-## 指令映射
+- 语义闭合
+- `Partition`
+- `WASM` family 专属 lowering
+- 宿主能力与导入需求的显式标注
 
-| GenerateInstruction | WASM 对应 |
-|:---|:---|
-| 算术/逻辑运算 | WASM 算术/逻辑指令（直接映射） |
-| `CallStatic` | `call` 指令（函数索引） |
-| `CallWitness` | `call_indirect`（通过函数表） |
-| `CallDynamic` | `call_indirect`（通过函数表 + TypeInfo） |
-| 内存读写 | `i32.load` / `i32.store` 等 |
-| 控制流 | `br` / `br_if` / `block` / `loop` |
+`WASM` 后端只接收自己的 `Backend Input`，而不是重新消费通用兼容壳。
 
-## 线性内存布局
+## Validate
 
-WASM 后端在线性内存中手动管理对象布局：
+`Validate` 阶段重点确认：
 
-- `structure` → 按对齐要求分配连续内存块
-- `class` → 头部含 TypeInfo 偏移量指针 + 字段数据
-- `union` / `unite` → tagged union 布局（标签 + 最大变体数据）
+- 当前输入是否符合 `wasm` 执行模型
+- 所需能力是否属于 `browser`、`node` 或 `wasi` 等合法宿主
+- `std.adaptor.*` 是否已经把宿主能力边界表达清楚
+- 受限环境下不允许的能力是否已经被提前拒绝
 
-GC 位图信息从 `LirTypeDef.GcPointerFieldIndices` 获取，用于生成 GC 根扫描代码。
+例如，`std.dom` 这类能力可以面向浏览器宿主开放，但不能默认对纯 `wasi` 输入静默成立。
 
-## Web API 桥接
+## Compile
 
-浏览器 API 通过 `[wasm_import]` 注解声明，WASM 后端生成对应的 import 段。JS 胶水代码（`voa-runtime.js`）提供这些 import 的实现。
+`Compile` 阶段负责：
 
-详见 [js-ffi.md](../js-ffi.md)。
+- 生成 `WASM` 模块结构
+- 安排函数、表、内存、导入导出和必要的运行时桥接点
+- 产出后续编码与打包所需的模块数据
 
-## 多目标变体
+## 宿主分层
 
-同一 WASM 后端通过 CanonicalTriple 区分不同宿主：
+同属 `WASM` family 的不同宿主应当继续区分：
 
-| CanonicalTriple | 目标 |
-|:---|:---|
-| `wasm32-unknown-browser` | 浏览器 |
-| `wasm32-unknown-node` | Node.js |
-| `wasm32-unknown-deno` | Deno |
-| `wasm32-unknown-bun` | Bun |
-| `wasm32-unknown-wasi-wasip1` | WASI Preview 1 |
-| `wasm32-unknown-wasi-wasip2` | WASI Preview 2 |
+- `wasm-browser`
+- `wasm-node`
+- `wasm-wasi`
 
-不同宿主的主要差异在 Packaging 阶段处理（生成不同的 JS glue、入口包装）。
+这些差异主要体现在：
+
+- 可用标准库 adaptor
+- 导入来源
+- 入口包装
+- 打包产物
+
+## 交付物
+
+典型交付物包括：
+
+- `.wasm`
+- 宿主胶水文件或启动脚本
+- import / export 清单
+- 最终 `ArtifactSet`
+
+## 风险边界
+
+- 禁止把浏览器、`Node`、`WASI` 细节直接塞回公共语义层
+- 禁止把宿主桥接逻辑伪装成统一标准库语义
+- 禁止在 emit 末端临时判断宿主能力并偷偷降级

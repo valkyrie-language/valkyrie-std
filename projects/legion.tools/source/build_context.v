@@ -1,5 +1,6 @@
 namespace legion;
 
+using nyar;
 using std.math.graph_theory;
 
 structure LegionBuildContext {
@@ -19,8 +20,9 @@ structure LegionBuildContext {
     build_options: LegionBuildTargetOptions
 }
 
-micro legion_canonical_target(target: utf8) -> utf8 {
-    let value: utf8 = target.trim().to_lower()
+# 将短目标名归一化为完整三元组前缀，供 legion_canonical_target 使用。
+# 这里只做短名展开，不做结构化解析，结构化解析交给 nyar.parse_target。
+micro legion_normalize_short_target(value: utf8) -> utf8 {
     if value == "clr" || value == "clr-microsoft-unknown-managed" {
         return "clr-microsoft-unknown-managed"
     }
@@ -34,6 +36,29 @@ micro legion_canonical_target(target: utf8) -> utf8 {
         return "nyar-unknown-unknown"
     }
     return ""
+}
+
+# 将目标名解析为 nyar.CanonicalTarget 结构。
+# 演示跨模块类型导入：nyar 项目导出 CanonicalTarget，legion.tools 通过 using nyar 引入。
+micro legion_parse_canonical_target(target: utf8) -> CanonicalTarget {
+    let value: utf8 = target.trim().to_lower()
+    let canonical: utf8 = legion_normalize_short_target(value)
+    if canonical.length() == 0 {
+        return default_target()
+    }
+    return parse_target(canonical)
+}
+
+# 返回规范化的目标三元组字符串。
+# 内部使用 nyar.parse_target 和 nyar.format_target 完成结构化解析与格式化。
+micro legion_canonical_target(target: utf8) -> utf8 {
+    let value: utf8 = target.trim().to_lower()
+    let canonical: utf8 = legion_normalize_short_target(value)
+    if canonical.length() == 0 {
+        return ""
+    }
+    let parsed: CanonicalTarget = parse_target(canonical)
+    return format_target(parsed)
 }
 
 micro legion_requested_targets(value: utf8) -> [utf8] {

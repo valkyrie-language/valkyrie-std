@@ -1,51 +1,54 @@
 # NyarVM 后端
 
-## 概述
+## 定位
 
-NyarVM 后端将 `GenerateModule` 直接翻译为 NyarVM 指令，输出 `.nyar` 格式的字节码。NyarVM 是 Valkyrie 的原生运行时，提供 JIT 编译能力。
+`NyarVM` family 面向 Valkyrie 自有运行时。它不需要迎合外部平台对象模型，但仍然必须遵守统一的 backend 契约：只消费自己的输入，先 `validate`，再 `compile`。
 
-## 管线
+## 输入前提
 
-```
-GenerateModule
-  │
-  ├── NyarVM Backend
-  │     ├── 指令翻译：GenerateInstruction → NyarVM OpCode
-  │     ├── 对象布局：按 NyarVM 对象模型计算字段偏移
-  │     └── GC 策略：使用 NyarVM 内置 GC
-  │
-  ▼
-NyarModuleData
-  │
-  ├── Acorn.Nyar.Encode
-  │
-  ▼
-.nyar (二进制字节码)
-```
+进入 `NyarVM` 后端前，应当已经完成：
 
-## 指令映射
+- 语义闭合
+- 中层优化
+- `Partition`
+- `NyarVM` family 对应的 lowering
 
-NyarVM 后端将 `GenerateInstruction` 一对一或一对多映射为 NyarVM 操作码。由于 GenerateModule 本身就是为 NyarVM 设计的标准 IR，大部分指令无需变换即可直接输出。
+后端接收的是 `NyarVM` 自己的 `Backend Input`，而不是给所有 family 共用的一份“标准后端输入”。
 
-## 对象模型
+## Validate
 
-NyarVM 使用统一的堆对象模型：
+`Validate` 阶段至少要确认：
 
-- `class` → 堆分配对象，头部包含 TypeInfo 指针和 GC 标记位
-- `structure` → 值类型，栈分配或内联于父对象
-- `union` → 堆分配，头部包含 TypeInfo 指针用于运行时变体判别
-- `unite` → 内联 tagged union，值语义
+- 运行时对象模型是否满足当前模块需求
+- 调用约定、入口约定和元数据要求是否完整
+- 需要交给 VM 处理的动态能力是否已经显式标注
 
-## Witness Table
+如果某项语义需要 VM 支持而当前契约没有定义，就必须编译期失败，不能把未定行为推迟到运行时。
 
-NyarVM 后端将 witness table 条目编译为函数指针表，存储在模块的元数据段。运行时通过 `(TraitName, SlotIndex)` 二元组索引。
+## Compile
 
-## 调用约定
+`Compile` 阶段负责：
 
-- `CallStatic` → 直接跳转到目标函数
-- `CallWitness` → 通过槽索引从 witness table 加载函数指针后间接调用
-- `CallDynamic` → 从对象头部的 TypeInfo 加载 witness table，再按槽索引间接调用
+- 把 `NyarVM` family 输入翻译成 VM 可执行指令或模块数据
+- 组织对象模型、元数据表和调用分发表
+- 生成供运行时加载的模块产物
 
-## 多文件支持
+## 交付物
 
-NyarVM 后端生成单一的 `.nyar` 模块。多文件项目的模块间引用通过 `[import]` / `[export]` 注解在 packaging 阶段处理，编译为一个整体或分模块发布。
+典型交付物包括：
+
+- `.nyar` 或等价的 VM 模块文件
+- 运行所需的元数据段
+- 打包阶段需要的 `ArtifactSet`
+
+## Family 特性
+
+- 可以直接对接 `NyarVM` 的对象模型和运行时能力
+- 可以利用 VM 自己的 GC、调度和元数据系统
+- 适合作为语言自有执行环境，但不应反向定义所有其他 family 的公共结构
+
+## 风险边界
+
+- 禁止把 `NyarVM` 的对象模型抬升为所有后端共享的物理模型
+- 禁止因为 VM 方便就让公共层提前绑定 VM 专属概念
+- 禁止把运行时补救机制当成编译期验证的替代品

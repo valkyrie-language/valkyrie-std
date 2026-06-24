@@ -1,91 +1,79 @@
-# 后端架构
+# 后端概览
 
-代码生成后端将统一的 `GenerateModule`（Nyar Standard IR）翻译为目标平台代码。所有后端共享相同的输入接口，在同一个语义主线下分叉。
+这里的“后端”不是一条统一的大总线，也不是所有 target 共用的一份低层 `IR`。
+
+在 `valkyrie.v` 的长期架构里，后端只负责各自 `target family` 的路线：消费本 family 的 `Backend Input`，先 `validate`，再 `compile`，最后交付 `ArtifactSet`。
 
 ## 在管线中的位置
 
-```
-... → GenerateModule → ⑧ Backend → 目标数据结构 → ⑨ Acorn 编码 → byte[]
-```
-
-后端是语义主线（阶段 ①~⑦ 所有 target 共享）结束后的分叉点。从这开始，不同 target 走不同的代码生成路径。
-
-## 统一入口
-
-```csharp
-var backend = BackendSelector.Select(targetProfile);
-var targetData = backend.Generate(module);
-```
-
-`BackendSelector` 根据 `CanonicalTriple` 选择后端。每个后端实现 `ICodeGenBackend`：
-
-```csharp
-public interface ICodeGenBackend
-{
-    object Generate(GenerateModule module);
-}
+```text
+Source
+  -> Parse
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Target Lowering Lane
+  -> Backend Input
+  -> Validate
+  -> Compile
+  -> Encode
+  -> Package
+  -> ArtifactSet
 ```
 
-返回值为目标平台数据结构（`NyarModuleData`、`WasmModuleData`、`JvmClassFileData` 等）。
+维护者需要特别记住：
 
-## 后端列表
+- `Partition` 之前是共享语义主线
+- `Partition` 之后必须按 family 分流
+- 后端不再接收“所有 target 都能吃”的兼容壳
 
-| 后端 | 输出 | 编码器 | 特点 | 文档 |
-|:---|:---|:---|:---|:---|
-| NyarVM | .nyar | Acorn.Nyar | 原生运行时，JIT 能力 | [nyar-vm.md](nyar-vm.md) |
-| WASM | .wasm | Acorn.Wasm | 浏览器 / Node / Deno / Bun / WASI | [wasm.md](wasm.md) |
-| JVM | .class | Acorn.Jvm | 利用 JVM 类型系统和 GC | [jvm.md](jvm.md) |
-| CLR | .dll / .exe | Acorn.Clr | 利用 CLR 类型系统和 GC | [clr.md](clr.md) |
-| Native | .elf / .exe / .dylib | Acorn.Elf / Pe / MachO | 手动内存布局和 GC | [native.md](native.md) |
+## 后端共同契约
 
-## 后端负责
+所有 family 都必须满足以下规则：
 
-- 将 `GenerateInstruction` 序列翻译为目标指令
-- 对象内存布局决策（字段偏移、对齐、分配策略）
-- 调用约定适配（`CallStatic` / `CallWitness` / `CallDynamic` → 目标平台调用指令）
-- GC 策略选择
-- Witness Table 落地（函数指针表 / `invokeinterface` / `callvirt` / `call_indirect`）
-- 生成目标平台数据结构，交给 Acorn 编码
+- 只消费自己的 `Backend Input`
+- 不重新解释语言语义
+- `Validate` 必须先于 `Compile`
+- 不支持的语义必须编译期硬失败
+- 成功结果必须落到统一的 `ArtifactSet`
 
-## 后端不负责
+更完整的约束见 [target-family-contract.md](../target-family-contract.md)。
 
-- 语义分析（TypeChecker 阶段已完成）
-- 优化（Nyar.Optimizer 阶段已完成）
-- 二进制编码（委托 Acorn）
-- 入口包装（Packaging 阶段负责）
+## Family 列表
 
-## 跨后端共享
+| Family | 典型交付物 | 关注点 | 文档 |
+|:---|:---|:---|:---|
+| `NyarVM` | VM 可加载产物 | VM 专用对象模型、运行时契约 | [nyar-vm.md](nyar-vm.md) |
+| `WASM` | `.wasm` 及宿主配套文件 | 浏览器 / Node / WASI 宿主边界 | [wasm.md](wasm.md) |
+| `JVM` | `.class` / `.jar` | ClassFile、栈机模型、JRE 约束 | [jvm.md](jvm.md) |
+| `CLR` | `.dll` / `.exe` | IL、元数据、CLR 类型系统 | [clr.md](clr.md) |
+| `Native` | 对象文件 / 可执行文件 / 动态库 | 目标文件格式、ABI、链接与打包 | [native.md](native.md) |
 
-`CodeGenModuleAdapter` 为各后端提供统一的 LIR 遍历基础设施：
+`Native` 下面如果继续细分平台差异，应当体现在 `native-windows.md`、`native-linux.md`、`native-darwin.md` 这类子页里，而不是反向抬升成全局统一模型。
 
-```csharp
-public abstract class CodeGenModuleAdapter
-{
-    protected abstract void EmitInstruction(GenerateInstruction inst);
-    protected abstract void EmitCall(GenerateCall call);
-    // ...
-    public void Traverse(GenerateModule module) { /* 遍历算法 */ }
-}
-```
+## 后端负责什么
 
-后端继承此基类，只需重写各指令的翻译逻辑，不需要自己实现控制流遍历。
+- 验证该 family 是否支持当前 `Backend Input`
+- 将 family 专属输入编译成目标代码或目标数据结构
+- 编码目标格式，或准备进入目标格式编码阶段
+- 生成打包和交付所需的产物集合
 
-## 类型信息在后端的处理
+## 后端不负责什么
 
-LIR 输出 `LirTypeDef` 表，包含：
+- 不负责补做 parser、name resolve、类型检查或 effect 闭合
+- 不负责把所有 family 重新揉成同一套低层表示
+- 不负责用 emit 逻辑兜底修补上游遗漏的语义事实
+- 不负责让一个 target 的特殊需求污染全部公共结构
 
-| 信息 | 用途 |
-|:---|:---|
-| 字段列表（名称、偏移、大小） | 内存布局计算 |
-| `GcPointerFieldIndices` | GC 根扫描 |
-| 底层类型 | 枚举/标志的整数映射 |
+## 维护原则
 
-各后端根据自身平台特性做出最终布局决策：
+当你新增 backend 或扩展某个 family 时，优先检查以下问题：
 
-| 后端 | 布局策略 |
-|:---|:---|
-| NyarVM | 使用 VM 内置对象模型 |
-| WASM | 线性内存中手动计算偏移 |
-| JVM | 映射到 JVM 对象模型，利用 JVM GC |
-| CLR | 映射到 CLR 类型系统 |
-| Native | 直接计算内存偏移，生成 GC 根扫描代码 |
+1. 是否要求公共层新增只对单一 family 有意义的字段。
+2. 是否把宿主绑定、编码格式、入口包装混到同一个对象里。
+3. 是否偷偷恢复了“统一后端输入接口”的设计。
+4. 是否把本应在 `validate` 失败的问题推迟到 `compile` 或运行期。
+
+只要其中任意一项答案是“是”，就说明系统又在向新的 `god ir` 或 `god object` 滑回去。

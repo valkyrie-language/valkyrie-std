@@ -1,58 +1,53 @@
 # JVM 后端
 
-## 概述
+## 定位
 
-JVM 后端将 `GenerateModule` 翻译为 JVM 字节码，输出 `.class` 文件。利用 JVM 的对象模型和 GC，Valkyrie 类型映射为 JVM 类。
+`JVM` family 面向 `ClassFile` 和 JVM 执行模型。它可以利用宿主现成的类型系统、对象模型和 GC，但不能因此把 JVM 世界观反向抬升成全局公共模型。
 
-## 管线
+## 输入前提
 
-```
-GenerateModule
-  │
-  ├── JVM Backend
-  │     ├── 指令翻译：GenerateInstruction → JVM 字节码指令
-  │     ├── 对象布局：利用 JVM 类模型
-  │     └── GC 策略：利用 JVM GC（无需手动管理）
-  │
-  ▼
-JvmClassFileData (使用 Acorn.Jvm.Data)
-  │
-  ├── Acorn.Jvm.Encode
-  │
-  ▼
-.class (二进制)
-```
+进入 `JVM` 后端前，应当已经完成：
 
-## 类型映射
+- 语义闭合
+- `Partition`
+- `JVM` family 专属 lowering
+- JVM 入口、类布局、调用方式等必要信息的确定
 
-| Valkyrie 类型 | JVM 映射 |
-|:---|:---|
-| `class` | JVM class |
-| `structure` | JVM class（值语义通过 `with` 方法实现） |
-| `enums` / `flags` | JVM enum |
-| `union` / `unite` | 密封类 + 记录类 |
-| `trait` | JVM interface |
-| 原始类型（`i32` 等） | JVM 原始类型 |
+## Validate
 
-## 指令映射
+`Validate` 阶段重点确认：
 
-| GenerateInstruction | JVM 对应 |
-|:---|:---|
-| 算术/逻辑运算 | JVM 算术/逻辑指令 |
-| `CallStatic` | `invokestatic` |
-| `CallWitness` | `invokeinterface`（通过接口分派） |
-| `CallDynamic` | `invokeinterface`（通过 TypeInfo 查找） |
-| 内存读写 | 字段访问 `getfield` / `putfield` |
-| 控制流 | JVM 跳转指令 |
+- 输入是否能够合法映射到 JVM 栈机与类型系统
+- 需要的调用语义是否能由 `JVM` family 承担
+- 入口点、类名、包名和运行时依赖是否完整
 
-## Witness Table 在 JVM 上
+如果某项语义只能靠额外宿主黑魔法才能成立，就必须在这里失败，而不是让后面的字节码生成硬扛。
 
-JVM 后端利用 JVM 的 `invokeinterface` 指令实现 witness table 分派。trait 编译为 JVM interface，每个 impl 编译为对应的类实现该 interface。`CallWitness` 直接映射为 `invokeinterface`。
+## Compile
 
-## 入口点
+`Compile` 阶段负责：
 
-`EntryPolicy` 为 JVM 后端生成标准的 `public static void main(String[] args)` 入口方法，调用编译后的 Valkyrie 入口函数。
+- 生成类、方法、字段和常量池等 JVM 目标结构
+- 将 `JVM` family 输入映射到方法体与控制流
+- 组织最终的 `.class` 或相关打包输入
 
-## GC 集成
+## Family 特性
 
-JVM 后端完全依赖 JVM GC，不需要在生成代码中插入 GC 根扫描或内存管理指令。Valkyrie 的 `class` 类型直接享受 JVM 的自动内存管理。
+- 可以利用 JVM GC，无需自己实现对象回收
+- 可以利用接口与虚调用模型表达部分分派语义
+- 适合进入 `.class`、`.jar` 等生态产物
+
+## 交付物
+
+典型交付物包括：
+
+- `.class`
+- 可选的 `.jar`
+- 启动入口与清单信息
+- 最终 `ArtifactSet`
+
+## 风险边界
+
+- 禁止把 JVM 类型系统当作 Valkyrie 语言语义本身
+- 禁止为了适配 JVM 而污染所有 family 共用的数据结构
+- 禁止在 bytecode emit 阶段补做本应在前面完成的语义判断

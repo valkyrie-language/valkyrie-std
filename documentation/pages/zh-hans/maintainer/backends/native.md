@@ -1,66 +1,58 @@
 # Native 后端
 
-## 概述
+## 定位
 
-Native 后端将 `GenerateModule` 翻译为原生机器码，输出 `.elf`（Linux）、`.exe`（Windows）或 `.dylib`（macOS）格式。Native 后端需要自行处理内存布局、GC 和调用约定。
+`Native` family 面向直接二进制输出。它不是“先降到文本汇编再交给外部工具糊过去”的替代名词，而是需要自己维护目标文件、可执行文件、ABI 和打包边界的独立后端路线。
 
-## 管线
+## 输入前提
 
-```
-GenerateModule
-  │
-  ├── Native Backend
-  │     ├── 指令翻译：GenerateInstruction → 原生机器码
-  │     ├── 对象布局：手动计算字段偏移和内存分配
-  │     └── GC 策略：Boehm GC 或精确 GC
-  │
-  ▼
-Native Data (平台特定数据结构)
-  │
-  ├── Acorn.Elf.Encode (Linux)
-  ├── Acorn.Pe.Encode  (Windows)
-  └── Acorn.MachO.Encode (macOS)
-  │
-  ▼
-.elf / .exe / .dylib
-```
+进入 `Native` 后端前，应当已经完成：
 
-## 指令翻译
+- 语义闭合
+- `Partition`
+- `Native` family 专属 lowering
+- 目标平台、对象文件格式、入口约定和链接需求的确定
 
-Native 后端将 `GenerateInstruction` 序列翻译为对应平台的机器指令。指令选择（instruction selection）和寄存器分配（register allocation）在此层完成。
+## Validate
 
-## 内存布局
+`Validate` 阶段重点确认：
 
-| Valkyrie 类型 | Native 布局 |
-|:---|:---|
-| `structure` | 连续内存块，按对齐手动计算偏移 |
-| `class` | 堆分配，头部含 TypeInfo 指针 |
-| `enums` / `flags` | 底层整数类型 |
-| `union` | 标签 + 最大变体数据 |
-| `unite` | 紧凑 tagged union |
+- 当前输入是否满足目标 ABI、对象模型和平台约束
+- 需要的宿主能力是否能由 `native` family 承担
+- 对象文件格式、入口点、链接依赖和打包方式是否明确
 
-## GC 策略
+如果某项语义在目标平台上没有稳定实现路径，就必须编译期失败，不能靠后续编码阶段硬补。
 
-Native 后端可选择两种 GC 策略：
+## Compile
 
-- **Boehm GC**：使用 Boehm 保守式垃圾收集器，无需精确的 GC 位图
-- **精确 GC**：使用 `LirTypeDef.GcPointerFieldIndices` 生成精确的根扫描代码，配合自定义 GC 运行时
+`Compile` 阶段负责：
 
-## 平台适配
+- 生成 `Native` family 的低层目标输入
+- 安排对象布局、调用约定和必要的运行时接线
+- 产出对象文件、可执行文件或动态库所需的数据
 
-| 平台 | 二进制格式 | 编码器 | 调用约定 |
-|:---|:---|:---|:---|
-| Linux x86_64 | ELF | Acorn.Elf | System V AMD64 ABI |
-| Windows x86_64 | PE | Acorn.Pe | Microsoft x64 ABI |
-| macOS x86_64 / ARM64 | Mach-O | Acorn.MachO | Apple ABI |
+## 平台分层
 
-## 入口点
+`Native` family 内部必须继续按平台细分，例如：
 
-`EntryPolicy` 根据目标平台生成对应的入口符号：
+- `native-windows`
+- `native-linux`
+- `native-darwin`
 
-- Linux / macOS：`_start`
-- Windows：`main` / `WinMain`
+共享的是 family 契约，不是所有平台共用的一份伪统一物理模型。
 
-## 与 FFI 的关系
+## 交付物
 
-Native 后端支持 `[c("lib", "func")]` 和 `[syscall]` FFI 注解。前者生成对动态链接库导出函数的调用，后者生成直接的系统调用指令。
+典型交付物包括：
+
+- 对象文件
+- 可执行文件
+- 动态库
+- 链接脚本、导入库或必要的配套清单
+- 最终 `ArtifactSet`
+
+## 风险边界
+
+- 禁止把 `native` 路线退化成文本汇编中间态
+- 禁止把某个平台的格式细节提升为全部 family 的公共结构
+- 禁止把链接、打包、宿主启动逻辑塞进同一个巨型对象

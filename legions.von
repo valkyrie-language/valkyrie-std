@@ -56,6 +56,7 @@
         "examples/test.trait_qualified_dispatch",
         "examples/test.union_parameter",
         "examples/test.unite_compact",
+        "examples/test.module_system",
         "examples/test.wasm_loop",
         "projects/core",
         "projects/nyar",

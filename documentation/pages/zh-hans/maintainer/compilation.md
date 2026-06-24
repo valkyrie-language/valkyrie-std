@@ -1,318 +1,358 @@
 # 编译管线逐阶段详解
 
-本文按管线顺序逐阶段展开。每个阶段回答三个问题：**输入是什么、输出是什么、做了什么**。你可以从头读到尾理解全貌，也可以跳到任一阶段查看细节。
+本文描述 `valkyrie.v` 的长期编译主线。核心目标不是把所有 target 塞进一份统一大 `IR`，而是让语义先闭合，再按 target family 分流，最后以统一交付契约落盘。
 
----
+## 一张图
 
-## 阶段 ①：Oak.Valkyrie — 文本解码
+```text
+Source
+  -> Parse
+  -> Meta
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Target Lowering Lane
+  -> Backend Input
+  -> Validate
+  -> Backend Compile
+  -> Encode
+  -> Package
+  -> ArtifactSet
+```
 
-| | |
-|:---|:---|
-| **位置** | 管线最前端 |
-| **输入** | 源码字符串（`.v` 文件） |
-| **输出** | `CompilationUnit`（AST 根节点） |
+核心约束如下：
 
-### 做了什么
+- `Parse -> Partition` 是语义主线，所有 target 共享。
+- target 分叉从 `Partition` 开始，而不是从 parser、类型检查器或后端内部开始。
+- `Validate` 是强约束，不是可选步骤。
 
-- **Lexer** 将字符流切分为 token 流
-- **Parser** 将 token 流解析为 AST 树
-- 每个 AST 节点保留 `TextSpan`（行列号），供后续阶段生成诊断
-- 不做任何语义分析——此阶段完全不关心标识符是否是类型名、函数名还是变量名
+## 阶段 1：Parse
 
-这也意味着 parser 不负责禁止 `string` 这类历史遗留类型名。是否允许某个名字，必须等语义绑定确认它到底是用户自定义类型，还是错误的 legacy 内建别名。
+### 输入
 
-### 语言特性在此阶段的处理
+- `.v`
+- `.awsl`
+- 其他正式语言源文件
 
-无。纯语法解析，不涉及语义。
+### 输出
 
-> 详见 Oak.Valkyrie 项目（外部依赖，`Valkyrie.cs` 通过 NuGet 引用）。
+- 带 `TextSpan` 的语法树
+- 语法诊断
 
----
+### 负责什么
 
-## 阶段 ②：MetaStager — 多阶段编程变换
+- 文本解码
+- token 化
+- 语法解析
+- 保留源位置信息
 
-| | |
-|:---|:---|
-| **位置** | Parse 之后、Analyze 之前 |
-| **输入** | AST（可能包含 `<% %>` 元节点） |
-| **输出** | 纯 Stage 0 AST（所有元节点已消除） |
+### 不负责什么
 
-### 做了什么
+- 名称解析
+- 类型检查
+- target 推断
+- 平台绑定
 
-- 递归遍历 AST，识别 `<% %>` 元节点
-- 编译期求值：`<% match target.spec %>` 根据 `CanonicalTriple` 选择代码分支
-- 宏展开：`@macro_name(args)` 从 `MacroRegistry` 查找宏定义并展开
-- 循环展开：`<% loop field in node.fields %>` 生成重复代码
-- 元代码块逃逸：`<% expr %>` 将编译期求值结果插入为 AST 片段
-- 重复消除直到 AST 中不再包含任何元节点（最大深度 64）
+## 阶段 2：Meta
 
-### 语言特性在此阶段的处理
+### 输入
 
-| 特性 | 处理方式 |
-|:---|:---|
-| `macro` 定义 | 提取到 `MacroRegistry`，不展开自身 |
-| `@macro` 调用 | 展开宏体，替换调用点 |
-| `[derive(Trait)]` | 触发生成 `imply` 块 |
-| `<% if / match / loop %>` | 编译期求值并替换 |
+- 语法树
+- 编译配置
+- `CanonicalTarget`
 
-> 详见 [meta-stager.md](meta-stager.md)。
+### 输出
 
----
+- 已消除元节点的稳定语法树
 
-## 阶段 ③：TypeChecker — 类型检查
+### 负责什么
 
-| | |
-|:---|:---|
-| **位置** | MetaStager 之后、HirBuilder 之前 |
-| **输入** | Stage 0 AST |
-| **输出** | `SemanticModel`（含符号表、类型绑定、trait 满足关系、witness table、诊断） |
+- 宏展开
+- 编译期条件分支
+- 代码生成模板的语法级展开
 
-### 做了什么
+### 不负责什么
 
-三个 Pass 顺序执行：
+- 语义闭合
+- target family lowering
 
-**Pass 1 — 声明收集**：遍历 AST 收集所有顶层声明（类型、函数、命名空间、导入），构建初始符号表。不检查函数体。
+## 阶段 3：Semantics
 
-**Pass 2 — 声明检查**：验证声明的合法性。同时执行以下语言特性的编译期处理：
+### 输入
 
-| 特性 | 在此阶段的处理 |
-|:---|:---|
-| **trait 结构推导** | 对每个 `类型 × trait` 对，检查方法签名是否覆盖 → 推断关联类型 → 验证关联类型约束 → 建立满足关系 → 生成 witness table 条目 |
-| **类继承展开** | `class Dog(Animal)` → `class Dog { animal: Animal; ... }`，PascalCase 类型名自动转 snake_case 字段名，计算 MRO 序列 |
-| 泛型约束验证 | 验证 `where T: Trait` 约束是否自洽 |
-| 循环依赖检测 | 循环继承、循环 trait 依赖 |
+- 稳定语法树
+- 模块图
+- 导入关系
 
-**Pass 3 — 体检查**：逐函数检查函数体。同时执行：
+### 输出
 
-| 特性 | 在此阶段的处理 |
-|:---|:---|
-| **方法分派决议** | 遇到 `receiver.method(args)` → 按 class 自有 > trait > 独立 micro 三级查找 → 编码为 `HirDispatchKind`（Static / Witness / Dynamic） |
-| **? 操作符验证** | 验证接收者类型是 `Result<T, E>`，验证错误类型 `E` 能传播到当前函数的返回错误类型 |
-| **效应签名验证** | 验证函数声明的效应签名与实际传播的效应一致 |
-| **`.block` 上下文检查** | `system` 的 `on_update` 等回调中禁止 `.block`，产生编译错误 |
+- `SemanticModel`
+- 语言级诊断
+- 逻辑入口信息
 
-类型系统中的文本语义也在这一阶段被收紧：宽泛 `string` 不属于正式类型系统，语义层必须把文本绑定到 `char`、`utf8`、`utf16`、`utf32`、`c_str` 等确定类型。`literal_text` 与 `literal_char` 只允许存在于 `HIR` 之前，并且要在进入 `HIR` 前完成收敛；若缺少额外语义线索，默认分别收敛为 `utf8` 与 `char`。若仍命中历史遗留内建 `string`，应直接报错。同时，所有文本类型都视为不可变值，故意不支持文本 `+=`，以避免隐藏分配与意料之外的 GC 压力。
+### 负责什么
 
-### 输出 SemanticModel 包含
+- 名称解析
+- 类型检查
+- `trait / imply` 满足
+- `row` 方法约束满足
+- `class / unite` 名义关系判断
+- effect 约束验证
+- 文本类型收敛
+- 逻辑入口识别
 
-- 完整符号表（所有作用域绑定）
-- 每个表达式节点的推断类型
-- trait 满足关系表（哪类满足哪 trait）
-- witness table 条目集合
-- 方法分派决议结果
-- 诊断列表
+### 必须在这一层闭合的事实
 
-> 详见 [type-checker.md](type-checker.md)、[trait-resolution.md](trait-resolution.md)、[method-dispatch.md](method-dispatch.md)、[class-inheritance.md](class-inheritance.md)。
+- 当前调用到底是静态调用、见证调用还是其他语言级调用事实
+- 某个方法、字段、构造器到底绑定到谁
+- 某个文本字面量最终属于哪种文本类型
 
----
+### 不负责什么
 
-## 阶段 ④：HirBuilder — HIR 构建
+- 目标 ABI
+- 文件格式
+- 宿主入口包装
+- 产物拼装
 
-| | |
-|:---|:---|
-| **位置** | TypeChecker 之后、MIR 降级之前 |
-| **输入** | AST + SemanticModel |
-| **输出** | HIR（已解析符号的高层中间表示） |
+## 阶段 4：HIR
 
-### 做了什么
+### 输入
 
-- 将 AST 节点一对一或一对多转换为 HIR 节点
-- 变量引用 → 绑定到符号表中的具体 Symbol（含类型信息）
-- 方法调用 → 编码为 `HirCall`，携带 TypeChecker 阶段已决议的 `HirDispatchKind`
-- 各语言特性的语义节点保留在高层的 HIR 形式：
+- 稳定语法树
+- `SemanticModel`
 
-| AST 语法 | HIR 节点 | 说明 |
-|:---|:---|:---|
-| `?` | `HirTryOperator` | 保留语义，不在此展开 |
-| `catch/resume` | `HirCatchNode` | 保留语义 |
-| `.await` | `HirAwaitNode` | 保留语义 |
-| `.awake` | `HirAwakeNode` | 保留语义 |
-| `.block` | `HirBlockNode` | 保留语义 |
-| `match` | `HirMatchNode` | 保留模式结构 |
-| `dyn Trait` | `HirDynamicDispatch` | 标记为动态分派 |
+### 输出
 
-从 `HIR` 开始，文本类型必须已经完全确定，不能再保留宽泛 `string` 等待后续阶段猜编码；若没有更多信息，默认收敛为 `utf8`。文本在这条链路上也始终按不可变值处理，不支持把 `+=` 当作文本原地修改。
+- 高层语义表示 `HIR`
 
-### HIR 不做什么
+### 负责什么
 
-- 不做布局决策（字段偏移、内存大小）
-- 不做 ABI 决策
-- 不编码文件格式信息
+- 把语法树转成已绑定的高层语义节点
+- 保留语言特性语义，不急于抹平成低层细节
+- 统一表达入口、调用、控制流、模式和文本语义
 
-> 详见 [hir-types.md](hir-types.md)。
+### 不负责什么
 
----
+- 低层布局
+- 目标调用约定
+- 二进制格式字段
 
-## 阶段 ⑤：HirToMirLowerer — MIR 降级
+## 阶段 5：MIR
 
-| | |
-|:---|:---|
-| **位置** | HIR 之后、优化之前 |
-| **输入** | HIR |
-| **输出** | `EGraph<IKun>`（以 IKun 判别联合为节点的等价图） |
+### 输入
 
-### 做了什么
+- `HIR`
 
-将高级语义节点展开为以 `IKun` 为原子操作的低级表示。这是大多数语言特性的 **实际展开发生地**：
+### 输出
 
-| 特性 | 变换 |
-|:---|:---|
-| **`?` 操作符** | `HirTryOperator` → 展开为 `match { Ok(v) => v, Err(e) => return Err(From(e)) }` |
-| **`catch/resume`** | `HirCatchNode` → `IKunCatch`，`resume` → `IKunResume`，效应标识标记在 IKun 节点上 |
-| **`.await`** | `HirAwaitNode` → 展开为 `perform AsyncWait(future)`，注入协程挂起点标记 |
-| **`.awake`** | `HirAwakeNode` → 展开为 `perform AsyncSpawn(future)` |
-| **`.block`** | `HirBlockNode` → 展开为 `perform AsyncBlock(future)` |
-| **模式匹配** | `HirMatchNode` → 穷尽性检查 → 决策树编译 → `IKunMatch` / `IKunMatchCase` / `IKunJumpTable` |
-| **语法糖** | 各种语法糖在此全部消除为基本 IKun 操作 |
+- 中层分析表示 `MIR`
 
-### EGraph 的意义
+### 负责什么
 
-不直接生成线性的 IKun 序列，而是生成 EGraph（等价图）。EGraph 中的每个 e-class 可以包含多个等价节点，为后续优化提供可能性空间。例如 `a + 0` 的 e-class 中同时包含 `Add(a, 0)` 和 `a` 两个等价表示。
+- 把高层语义变成可分析、可重写、可静态化的表示
+- 显式化控制流与数据依赖
+- 承接后续优化与静态化
 
-> 详见 [pattern-lowering.md](pattern-lowering.md)、[effect-compilation.md](effect-compilation.md)、[async-compilation.md](async-compilation.md)。
+### 设计要求
 
----
+- `MIR` 是语言与 target 之间的分析边界
+- `MIR` 可以用 `SSA`、图结构、表达式岛或其他可分析形式实现
+- `MIR` 不是所有 target 共用的最终物理格式
 
-## 阶段 ⑥：Nyar.Optimizer — 优化与提取
+## 阶段 6：Optimize
 
-| | |
-|:---|:---|
-| **位置** | MIR 之后、LIR 之前 |
-| **输入** | `EGraph<IKun>` |
-| **输出** | `IKunTree`（从等价图中提取的最优程序） |
+### 输入
 
-### 做了什么
+- `MIR`
+- 优化级别
+- target 预算信息
 
-- **方言降级**：将领域特定 IKun 节点（如 `IKunShader`、`IKunWeb`）降级为通用节点
-- **等价饱和**：应用重写规则，为每个 e-class 填充更多等价节点
-- **部分求值**：编译期可求值的表达式被折叠为常量
-- **成本模型提取**：`Extractor` 按 `ICostModel` 从每个 e-class 中选择成本最低的节点，串成线性 `IKunTree`
+### 输出
 
-> 详见 Nyar.Optimizer 项目（外部依赖，`Valkyrie.cs` 通过 NuGet 引用）。
+- 已静态化、已去虚化、已收敛预算的 `MIR` 或等价结果
 
----
+### 负责什么
 
-## 阶段 ⑦：IkunTreeToLirLowerer — LIR 降级
+- 常量折叠
+- 规则重写
+- 去虚化
+- 部分求值
+- 闭世界静态化
+- 体积与首包预算控制
 
-| | |
-|:---|:---|
-| **位置** | 优化之后、Backend 之前 |
-| **输入** | `IKunTree`（线性最优程序） |
-| **输出** | `GenerateModule`（Nyar Standard IR） |
+### 说明
 
-### 做了什么
+这里可以使用 `EGraph`，也可以使用别的优化设施；但优化设施不构成语言真相本身。
 
-- **指令翻译**：IKun 节点 → `GenerateInstruction` + `GenerateOperand`
-- **类型映射**：HIR 类型名 → `GenerateValueType`（`i32 → I32`、`class → ExternRef` 等）
-- **调用分派生成**：
+### 不负责什么
 
-| HirDispatchKind | LIR 产物 |
-|:---|:---|
-| `Static` | `CallStatic "fully.qualified.name"` |
-| `Witness` | `CallWitness slotIndex` + witness table 条目注入模块 |
-| `Dynamic` | `CallDynamic slotIndex`（通过 TypeInfo 间接调用） |
+- 文件格式编码
+- 宿主桥接代码生成
 
-- **witness table 编码**：将 TypeChecker 阶段生成的 witness table 条目注入 `GenerateModule` 元数据段
-- **协程状态机生成**（async 特性在此最终落地）：
+## 阶段 7：Partition
 
-| 步骤 | 内容 |
-|:---|:---|
-| 1. 识别挂起点 | 扫描函数体中的 `IKunCatch(AsyncWait)` 节点 |
-| 2. 拆分基本块 | 在每个挂起点处切断基本块 |
-| 3. 生成状态枚举 | 每个挂起点一个状态值 |
-| 4. 提升局部变量 | 跨挂起点存活的局部变量提升到 `F_Frame` 结构体 |
-| 5. 控制流重构 | 生成 `loop + match state { Start → ... → AfterAwait1 → ... → Done }` |
+### 输入
 
-- **GC 位图**：从类型信息提取 `GcPointerFieldIndices`，编码到 `LirTypeDef` 中
+- 优化后的 `MIR`
+- `CanonicalTarget`
+- 构建配置
 
-这一阶段不允许再接受宽泛 `string`。因为 `Valkyrie` 是多后端语言，`CLR`、`JVM`、`WASM` 对文本的宿主表示完全不同；若在 `LIR` 才决定文本编码，后端会不可避免地产生不一致语义与 bug。默认文本类型应优先收敛到 `utf8`，而所有文本拼接都必须显式表现为构造新值，不能依赖文本 `+=` 制造隐藏分配。
+### 输出
 
-### LIR 不做什么
+- `ArtifactPartitionPlan`
 
-- 不做 ABI 决策（对象布局、调用约定由各后端决定）
-- 不编码二进制格式（`.wasm` / `.class` / `.dll` 编码由 Acorn 完成）
-- 不做宿主入口包装
+### 负责什么
 
-> 详见 [lir-lowering.md](lir-lowering.md)、[async-compilation.md](async-compilation.md)。
+- 决定哪些代码进入哪个 target family
+- 决定是否拆包、延迟加载、首包裁剪
+- 决定后续进入哪条 lane
 
----
+### 这是整条管线最关键的分界点
 
-## 阶段 ⑧：Backend — 代码生成
+`Partition` 之后，不允许继续维持“所有后端都能吃”的兼容壳。必须按 family 进入各自路线。
 
-| | |
-|:---|:---|
-| **位置** | LIR 之后、二进制编码之前 |
-| **输入** | `GenerateModule` |
-| **输出** | 目标平台数据结构（`NyarModuleData` / `WasmModuleData` / `JvmClassFileData` / `ClrModuleData` 等） |
+## 阶段 8：Target Lowering Lane
 
-### 做了什么
+### 输入
 
-各后端独立完成：
+- 分区后的中层结果
+- family 契约
 
-- **指令翻译**：`GenerateInstruction` → 目标平台指令（NyarVM opcode / WASM opcode / JVM bytecode / CIL / 原生机器码）
-- **对象布局**：字段偏移计算、对齐、内存分配策略
-- **调用约定适配**：`CallStatic → call / invokestatic / ...`
-- **GC 策略**：NyarVM 用内置 GC，JVM/CLR 用平台 GC，WASM 依赖宿主 GC，Native 用 Boehm 或精确 GC
-- **Witness Table 落地**：NyarVM → 函数指针表，JVM → `invokeinterface`，CLR → `callvirt`，WASM → 函数表 + `call_indirect`
+### 输出
 
-| 后端 | 输出格式 | 编码器 | 文档 |
-|:---|:---|:---|:---|
-| NyarVM | .nyar | Acorn.Nyar | [nyar-vm.md](backends/nyar-vm.md) |
-| WASM | .wasm | Acorn.Wasm | [wasm.md](backends/wasm.md) |
-| JVM | .class | Acorn.Jvm | [jvm.md](backends/jvm.md) |
-| CLR | .dll / .exe | Acorn.Clr | [clr.md](backends/clr.md) |
-| Native | .elf / .exe / .dylib | Acorn.Elf / Pe / MachO | [native.md](backends/native.md) |
+- family 专用 `Backend Input`
 
-> 详见 [backends/index.md](backends/index.md)。
+### 负责什么
 
----
+- 把已经闭合的语义输入，翻译为本 family 可消费的低层输入
+- 保持 family 自身约束，而不是继续伪装成统一低层模型
 
-## 阶段 ⑨：Acorn — 二进制编码
+### 典型结果
 
-| | |
-|:---|:---|
-| **位置** | Backend 之后、Packaging 之前 |
-| **输入** | 目标平台数据结构 |
-| **输出** | `byte[]` |
+- `CLR` 得到 `CLR` 专用 backend input
+- `JVM` 得到 `JVM` 专用 backend input
+- `WASM Browser/Node` 得到 `Wasm` 模块输入与宿主约束
+- `WASI` 得到 `WASI` 所需模块输入与入口约束
+- `Native` 得到 native family 自己的对象文件或机器码输入
 
-### 做了什么
+## 阶段 9：Validate
 
-将 Backend 生成的数据结构序列化为标准二进制格式。每个格式有唯一的 Acorn 模块负责。Valkyrie 编译器本身不涉及二进制编码的实现。
+### 输入
 
-> 详见 Acorn.cs 项目（外部依赖）。
+- `Backend Input`
+- family 契约
 
----
+### 输出
 
-## 阶段 ⑩：Packaging — 入口包装与交付
+- 验证通过结果，或编译期错误
 
-| | |
-|:---|:---|
-| **位置** | 管线最末端 |
-| **输入** | 主产物字节码 + 元数据 |
-| **输出** | `ArtifactSet` |
+### 必须检查什么
 
-### 做了什么
+- 输入是否真属于当前 family
+- 是否仍残留当前 family 不支持的开放语义
+- 是否仍有未闭合的调用、布局或入口事实
+- 是否满足当前 family 的宿主约束与格式前提
 
-- 生成物理入口点（`_start`、`main` 等）
-- 注入 imports 契约
-- 打包 sidecar 资产（JS glue、manifest、CSS 等）
-- 生成调试信息
+### 原则
 
----
+- `Validate` 必须早于 `Compile`
+- 不支持的语义必须编译期硬失败
+- 禁止 emit 兜底补语义
 
-## 多文件编译
+## 阶段 10：Backend Compile
 
-上述管线描述的是单文件编译。多文件场景增加两个全局 Pass：
+### 输入
 
-1. **声明收集**（所有文件）：在所有文件 AST 上收集类型、函数、trait 声明，构建全局声明表
-2. **拓扑排序**：按 `using` 依赖关系排序文件 → **体分析**（逐文件执行 Pass 3）
+- 已通过验证的 family 输入
 
-trait 推导、witness table 条目、方法分派决议在多文件场景中基于全局声明表执行。
+### 输出
 
-> 详见 [multi-file.md](multi-file.md)。
+- 目标格式数据结构
 
----
+### 负责什么
 
-## 增量编译
+- 指令选择
+- 布局计算
+- 调用约定映射
+- metadata 组织
+- 目标相关局部优化
 
-编译器通过文件指纹（内容哈希）追踪变更。`DependencyGraph` 维护模块依赖关系，脏标记沿依赖边传播。只重编译受影响的模块及其下游依赖。
+### 不负责什么
+
+- 名称解析
+- trait 选择
+- row 满足判断
+- effect 选择
+- 标准库语义解释
+
+## 阶段 11：Encode
+
+### 输入
+
+- 目标格式数据结构
+
+### 输出
+
+- 主二进制字节流
+
+### 负责什么
+
+- 结构编码
+- 格式校验
+- 主产物字节输出
+
+### 不负责什么
+
+- 语言语义
+- 入口胶水
+- sidecar 拼装
+
+## 阶段 12：Package
+
+### 输入
+
+- 主产物
+- family 契约
+- 宿主约束
+
+### 输出
+
+- `ArtifactSet`
+
+### 负责什么
+
+- 入口包装
+- sidecar 产物
+- `RunContract`
+- 调试资产
+- 验证记录聚合
+
+### 说明
+
+`Browser`、`Node`、`WASI`、`CLR`、`JVM` 的差异，大量发生在这一层，而不是 parser、类型检查器或通用 backend 层。
+
+## `ArtifactSet` 是最终成功标准
+
+编译成功不是“有个 `.wasm` 或 `.dll`”，而是至少具备：
+
+- `PrimaryArtifact`
+- `SidecarArtifacts`
+- `DebugArtifacts`
+- `ValidationRecords`
+- `RunContract`
+
+## 永久约束
+
+- 禁止把 `MIR`、`Lane` 或 `Backend Input` 再膨胀成统一大 `IR`
+- 禁止让后端补做语言语义判断
+- 禁止让 `std` 直接知道宿主平台差异
+- 禁止让工具层承担 lowering 职责
+- 禁止为了单一 family 的短期需求污染所有公共结构
+
+## 进一步阅读
+
+- [架构详解](../developer/architecture.md)
+- [目标家族契约](target-family-contract.md)
+- [后端概览](backends/index.md)
