@@ -69,7 +69,7 @@ planner 过滤可见 sdk
 
 ## 适用场景
 
-- 官方平台 `sdk`：例如 `.NET`、`JVM`、browser、`WASI`
+- 官方平台 `sdk`：例如 `CLR`、`JVM`、browser、`WASI`
 - 发行版默认 `sdk`：例如保留的 `std.adaptor.clr`、`std.adaptor.jvm`、`std.adaptor.wasm`
 - 第三方 `sdk`：例如腾讯 `wechat`、Unity、Cloudflare Worker、Electron
 - 企业内部 `sdk`：例如公司自有 runtime、网关、沙箱宿主
@@ -80,7 +80,7 @@ planner 过滤可见 sdk
 本设计不试图：
 
 1. 在运行时动态切换 `host_provider`。
-2. 提供 Java 风格 ServiceLoader / `.NET` 反射式插件系统。
+2. 提供运行时反射式插件发现系统。
 3. 让单个二进制在运行时同时装配多套宿主能力。
 4. 让 `std` 自动联网下载第三方平台支持。
 

@@ -2,7 +2,7 @@
 
 ## 概述
 
-Valkyrie 是面向 ECS、游戏引擎与 Web 全栈的领域特定语言，编译到 IKun IR，通过 Nyar Intelligence 优化后生成目标平台代码。
+Valkyrie 是面向 ECS、游戏引擎与 Web 全栈的领域特定语言。它的长期编译主线强调语义先闭合、`Partition` 后按 family 分流，而不是依赖某个统一终态中间表示。
 
 ### 设计哲学
 
@@ -16,12 +16,21 @@ Valkyrie 的语言设计围绕三条核心原则展开：
 
 ### 编译管线
 
-```
-源代码 → Oak (Lexer + Parser) → AST
-      → Valkyrie (AST → IKun EGraph) → EGraph<IKun>
-      → Nyar (降级 Pass + Extractor) → IKunTree
-      → Nyar (代码生成) → 目标数据
-      → Acorn (二进制编码) → byte[]
+```text
+源代码
+  -> Parse
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Family Lane
+  -> Backend Input
+  -> Validate
+  -> Compile
+  -> Encode
+  -> Package
+  -> ArtifactSet
 ```
 
 详细管线与各阶段职责参见 [维护者文档：编译管线](../maintainer/compilation.md)。
@@ -122,7 +131,7 @@ dog.bark()   # 第一步命中：class 自有
 data.log()   # 第二步命中：trait 默认方法
 ```
 
-详细规则（消歧手段、条件特化、动态分派）参见 [method-dispatch.md](method-dispatch.md)。
+详细规则（消歧手段、条件特化、动态分派）参见 [维护者文档：方法分派边界](../maintainer/method-dispatch.md)。
 
 ## 表达式
 

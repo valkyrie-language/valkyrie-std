@@ -1,17 +1,17 @@
 # 注册表配置
 
-Legion 通过 `IRegistry` 接口适配多种注册表，对外提供统一的依赖解析体验。
+`Legion` 通过注册表适配契约接入多种依赖来源，对外提供统一的依赖解析体验。
 
 ## 内置注册表
 
-| 注册表 | 实现类 | 默认端点 |
+| 注册表 | 适配器 | 默认端点 |
 |:---|:---|:---|
-| npm | `NpmRegistry` | `https://registry.npmjs.org` |
-| jsr | `JsrRegistry` | `https://jsr.io` |
-| conda | `CondaRegistry` | `https://api.anaconda.org` |
-| NuGet | `NuGetRegistry` | `https://api.nuget.org/v3` |
-| Maven Central | `MavenRegistry` | `https://search.maven.org` |
-| Valhalla | `ValhallaRegistry` | `https://valhalla.nyar.dev` |
+| npm | `npm` 适配器 | `https://registry.npmjs.org` |
+| jsr | `jsr` 适配器 | `https://jsr.io` |
+| conda | `conda` 适配器 | `https://api.anaconda.org` |
+| NuGet | `nuget` 适配器 | `https://api.nuget.org/v3` |
+| Maven Central | `maven` 适配器 | `https://search.maven.org` |
+| Valhalla | `valhalla` 适配器 | `https://valhalla.nyar.dev` |
 
 ## 认证互通
 
@@ -95,21 +95,20 @@ my-package = { version = "1.0.0", registry = "npm" }
 
 ## 自定义注册表
 
-实现 `IRegistry` 接口即可添加：
+新增自定义注册表时，应实现一层最小适配器，把外部注册表的能力映射到 `Legion` 可识别的统一依赖操作。
 
-```csharp
-public class MyCustomRegistry : IRegistry
-{
-    public string Name => "my-registry";
-    public string Endpoint { get; set; } = "https://my.example.com";
+最小能力通常包括：
 
-    public async Task<Package> GetPackageAsync(string name, string version) { /* ... */ }
-    public async Task<List<Package>> SearchPackagesAsync(string query) { /* ... */ }
-    public async Task<PublishResult> PublishPackageAsync(PublishOptions opts, byte[] data) { /* ... */ }
-    public async Task<string> DownloadPackageAsync(Package pkg, string dir) { /* ... */ }
-    public async Task<List<string>> GetPackageVersionsAsync(string name) { /* ... */ }
-    public async Task<TokenVerifyResult> VerifyTokenAsync(string token) { /* ... */ }
-}
+- 读取包元数据
+- 搜索包
+- 下载包
+- 列出版本
+- 验证凭据
 
-legion.RegisterRegistry(new MyCustomRegistry());
-```
+如果某个注册表还支持发布，则可继续补充发布能力；如果不支持，也不应为了接口整齐强行伪造发布语义。
+
+接入原则：
+
+- 适配器只负责注册表协议与凭据交互
+- 适配器不反向承担编译主线职责
+- 适配器输出应稳定落入 `vendors/` 依赖视图

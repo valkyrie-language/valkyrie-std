@@ -7,17 +7,17 @@ VOA（Valkyrie of Asgard）是 Valkyrie 语言的全栈 Web 开发框架，灵�
 | 原则 | 说明 |
 |:---|:---|
 | 约定优于配置 | 遵循命名约定即可自动生效，无需显式配置 |
-| 前后端统一语言 | 前端编译为 WASM，后端运行于 CLR / JVM / Native |
+| 前后端统一语言 | 前端进入 `WASM Browser/Node` 路线，后端进入 `CLR` / `JVM` / `Native` 等 family |
 | 类型共享 | 数据类型只需定义一次，前后端共享 |
 | 函数调用 | 前端直接调用后端函数，框架自动处理网络通信 |
 | 项目导向 | 每个项目都是独立的 Valkyrie 包，管理自身依赖 |
-| Valkyrie 扩展 | 不自建编译管线，消费 ValkyrieRuntime 扩展接口 |
+| 语言主线复用 | 不自建平行编译器，复用 `valkyrie.v` 的语义主线与 family 分流 |
 
 ## 技术栈
 
 | 层 | 技术 | 说明 |
 |:---|:---|:---|
-| 编译器 | ValkyrieRuntime | 消费 Valkyrie 的编译能力，注入 WebDialect |
+| 编译主线 | `valkyrie.v` 主编译线 | 复用语义闭合、family lowering 与交付体系 |
 | 前端 | WASM | 编译目标为 WebAssembly + JS 胶水代码 |
 | 后端 | CLR（优先） | 也可运行于 JVM、Native |
 | UI | AWSL | `.awsl` 组件文件 |
@@ -123,16 +123,26 @@ Valkyrie 通过属性标注声明 JS 互操作：
 
 ## 编译架构
 
-```
-.awsl 源码 → AwslReactiveCompiler → JS + CSS
-.v 源码   → ValkyrieRuntime.CompileToWasm() → .wasm + JS 胶水
-         → WasmTargetBuilder.Build() → index.html + 静态资源
+```text
+.awsl 源码
+  -> AWSL 前置转换
+  -> 标准语义主线
+  -> Partition
+  -> WASM Browser/Node Lane
+  -> Package
+  -> .wasm + 宿主胶水 + 静态资源
+
+.v 源码
+  -> 标准语义主线
+  -> 对应 family lane
+  -> Package
+  -> 对应交付物
 ```
 
-VOA 不实现自己的编译器，所有编译能力通过 `ValkyrieRuntime` 的扩展接口获取：
-- `ValkyrieRuntime.CompileToWasm()` — WASM 编译
-- `ValkyrieRuntime.RegisterDialect(WebDialect)` — Web 方言注入
-- `JsBridgeGenerator` — 类型驱动的 JS 桥接生成
+VOA 不实现自己的平行编译器。它只在主线之上增加：
+- Web 相关前置转换
+- Web 宿主约束
+- 交付阶段的资源组织
 
 ## 配置
 
@@ -143,4 +153,4 @@ VOA 不实现自己的编译器，所有编译能力通过 `ValkyrieRuntime` 的
 - [AWSL 语言规范](language/extensions/awsl.md) — UI 声明语言语法详解
 - [Island 架构](guides/island-architecture.md) — 混合渲染模式
 - [运行时架构](internals/index.md) — 编译管线全景
-- [JS FFI 体系](internals/js-ffi.md) — 类型驱动 JS 桥接
+- [JS FFI 体系](../maintainer/js-ffi.md) — 宿主绑定与打包边界

@@ -83,7 +83,7 @@ Valkyrie 的 FFI 注解按**调用约定语义**精确分类，抵制模糊的 `
 | `[c("lib", "func")]` | C 调用约定（cdecl/stdcall），动态链接库函数 | Windows / Linux / macOS | `[c("libc", "write")]` |
 | `[com("Interface", "Method")]` | COM vtable 调用 | Windows | `[com("IUnknown", "Release")]` |
 | `[syscall(number)]` | 直接系统调用（绕过 libc/Win32） | Windows / Linux / macOS | `[syscall(1)]` |
-| `[clr("Type", "Method")]` | .NET CLR 静态方法/属性 | CLR | `[clr("System.Console", "WriteLine")]` |
+| `[clr("Type", "Method")]` | CLR 宿主静态方法/属性 | CLR | `[clr("System.Console", "WriteLine")]` |
 | `[dlr]` | DLR 动态调用（运行时解析成员） | CLR | `[dlr]` |
 | `[jvm("class", "method")]` | JVM 类方法/字段（invokestatic/getstatic） | JVM | `[jvm("java/lang/Math", "sin")]` |
 | `[js_builtin("path")]` | JS 内置全局对象方法 | Web | `[js_builtin("console.log")]` |
@@ -151,9 +151,9 @@ micro sys_darwin_mach_reply_port(): i32
 - Windows：使用 NT 函数名（字符串，编译器映射为 syscall 编号）
 - macOS：正数为 BSD syscall，负数为 Mach trap
 
-#### `[clr("Type", "Method")]` — .NET CLR 方法
+#### `[clr("Type", "Method")]` — CLR 方法
 
-绑定 .NET CLR 静态方法或属性。第一个参数为完整类型名，第二个为方法/属性名。
+绑定 `CLR` 宿主静态方法或属性。第一个参数为完整类型名，第二个为方法/属性名。
 
 ```v
 [clr("System.Console", "WriteLine")]
@@ -168,9 +168,9 @@ micro clr_get_cwd(): string
 
 属性 getter 使用 `get_` 前缀，setter 使用 `set_` 前缀（遵循 CLR 内部命名）。
 
-#### `[dlr]` — DLR 动态调用
+#### `[dlr]` — 动态宿主调用
 
-绑定 .NET DLR（动态语言运行时）调用，运行时解析成员。
+绑定宿主提供的动态成员调用能力，运行时解析成员。
 
 ```v
 [dlr]
@@ -237,10 +237,10 @@ micro wasi_clock_time_get(clock_id: i32, precision: i64, time: i32): i32
 
 | 注解 | 语义 | 适用平台 | 示例 |
 |:---|:---|:---|:---|
-| `[import("module")]` | 动态导入 `.nyar` 库 | NyarVM | `[import("std.math")]` |
-| `[export]` | 导出为 `.nyar` 库符号 | NyarVM | `[export]` |
+| `[import("module")]` | 动态导入 `.nyar` 模块 | NyarVM | `[import("std.math")]` |
+| `[export]` | 导出为 `.nyar` 模块符号 | NyarVM | `[export]` |
 
-#### `[import("module")]` — 动态导入 .nyar 库
+#### `[import("module")]` — 动态导入 `.nyar` 模块
 
 在运行时动态加载 `.nyar` 模块，获取其导出符号。参数为模块名。
 
@@ -252,9 +252,9 @@ micro math_module: i32
 micro physics_module: i32
 ```
 
-#### `[export]` — 导出为 .nyar 库符号
+#### `[export]` — 导出为 `.nyar` 模块符号
 
-标记函数或声明为公开导出，编译到 `.nyar` 库时其他模块可通过 `[import]` 引用。
+标记函数或声明为公开导出，编译到 `.nyar` 模块时其他模块可通过 `[import]` 引用。
 
 ```v
 [export]
@@ -279,4 +279,4 @@ micro myFunction() {
 }
 ```
 
-自定义特性的语义由 Plugin 和编译器扩展定义。
+自定义特性的语义由插件与编译器扩展定义。

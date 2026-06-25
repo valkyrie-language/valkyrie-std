@@ -83,7 +83,7 @@ structure UserSnapshot {
 }
 ```
 
-**理由**：`structure` 明确表达结构相等、不可变、值复制的语义，提供最大程度的可控性。`struct` 在 C# 中有引用语义歧义，`record` 在多语言中含义不一致。大多数情况下使用 `class` 即可，`class` 并不意味着非要装箱，是否装箱取决于优化器的决策。
+**理由**：`structure` 明确表达结构相等、不可变、值复制的语义，提供最大程度的可控性。`struct`、`record` 这类词在不同语言中历史包袱很重，而 `structure` 更直接表达这里要的语义。
 
 ### 类 → `class`
 
@@ -164,18 +164,19 @@ VCC 是一个独立的编译器工具，不依赖于任何包管理器。它直�
 
 `component`、`system`、`widget`、`plugin` 是一等公民语法，不是库模拟：
 
-| 传统语言 | Valkyrie |
+| 面向框架的写法 | Valkyrie |
 |:---|:---|
-| `class Position : IComponent` | `component Position { ... }` |
-| `class MovementSystem : SystemBase` | `system MovementSystem { ... }` |
-| `world.Query<Position, Velocity>()` | `query all = Query.all(Position, Velocity)` |
+| 用普通数据类型手动注册组件 | `component Position { ... }` |
+| 用调度对象登记系统逻辑 | `system MovementSystem { ... }` |
+| 通过查询 API 组合筛选条件 | `query all = Query.all(Position, Velocity)` |
 
 ### 前端复用，不自建解析器
 
-Valkyrie 依赖 Oak.Valkyrie 提供词法分析和语法解析，依赖 Nyar.Core 提供中间表示和优化。不自建解析器或优化器，遵循 Nyar 组织的职责分离原则：
-- **Oak**：一切文本编解码
-- **Acorn**：一切二进制编解码
-- **Nyar**：一切分析与优化
+`Valkyrie` 不把文本处理、语义分析、目标编码和打包揉进单一工具。长期原则是职责分层：
+- 文本解析负责把源码转为稳定语法输入
+- 语义与中层负责闭合语言事实
+- family 路线各自生成目标输入
+- 编码与打包负责交付物组织
 
 ### 年度版本号
 

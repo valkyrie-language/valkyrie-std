@@ -1,53 +1,80 @@
 # 依赖规则
 
-Valkyrie 严格遵守 Nyar 组织架构中的依赖方向规则。
+## 总原则
 
-## 允许的依赖方向
+依赖方向必须服务于长期架构边界，而不是延续某条旧仓库的历史分层。
 
-```
-Oak.cs ──────→ 无外部依赖（纯文本编解码）
-Acorn.cs ────→ 无外部依赖（纯二进制编解码）
-NyarVM.cs ───→ Oak.cs + Acorn.cs
-Valkyrie.cs ─→ Oak.cs + NyarVM.cs + Acorn.cs
-```
+对 `valkyrie.v` 当前路线来说，最重要的不是记住一串旧项目名，而是守住下面这些方向：
 
-## 禁止的依赖方向
+- 语言语义层不依赖宿主绑定层
+- 公共中层不依赖具体 family 实现
+- 编码与打包层不反向定义语言语义
+- 工具链层不反向长成编译器核心
 
-- Oak.cs 不能依赖 NyarVM / Acorn / Valkyrie
-- Acorn.cs 不能依赖 NyarVM / Oak / Valkyrie
-- NyarVM 不能自建文本编解码（用 Oak）
-- NyarVM 不能自建二进制编解码（用 Acorn）
-- VCC 不能依赖 Legion / VOA / Valhalla
-- 任何项目不能在 Oak 之外新建文本编解码器
-- 任何项目不能在 Acorn 之外新建二进制编解码器
+## 推荐分层
 
-## Valkyrie 内部依赖
-
-```
-Valkyrie（CLI）
-  ↓
-Valkyrie.Runtime（管线编排）
-  ↓
-Oak.Valkyrie + Nyar.Core + Nyar.Optimizer + Acorn.Nyar
-
-Valkyrie.TypeChecker → Oak.Valkyrie（不依赖 Nyar）
-Valkyrie.Formatter → Oak.Valkyrie AST
-
-Legion → Valkyrie.Runtime（编译）
-Legion.Registry.Valhalla → Legion + Valhalla
-
-Valhalla → Acorn.Nyar
-Valhalla.Client → Valhalla
-Valhalla.Config → Valhalla
-Valhalla.Server → Valhalla + ASP.NET Core
+```text
+Source / Parse
+  -> Semantics
+  -> HIR / MIR / Optimize
+  -> Partition
+  -> Family Lane
+  -> Backend Input
+  -> Validate / Compile
+  -> Encode / Package
+  -> Toolchain
 ```
 
-## 编译器与包管理严格分离
+依赖只能沿这个方向向下走，不能逆流。
 
-这是最核心的依赖规则：
+## 仓库层面的职责
 
-- **VCC** 不依赖任何包管理器
-- **Legion** 调用 VCC，VCC 不知道 Legion 存在
-- 替换包管理器不影响编译行为
+### `projects/core`
 
-两者通过 `vendors/` 目录通信，`vendors/` 格式是唯一的共享接口。
+- 只放语言固有 primitive、核心约束和稳定基础类型
+
+### `projects/std`
+
+- 只放统一语义标准库
+- 不直接承载宿主差异
+
+### `projects/std.adaptor.*`
+
+- 只放宿主绑定
+- 不反向提升成语言主线
+
+### `projects/std.data.binary.*`
+
+- 只放目标格式数据模型与编码契约
+- 不承担语言语义解释
+
+### `projects/nyar.vm.*`
+
+- 只放执行环境或特定 family 运行契约
+
+### `projects/legion.tools`
+
+- 只放工程工具链能力
+- 不反向承担前端语义、middle-end 或 lowering 责任
+
+## 明确禁止
+
+- 禁止后端依赖前端补丁式语义兜底
+- 禁止工具链层依赖编译器内部私有对象图
+- 禁止某个 family 的数据结构泄漏成全部公共层的必选字段
+- 禁止把编码格式层反向抬升成统一低层 `IR`
+- 禁止把宿主绑定塞回 `std` 本体
+
+## 编译器与包管理分离
+
+这是必须长期维持的规则：
+
+- `VCC` 不依赖包管理器实现细节
+- `Legion` 可以调用 `VCC`
+- 替换包管理器不应改变编译器语义
+
+共享边界应当是清晰的构建输入、依赖闭包和交付契约，而不是私有内部对象。
+
+## 一句话原则
+
+任何依赖一旦让工具链反向定义编译器、让后端反向定义语言语义，或让单一 family 污染公共层，就说明依赖方向已经坏掉。

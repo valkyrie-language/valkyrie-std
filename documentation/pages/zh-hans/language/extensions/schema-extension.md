@@ -8,9 +8,9 @@ Valkyrie 语言的 Schema 扩展为数据模式定义提供声明式语法，用
 
 | 维度 | 关键字 | 职责 | 生成目标示例 |
 |:---|:---|:---|:---|
-| **What** | `class`, `structure`, `union`, `enums`, `flags` | 纯数据类型 | TypeScript interface, Go struct |
-| **How** | `namespace!` + `model` / `stream` / `cache` | 持久化/缓存/消息队列的形态 | Repository, 序列化器 |
-| **Where** | `service` (`http`, `rpc`, `grpc`, `message`, `ws`) | 跨边界通信协议 | HTTP handler, gRPC stub |
+| **What** | `class`, `structure`, `union`, `enums`, `flags` | 纯数据类型 | 领域数据模型 |
+| **How** | `namespace!` + `model` / `stream` / `cache` | 持久化/缓存/消息队列的形态 | 存储与编解码契约 |
+| **Where** | `service` (`http`, `rpc`, `grpc`, `message`, `ws`) | 跨边界通信协议 | 服务与传输边界 |
 | **微过程** | `micro` | 轻量级转换/计算逻辑 | 辅助函数、校验器 |
 
 ## 数据类型定义（What）
@@ -260,7 +260,6 @@ class Order {
     total: f64,
 }
 ```
-
 
 
 

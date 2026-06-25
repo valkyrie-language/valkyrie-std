@@ -1,146 +1,64 @@
 # API 参考
 
-## Valkyrie.Runtime
+## 当前状态
 
-```csharp
-namespace Valkyrie.Runtime;
+本文不再维护废弃路线里的对象 API、命名空间清单或宿主运行时类图。
 
-public class ValkyrieRuntime
-{
-    ⍝ <summary>
-    ⍝ 编译源码为 NyarVM 模块（.nyar 字节码）
-    ⍝ </summary>
-    public CompileResult Compile(string sourceCode);
+对当前 `valkyrie.v` 路线来说，真正稳定的不是某个历史类名，而是编译与工具链的契约边界。
 
-    ⍝ <summary>
-    ⍝ 编译源码为 WASM 模块
-    ⍝ </summary>
-    public CompileResult CompileToWasm(string sourceCode);
+## 应关注的稳定契约
 
-    ⍝ <summary>
-    ⍝ 加载编译结果到运行时
-    ⍝ </summary>
-    public ModuleId LoadModule(CompileResult result);
+### 编译输入
 
-    ⍝ <summary>
-    ⍝ 从 .nyar 字节码加载模块
-    ⍝ </summary>
-    public ModuleId LoadBytecode(byte[] bytes);
+稳定输入应围绕这些概念组织：
 
-    ⍝ <summary>
-    ⍝ 运行指定模块中的函数
-    ⍝ </summary>
-    public Value Run(ModuleId moduleId, string functionName, Value[] args);
+- 源文件集合
+- 构建配置
+- `CanonicalTarget`
+- 依赖闭包
 
-    ⍝ <summary>
-    ⍝ 注册领域方言
-    ⍝ </summary>
-    public void RegisterDialect(IDialect dialect);
-}
+### 编译输出
 
-public class CompileResult
-{
-    public bool Success { get; }
-    public IReadOnlyList<Diagnostic> Diagnostics { get; }
-    public EGraph<IKun> EGraph { get; }
-    public ModuleId ModuleId { get; }
-    public Target Target { get; }
-    public byte[] OutputBytes { get; }
-}
-```
+稳定输出应围绕这些概念组织：
 
-## Valkyrie.TypeChecker
+- 诊断集合
+- `ArtifactSet`
+- 运行契约
+- 调试与附属产物
 
-```csharp
-namespace Valkyrie.TypeChecker;
+### 工具链入口
 
-public class TypeChecker
-{
-    public void Check(CompilationUnit ast);
+稳定工具链入口应围绕这些能力组织：
 
-    public IReadOnlyList<TypeDiagnostic> Diagnostics { get; }
-}
+- 编译
+- 检查
+- 格式化
+- 测试
+- 打包
 
-public class TypeDiagnostic
-{
-    public DiagnosticSeverity Severity { get; }
-    public string Message { get; }
-    public TextSpan Span { get; }
-}
+而不是围绕某个旧的宿主运行时对象。
 
-public enum DiagnosticSeverity
-{
-    Error,
-    Warning,
-    Info
-}
-```
+## 文档边界
 
-## Valkyrie.PackageManager
+如果后续需要补 API 参考，建议按下面三类重新写：
 
-```csharp
-namespace Valkyrie.PackageManager;
+1. 编译契约：输入、输出、错误、目标矩阵。
+2. 工具链契约：`VCC`、`Legion`、`VOA` 的命令面与交付面。
+3. 扩展契约：方言、宿主绑定、family 级扩展点。
 
-public interface IRegistry
-{
-    string Name { get; }
-    string Endpoint { get; set; }
-    Task<Package> GetPackageAsync(string name, string version);
-    Task<List<Package>> SearchPackagesAsync(string query);
-    Task<PublishResult> PublishPackageAsync(PublishOptions opts, byte[] data);
-    Task<string> DownloadPackageAsync(Package pkg, string dir);
-    Task<List<string>> GetPackageVersionsAsync(string name);
-    Task<TokenVerifyResult> VerifyTokenAsync(string token);
-}
-```
+## 暂不保留的旧内容
 
-## Valkyrie.Formatter
+以下内容不再作为当前路线的参考依据：
 
-```csharp
-namespace Valkyrie.Formatter;
+- 旧运行时对象 API
+- 旧内部中间层对象暴露
+- 旧命名空间和类签名清单
+- 与废弃仓库路线绑定的宿主接口
 
-public class CodeFormatter
-{
-    public string Format(string sourceCode, FormatterConfig config);
-    public string FormatFile(string filePath, FormatterConfig config);
-}
+## 相关文档
 
-public class FormatterConfig
-{
-    public IndentStyle IndentStyle { get; set; } = IndentStyle.Space;
-    public int IndentSize { get; set; } = 4;
-    public int LineWidth { get; set; } = 120;
-    public BraceStyle BraceStyle { get; set; } = BraceStyle.NextLine;
-    // ...
-}
-```
-
-## Valkyrie.ToolChains
-
-```csharp
-namespace Valkyrie.ToolChains;
-
-public static class ToolChainEntry
-{
-    ⍝ <summary>
-    ⍝ 工具链统一入口，按命令分派到子工具
-    ⍝ </summary>
-    public static Task<int> RunAsync(string[] args);
-}
-```
-
-## Oak.Valkyrie（非 Valkyrie 项目，但相关）
-
-```csharp
-namespace Oak.Valkyrie;
-
-public static class ValkyLexer
-{
-    public static IEnumerable<Token> Tokenize(string source);
-}
-
-public static class ValkyrieParser
-{
-    public static CompilationUnit Parse(IEnumerable<Token> tokens);
-}
-```
+- [架构详解](architecture.md)
+- [编译管线逐阶段详解](../maintainer/compilation.md)
+- [目标家族契约](../maintainer/target-family-contract.md)
+- [VCC 编译器](../toolchain/vcc.md)
+- [Legion 包管理器](../toolchain/legion.md)

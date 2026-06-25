@@ -114,7 +114,7 @@ tag = "latest"
 | `deno` | `wasm32-unknown-deno` | WebAssembly（Deno） |
 | `bun` | `wasm32-unknown-bun` | WebAssembly（Bun） |
 | `wasi` | `wasm32-unknown-wasi-wasi` | WASI Component Model |
-| `clr` | `clr-microsoft-windows` | .NET CLR 程序集 |
+| `clr` | `clr-microsoft-windows` | CLR 托管程序集 |
 | `jvm` | `jvm-openjdk-linux` | JVM 类文件 |
 | `native` | 宿主平台对应的 canonical triple | 原生二进制 |
 
@@ -212,7 +212,7 @@ legion lint --format pretty --color always
 |:---|:---|:---|
 | `build` | ✅ 已实现 | 新版 + 旧版 |
 | `clean` | ✅ 已实现 | 新版 |
-| `run` | ✅ 已实现 | 新版（NyarVM）+ 旧版 |
+| `run` | ✅ 已实现 | 新版 + 旧版 |
 | `test` | ✅ 已实现 | 新版 |
 | `benchmark` | ✅ 已实现 | 新版 |
 | `coverage` / `cov` | ✅ 已实现 | 新版 |
@@ -391,7 +391,7 @@ my-package/
 
 | 命令 | 说明 |
 |:---|:---|
-| `legion test` | 扫描 `test/` 目录，识别 `[test]` 函数并在 NyarVM 中执行 |
+| `legion test` | 扫描 `test/` 目录，识别 `[test]` 函数并在默认测试目标上执行 |
 | `legion test <project>` | 运行指定项目的测试 |
 | `legion test --filter <name>` | 按名称过滤测试用例 |
 | `legion test --target nyar,clr,jvm,node` | 在多 target 上执行测试 |
@@ -450,12 +450,12 @@ micro fib_30() -> unit {
 
 `legion test` 和 `legion bench` 通过 Runner 抽象支持多种执行目标。每个后端家族有对应的 Runner：
 
-| 后端家族 | Runner | 执行方式 | 外部依赖 |
+| 后端家族 | Runner 类型 | 执行方式 | 外部依赖 |
 |:---|:---|:---|:---|
-| NyarVM | NyarVmRunner | 进程内加载 `.nyar` 字节码 | 无 |
-| CLR | ClrRunner | `dotnet exec {artifact}` | .NET SDK/Runtime |
-| JVM | JvmRunner | `java -cp {classpath} {entry}` | JDK/JRE |
-| WASM (Node) | NodeRunner | `node {artifact}` | Node.js |
+| NyarVM | VM Runner | 加载 `.nyar` 产物并执行 | 无 |
+| CLR | CLR Runner | 调用宿主命令执行托管产物 | CLR 宿主环境 |
+| JVM | JVM Runner | 调用宿主命令执行 JVM 产物 | JVM 宿主环境 |
+| WASM (Node) | Node Runner | 调用 `node` 执行宿主入口 | Node.js |
 
 Runner 命令路径的配置优先级（由高到低）：
 

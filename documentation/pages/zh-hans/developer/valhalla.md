@@ -30,14 +30,7 @@
 
 ## Legion 集成
 
-通过 `Legion.Registry.Valhalla` 程序集中的 `ValhallaRegistry` 实现适配：
-
-```csharp
-using Valkyrie.PackageManager;
-
-var legion = new Legion();
-legion.RegisterRegistry(new ValhallaRegistry("https://valhalla.example.com"));
-```
+`Legion` 通过注册表适配层接入 `Valhalla`，但这种接入应当被视为工具链集成，不是语言语义的一部分。
 
 ## 自托管部署
 
@@ -48,17 +41,14 @@ legion.RegisterRegistry(new ValhallaRegistry("https://valhalla.example.com"));
 - 组织命名空间配置
 - TLS 证书
 
-## 项目结构
+## 逻辑分层
 
-```
-Valhalla/
-├── Valhalla/                  # 共享核心库（数据模型、签名、审计）
-├── Valhalla.Client/           # 客户端库（下载、安装、锁文件校验）
-├── Valhalla.Config/           # 配置模型
-├── Valhalla.Server/           # HTTP 服务端（ASP.NET Core）
-│   ├── Auth/                  # Ed25519 认证中间件
-│   └── Storage/               # 存储抽象（Local / S3）
-└── Legion.Registry.Valhalla/  # Legion IRegistry 适配器
+```text
+Valhalla
+├── 核心数据与签名
+├── 客户端访问与校验
+├── 服务端接口与存储
+└── Legion 注册表适配层
 ```
 
 ## 安全模型

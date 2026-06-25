@@ -2,46 +2,54 @@
 
 ## 测试分层
 
+```text
+单元测试
+  -> 验证单一规则、单一阶段或单一组件
+
+集成测试
+  -> 验证多个阶段或多个模块之间的协作
+
+端到端测试
+  -> 验证真实输入到真实交付物的完整链路
 ```
-┌──────────────────────────────────┐
-│         E2E 端到端测试            │  ← 真实项目编译运行
-├──────────────────────────────────┤
-│     集成测试（多模块交互）         │  ← TypeChecker + Converter
-├──────────────────────────────────┤
-│        单元测试（单个模块）         │  ← Lexer / Parser / Scope
-└──────────────────────────────────┘
-```
 
-## Valkyrie 项目测试
+测试的目标不是重复实现细节，而是验证长期稳定边界是否仍然成立。
 
-Valkyrie 项目（`.v` 源码）使用 `legion test` 命令进行测试，测试代码放在项目的 `test/` 目录中。
+## 重点测试什么
 
-### 测试目录约定
+在当前架构下，优先测试这些边界：
 
-每个项目 SHALL 支持 `test/` 目录，其中的 `.v` 文件为测试源码：
+- 语义是否在前端闭合
+- `Partition` 后是否按 family 正确分流
+- family `validate` 是否按预期失败或通过
+- `ArtifactSet` 是否完整
+- `std` 与 `std.adaptor.*` 的边界是否被破坏
 
-```
+## `Valkyrie` 项目测试
+
+`Valkyrie` 项目使用 `legion test`、`legion bench`、`legion coverage` 这一组命令。
+
+### 目录约定
+
+```text
 my-project/
 ├── legion.von
 ├── source/
-│   └── _.v          # 实现代码
 └── test/
-    ├── simple_test.v   # 测试文件
-    └── bench_test.v    # 基准文件
+    ├── basic_test.v
+    └── bench_test.v
 ```
 
 ### 测试标注
 
-测试函数通过 `[test]` attribute 或 `test` modifier 标注，二者等价：
+测试函数可以使用 `[test]` 或 `test` 标注：
 
 ```v
-# attribute 形式
 [test]
 micro easy_if_1() -> unit {
     let max = if a > b { a } else { b }
 }
 
-# modifier 形式（与 attribute 完全等价）
 test micro easy_if_2() -> unit {
     let max = if a > b { a } else { b }
 }
@@ -49,42 +57,16 @@ test micro easy_if_2() -> unit {
 
 ### 基准标注
 
-`[benchmark]` attribute 标注的函数为基准测试用例，被 `legion bench` 识别：
-
 ```v
 [benchmark]
 micro easy_if_3() -> unit {
-    # 基准测试逻辑
+    # 基准逻辑
 }
 ```
-
-### 测试块
-
-`tests` 声明用于复杂测试场景，内部环境等同于 class body：
-
-```v
-tests `test block` {
-    field: Typing = default
-    method() -> unit { }
-    domain {
-        field
-        method()
-    }
-}
-```
-
-### 编译宏变量
-
-编译时注入两个只读宏变量，可在测试代码中通过 `@build_type` / `@build_mode` 读取：
-
-| 变量 | 取值 | 说明 |
-|:---|:---|:---|
-| `@build_type` | `"build"` / `"test"` / `"benchmark"` / `"coverage"` | 当前编译类型 |
-| `@build_mode` | `"development"` / `"production"` | 当前构建模式 |
 
 ### 测试专用依赖
 
-`legion.von` 的 `dependencies` 中支持 `test: true` 标志，声明该依赖仅在 `legion test` / `legion bench` / `legion coverage` 模式下可见：
+测试依赖应显式标记为测试可见，避免污染生产构建闭包。
 
 ```von
 dependencies: {
@@ -95,161 +77,69 @@ dependencies: {
 }
 ```
 
-### 运行测试
+## 运行测试
 
 ```bash
-# 默认在 NyarVM 中执行测试
 legion test
-
-# 指定项目
 legion test examples/test.if_expression
-
-# 过滤测试名
 legion test --filter easy_if
-
-# 多 target 测试
-legion test --target nyar --target clr
-legion test --target all                # 展开为 nyar, clr, jvm, node
-
-# 多 target 逗号分割
 legion test --target nyar,clr,jvm
-
-# 详细输出
 legion test --verbose
 ```
 
-### 多 Target 测试
+## 多目标测试
 
-`legion test` 支持 `--target` 参数指定执行目标，对每个 target 编译产物后通过对应 Runner 执行：
+`legion test` 可以在多个目标上执行，但要把“测试目标”和“语言语义”分开看：
 
-| Target | Runner | 说明 |
-|:---|:---|:---|
-| `nyar` | NyarVmRunner | 进程内加载字节码（无外部依赖） |
-| `clr` | ClrRunner | 通过 `dotnet exec` 执行 .NET 程序集 |
-| `jvm` | JvmRunner | 通过 `java -cp` 执行 JVM 类文件 |
-| `node` | NodeRunner | 通过 `node` 执行 WASM 产物 |
+- 语言语义只闭合一次
+- 不同 target 只负责承载同一份已闭合语义
+- 某个 family 不支持的能力应在 `validate` 阶段明确失败
 
-每个 target 的编译产物输出到 `.cache/test/<target>/` 独立目录，与最终部署产物 `dist/` 隔离。
+典型目标包括：
 
-不可用的 target（如未安装对应运行时）会被自动跳过并输出警告。
+- `nyar`
+- `clr`
+- `jvm`
+- `node`
 
-### 外部 Runner 配置
+每个目标的中间产物应当隔离在测试缓存目录中，而不是与最终交付目录混放。
 
-Runner 的命令路径可通过以下方式配置，优先级由高到低：
+## Runner 原则
 
-1. 命令行参数 `--runner clr=C:\custom\dotnet.exe`
-2. `legion.von` 的 `[runner]` 段
-3. 环境变量 `LEGION_RUNNER_CLR`（大写 target 名）
-4. PATH 自动检测
+Runner 只是执行测试产物的宿主适配层，不是新的语言语义层。
 
-`legion.von` 的 `[runner]` 段示例：
+维护时应坚持：
 
-```von
-[runner]
-{target: "clr", command: "dotnet", args: ["exec", "{artifact}"]}
-{target: "jvm", command: "java", args: ["-cp", "{classpath}", "{entry}"]}
-{target: "node", command: "C:\\Program Files\\nodejs\\node.exe", args: ["{artifact}"]}
-```
+- Runner 只负责启动对应宿主
+- Runner 不补做编译期语义判断
+- Runner 配置不应反向影响前端语义结果
 
-### 运行基准测试
+## 基准与覆盖率
+
+### 基准
 
 ```bash
-# 默认运行 3 次
 legion bench
-
-# 指定运行次数
 legion bench --runs 10
-
-# 指定 target
-legion bench --target nyar --target clr
-
-# 详细输出
-legion bench --verbose
+legion bench --target nyar,clr
 ```
 
-### 运行覆盖率检查
+### 覆盖率
 
 ```bash
-# 检查语法特性覆盖
 legion coverage
-# 别名
 legion cov
 ```
 
-## .NET C# 测试项目
+覆盖率更适合衡量规则覆盖和语法路径覆盖，不应被误用为实现质量的唯一指标。
 
-### 核心测试项目
+## 编写测试的原则
 
-### Valkyrie.Tests
+- 小而准地验证一个边界
+- 优先覆盖回归风险高的阶段边界
+- 少写重复实现细节的测试
+- 避免把单一后端的行为误写成全局语言规则
 
-| 测试集 | 内容 |
-|:---|:---|
-| `LexerTests` | 词法分析单元测试 |
-| `ParserTests` | 语法分析 + FFI 属性测试 |
-| `TypeCheckerTests` | 类型检查单元测试 |
-| `FormatterTests` | 格式化集成测试 |
-| `PackageManagerTests` | Legion 单元测试 |
-| `E2ETests` | Native 目标端到端测试 |
+## 一句话原则
 
-### Asgard.Tests
-
-| 测试集 | 内容 |
-|:---|:---|
-| `AwslReactiveCompilerTests` | AWSL 编译到 JS 的响应式编译 |
-| `AwslSsrRendererTests` | AWSL 服务端渲染 |
-| `ModuleDceTests` | 死代码消除 |
-| `PwaGeneratorTests` | PWA Service Worker 生成 |
-| `VoaCompilerTests` | VOA 完整编译流程 |
-
-### Legion.Tests
-
-| 测试集 | 内容 |
-|:---|:---|
-| `CondaRegistryTests` | Conda 适配器测试 |
-| `CredentialProviderTests` | 凭据自动发现 |
-| `JsrRegistryTests` | JSR 适配器测试 |
-| `MavenRegistryTests` | Maven 适配器测试 |
-| `NpmRegistryTests` | NPM 适配器测试 |
-| `NuGetRegistryTests` | NuGet 适配器测试 |
-| `PackageCacheTests` | 缓存功能测试 |
-| `RegistrySourceManagerTests` | 注册表源管理 |
-| `VendorAuthStoreTests` | 认证令牌存储 |
-| `VendorManagerTests` | Vendor 管理 |
-
-### Valhalla.Tests
-
-| 测试集 | 内容 |
-|:---|:---|
-| `Ed25519AuthMiddlewareTests` | Ed25519 认证中间件 |
-| `PackageNameTests` | 包名解析与验证 |
-| `ValhallaClientTests` | 客户端功能 |
-| `ValhallaConfigTests` | 配置加载 |
-| `ValhallaDigestTests` | SHA-256 承诺文件 |
-| `ValhallaE2ETests` | 端到端（发布→验证→下载） |
-| `ValhallaIncarnationTests` | 化身计数器 |
-| `ValhallaInstallerTests` | 安装器功能 |
-| `ValhallaLockFileTests` | protoswap.lock 生成与校验 |
-| `ValhallaLockFileValidationTests` | 锁文件安全校验 |
-
-## 运行 .NET 测试
-
-```bash
-# 全部测试
-dotnet test
-
-# 指定项目
-dotnet test projects/Valkyrie.Tests/
-dotnet test projects/Asgard.Tests/
-dotnet test projects/Legion.Tests/
-dotnet test projects/Valhalla.Tests/
-
-# 并行运行
-dotnet test --parallel
-```
-
-## 编写 .NET 测试
-
-- 测试文件放在对应 `Tests` 目录
-- 测试方法命名：`{方法名}_{场景}_{预期}`
-- 使用 `[Fact]` 和 `[Theory]` 属性
-- Arrange → Act → Assert 三段式
+测试要围绕长期边界组织，而不是围绕某个旧运行时或旧内部对象模型组织。

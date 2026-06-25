@@ -63,9 +63,9 @@ define_config(voa) {
 | `wasm32-unknown-node` | WebAssembly（Node.js） | 服务器侧 JS 宿主 |
 | `wasm32-unknown-deno` | WebAssembly（Deno） | Deno 宿主 |
 | `wasm32-unknown-bun` | WebAssembly（Bun） | Bun 宿主 |
-| `clr-microsoft-windows` | .NET CLR（Windows） | 后端（优先） |
-| `clr-unity-windows-il2cpp` | .NET CLR（Unity IL2CPP） | Unity |
-| `jvm-openjdk-linux` | Java JVM | 后端（可选） |
+| `clr-microsoft-windows` | `CLR` 托管执行（Windows） | 后端（优先） |
+| `clr-unity-windows-il2cpp` | `CLR` 托管执行（Unity IL2CPP） | Unity |
+| `jvm-openjdk-linux` | `JVM` 托管执行 | 后端（可选） |
 | `x86_64-unknown-linux-gnu` | 原生二进制（Linux） | 后端（可选） |
 | `lib` | 库 | 共享依赖 |
 

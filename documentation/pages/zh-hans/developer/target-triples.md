@@ -91,7 +91,7 @@ arch-impl-spec[-abi]
 | 值 | 含义 |
 |:---|:---|
 | `unknown` | 未指定特定实现，通用 |
-| `microsoft` | Microsoft .NET 运行时 |
+| `microsoft` | Microsoft `CLR` 宿主实现 |
 | `unity` | Unity Mono / IL2CPP |
 | `mono` | 独立 Mono |
 | `openjdk` | OpenJDK / HotSpot |
@@ -136,7 +136,7 @@ arch-impl-spec[-abi]
 | `wasm` | 标准 WebAssembly 二进制模块 | `wasm32`, `wasm64` |
 | `wasi` | WASI Component Model | `wasm32` |
 | `managed` | 标准托管执行（JIT 加载） | `clr`, `jvm` |
-| `nativeaot` | .NET NativeAOT 预编译 | `clr` |
+| `nativeaot` | `CLR NativeAOT` 预编译 | `clr` |
 | `il2cpp` | Unity IL2CPP 转译 C++ | `clr` |
 | `dex` | Android DEX 格式 | `jvm` |
 | `native` | GraalVM Native Image 原生可执行 | `jvm` |
@@ -177,18 +177,18 @@ arch-impl-spec[-abi]
 
 | CanonicalTarget | 含义 | 常用运行约定 |
 |:---|:---|:---|
-| `jvm-openjdk-unknown-managed` | OpenJDK 标准托管执行（平台无关） | 入口 `main(String[])`，产物 `.class`/`.jar` |
+| `jvm-openjdk-unknown-managed` | OpenJDK 标准托管执行（平台无关） | 标准入口函数，产物 `.class`/`.jar` |
 | `jvm-android-android-dex` | Android DEX | Android 应用模型，产物 `.dex`/`.apk` |
 | `jvm-graalvm-linux-native` | GraalVM Native Image (Linux) | 原生可执行文件 |
 | `jvm-graalvm-windows-native` | GraalVM Native Image (Windows) | 原生可执行文件 |
 
-### 6.3 CLR / .NET
+### 6.3 CLR
 
 | CanonicalTarget | 含义 | 常用运行约定 |
 |:---|:---|:---|
-| `clr-microsoft-unknown-managed` | Microsoft .NET 标准托管（平台无关） | 入口 `Main`，产物通常为 `.dll`，可附属 `.runtimeconfig.json`、`.deps.json`、`.pdb` 等 |
-| `clr-microsoft-windows-nativeaot` | .NET NativeAOT (Windows) | 原生可执行文件 |
-| `clr-microsoft-linux-nativeaot` | .NET NativeAOT (Linux) | 原生可执行文件 |
+| `clr-microsoft-unknown-managed` | Microsoft `CLR` 标准托管执行（平台无关） | 标准托管入口，产物通常为 `.dll`，可附属运行配置与调试符号 |
+| `clr-microsoft-windows-nativeaot` | `CLR NativeAOT` (Windows) | 原生可执行文件 |
+| `clr-microsoft-linux-nativeaot` | `CLR NativeAOT` (Linux) | 原生可执行文件 |
 | `clr-unity-windows-managed` | Unity Mono 托管执行 | 受 Unity 运行时约束 |
 | `clr-unity-windows-il2cpp` | Unity IL2CPP 转译 | 由 Unity IL2CPP 管线继续处理 |
 
@@ -229,16 +229,16 @@ arch-impl-spec[-abi]
 
 ### 7.1 JVM 族
 
-- 标准 ABI `managed` → 输出 `.class` 或 `.jar`，入口 `public static void main(String[])`
-- 标准库映射：`std.io.print` → `java.io.PrintStream.println`
+- 标准 ABI `managed` → 输出 `.class` 或 `.jar`，使用 JVM 约定入口
+- 标准库映射：`std.io.print` → JVM 宿主标准输出能力
 - `dex` ABI → Android 专用打包
 - `native` ABI → GraalVM 原生映像
 
-### 7.2 .NET 族
+### 7.2 CLR 族
 
-- 标准 ABI `managed` → 输出 `.dll`/`.exe`，入口合法 `Main`
-- 常见 sidecar：`.runtimeconfig.json`、`.deps.json`、`.pdb`
-- 标准库映射：`std.io.print` → `System.Console.WriteLine`
+- 标准 ABI `managed` → 输出 `.dll`/`.exe`，使用 `CLR` 约定入口
+- 常见 sidecar：运行配置、依赖描述、调试符号
+- 标准库映射：`std.io.print` → 宿主标准输出能力
 - `nativeaot` → 生成原生可执行文件，无 JIT
 - `il2cpp` → 交由 Unity IL2CPP 转换成 C++ 再编译
 

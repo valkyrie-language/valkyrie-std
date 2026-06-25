@@ -27,12 +27,21 @@ Hello, Valkyrie
 
 ## 编译流程
 
-```
-源码 .v → Oak.Valkyrie Lexer / Parser → AST
-→ Semantics → HIR(Resolved Symbols)
-→ MIR(EGraph<IKun>) → Extractor → IKunTree
-→ LIR(Nyar Standard IR) → 目标后端代码生成
-→ Acorn 编码 → Packaging → ArtifactSet
+```text
+源码 .v
+  -> Parse
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Family Lane
+  -> Backend Input
+  -> Validate
+  -> Compile
+  -> Encode
+  -> Package
+  -> ArtifactSet
 ```
 
 ## 多后端代码生成
@@ -44,12 +53,12 @@ VCC 支持多种目标平台：
 | NyarVM | unknown | `.nyar` 字节码 | 通用计算、开发调试 |
 | WASM | unknown | `.wasm` | 浏览器前端、Edge 计算 |
 | JVM | openjdk / android | `.class` | Java 生态集成 |
-| CLR | microsoft / unity | `.dll` / `.exe` | .NET 生态集成 |
+| CLR | microsoft / unity | `.dll` / `.exe` | 托管运行时生态集成 |
 | Native | pc / apple | `.elf` / `.exe` / `.dylib` | 原生高性能 |
 
 详细的目标三元组定义见[目标三元组规范](toolchain/target-triples.md)。
 
-所有后端共享同一条 `HIR -> MIR -> LIR` 主线，后端只负责目标数据结构生成，不识别标准库语义。
+共享的是语义主线，不是统一终态低层模型。`Partition` 之后，`VCC` 负责把输入分流到各自 family 路线，再进入 `validate -> compile -> package`。
 
 ## 模块系统
 
@@ -87,30 +96,15 @@ Legion: 解析依赖 → 下载程序集 → 放入 vendors/
 VCC:    读取 vendors/ → 编译源码 → 输出字节码
 ```
 
-## 使用 `Valkyrie.Compiler` API
+## 嵌入原则
 
-下游开发者应使用 `Valkyrie.Compiler` 嵌入编译能力，`Valkyrie.Runtime` 只负责运行时执行：
+下游工具如果要复用编译能力，应当依赖 `VCC` 暴露的编译契约，而不是绑定某个旧运行时对象接口。
 
-```csharp
-using Valkyrie.Compiler;
+长期稳定的嵌入边界应当是：
 
-var compiler = new ValkyrieCompiler();
-var result = compiler.CompileToTarget(sourceCode, buildPlan);
-if (result.Success)
-{
-    // result.ArtifactSet / output files
-}
-```
+- 输入源集合
+- 构建目标
+- `ArtifactSet`
+- 运行契约
 
-## 使用 `Valkyrie.Runtime` 执行 `.nyar`
-
-对 `nyarvm-standard` 目标，运行阶段再交给 `Valkyrie.Runtime`：
-
-```csharp
-using Valkyrie.Runtime;
-
-var bytes = File.ReadAllBytes("module.nyar");
-var runtime = new NyarStandardRuntime();
-runtime.LoadBytecode(bytes);
-var returnValue = runtime.Run("module", "main");
-```
+这样才能避免外部工具反向依赖废弃内部实现。
