@@ -2,21 +2,44 @@
 
 ## 项目结构
 
-```text
-valkyrie.v/
-├── documentation/              文档
-├── examples/                   示例与冒烟工程
-├── projects/
-│   ├── core/                   语言核心 primitive 与基础类型
-│   ├── std/                    统一语义标准库
-│   ├── std.adaptor.*/          宿主与平台绑定
-│   ├── std.data.binary.*/      目标格式模型与编解码
-│   ├── nyar.vm.*/              执行引擎与运行模型
-│   ├── legion.tools/           工程工具链
-│   ├── asgard/                 上层前端框架
-│   └── atlas/                  上层应用框架
-├── scripts/                    自举与工具脚本
-└── legions.von                 workspace 入口
+```mermaid
+flowchart TD
+    Root[valkyrie.v/]
+    Documentation[documentation/]
+    Examples[examples/]
+    Projects[projects/]
+    Scripts[scripts/]
+    Workspace[legions.von]
+    Core[core/]
+    Std[std/]
+    StdAdaptor[std.adaptor.*/]
+    Binary[std.data.binary.*/]
+    NyarVm[nyar.vm.*/]
+    LegionTools[legion.tools/]
+    Asgard[asgard/]
+    Atlas[atlas/]
+
+    Root --> Documentation
+    Root --> Examples
+    Root --> Projects
+    Root --> Scripts
+    Root --> Workspace
+    Projects --> Core
+    Projects --> Std
+    Projects --> StdAdaptor
+    Projects --> Binary
+    Projects --> NyarVm
+    Projects --> LegionTools
+    Projects --> Asgard
+    Projects --> Atlas
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Root phase;
+    class Documentation,Examples,Scripts,Workspace boundary;
+    class Projects,Core,Std,StdAdaptor,Binary,NyarVm,LegionTools,Asgard,Atlas delivery;
 ```
 
 ## 设计文档

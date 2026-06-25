@@ -12,22 +12,33 @@
 
 ## 编译主线
 
-```text
-Source
-  -> Parse
-  -> Meta
-  -> Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane
-  -> Backend Input
-  -> Validate
-  -> Compile
-  -> Encode
-  -> Package
-  -> ArtifactSet
+```mermaid
+flowchart LR
+    Source[Source]
+    Parse[Parse]
+    Meta[Meta]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    Encode[Encode]
+    Package[Package]
+    ArtifactSet[ArtifactSet]
+
+    Source --> Parse --> Meta --> Semantics --> HIR --> MIR --> Optimize --> Partition --> FamilyLane --> BackendInput --> Validate --> Compile --> Encode --> Package --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Source,Parse,Meta,Semantics,HIR,MIR,Optimize phase;
+    class Partition,Validate boundary;
+    class FamilyLane,BackendInput,Compile,Encode,Package,ArtifactSet delivery;
 ```
 
 这条主线表达的是长期边界：
@@ -54,21 +65,44 @@ Source
 
 ## 仓库结构
 
-```text
-valkyrie.v/
-├── documentation/
-├── examples/
-├── projects/
-│   ├── core/
-│   ├── std/
-│   ├── std.adaptor.*/
-│   ├── std.data.binary.*/
-│   ├── nyar.vm.*/
-│   ├── legion.tools/
-│   ├── asgard/
-│   └── atlas/
-├── scripts/
-└── legions.von
+```mermaid
+flowchart TD
+    Root[valkyrie.v/]
+    Documentation[documentation/]
+    Examples[examples/]
+    Projects[projects/]
+    Scripts[scripts/]
+    Workspace[legions.von]
+    Core[core/]
+    Std[std/]
+    StdAdaptor[std.adaptor.*/]
+    Binary[std.data.binary.*/]
+    NyarVm[nyar.vm.*/]
+    LegionTools[legion.tools/]
+    Asgard[asgard/]
+    Atlas[atlas/]
+
+    Root --> Documentation
+    Root --> Examples
+    Root --> Projects
+    Root --> Scripts
+    Root --> Workspace
+    Projects --> Core
+    Projects --> Std
+    Projects --> StdAdaptor
+    Projects --> Binary
+    Projects --> NyarVm
+    Projects --> LegionTools
+    Projects --> Asgard
+    Projects --> Atlas
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Root phase;
+    class Documentation,Examples,Scripts,Workspace boundary;
+    class Projects,Core,Std,StdAdaptor,Binary,NyarVm,LegionTools,Asgard,Atlas delivery;
 ```
 
 ## 架构原则
