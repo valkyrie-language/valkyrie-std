@@ -35,6 +35,8 @@
         "examples/test.gc_memory",
         "examples/test.generic_type",
         "examples/test.hello_world",
+        "examples/test.io",
+        "examples/test.io_smoke",
         "examples/test.if_expression",
         "examples/test.index_ordinal",
         "examples/test.integer_types",

@@ -93,7 +93,7 @@ imply ArrayList<T> {
 
 [host_contract]
 private micro __array_list_host_new<T>(capacity: usize): ArrayList<T> {
-    return ArrayList<T> { _items: [], _capacity: capacity }
+    return ArrayList { _items: [], _capacity: capacity }
 }
 
 [host_contract]
@@ -157,7 +157,7 @@ imply ArrayList<T>: std.iterator.IntoIterator {
     type Iter = ArrayListIterator<T>;
 
     micro into_iterator(self): ArrayListIterator<T> {
-        return ArrayListIterator::<T> {
+        return ArrayListIterator {
             _list: self,
             _index: 0,
         }

@@ -20,7 +20,7 @@ imply BitSet {
         let mut words: List<u64> = ArrayList::new(0)
         let mut i: usize = 0
         while i < words_needed {
-            words.push(0u64)
+            words.push(0)
             i = i + 1
         }
         return Self { words: words }
@@ -32,7 +32,7 @@ imply BitSet {
         let bit_idx: usize = index % 64
         self.ensure_capacity(word_idx + 1)
         let word: u64 = self.words.get(word_idx).unwrap()
-        self.words.set(word_idx, word | (1u64 << bit_idx))
+        self.words.set(word_idx, word | (1 << bit_idx))
     }
 
     [host_contract]
@@ -43,7 +43,7 @@ imply BitSet {
             return
         }
         let word: u64 = self.words.get(word_idx).unwrap()
-        self.words.set(word_idx, word & ~(1u64 << bit_idx))
+        self.words.set(word_idx, word ^ (word & (1 << bit_idx)))
     }
 
     [host_contract]
@@ -54,7 +54,7 @@ imply BitSet {
             return false
         }
         let word: u64 = self.words.get(word_idx).unwrap()
-        return (word & (1u64 << bit_idx)) != 0u64
+        return (word & (1 << bit_idx)) != 0
     }
 
     [host_contract]
@@ -78,7 +78,7 @@ imply BitSet {
             i = i + 1
         }
         while i < self.words.length() {
-            self.words.set(i, 0u64)
+            self.words.set(i, 0)
             i = i + 1
         }
     }
@@ -102,7 +102,7 @@ imply BitSet {
         while i < min_length {
             let a: u64 = self.words.get(i).unwrap()
             let b: u64 = other.words.get(i).unwrap()
-            self.words.set(i, a & ~b)
+            self.words.set(i, a ^ (a & b))
             i = i + 1
         }
     }
@@ -128,7 +128,7 @@ imply BitSet {
     micro is_empty(self): bool {
         let mut i: usize = 0
         while i < self.words.length() {
-            if self.words.get(i).unwrap() != 0u64 {
+            if self.words.get(i).unwrap() != 0 {
                 return false
             }
             i = i + 1
@@ -140,19 +140,17 @@ imply BitSet {
     micro clear_all(mut self): unit {
         let mut i: usize = 0
         while i < self.words.length() {
-            self.words.set(i, 0u64)
+            self.words.set(i, 0)
             i = i + 1
         }
     }
 
     micro ensure_capacity(mut self, needed: usize): unit {
         while self.words.length() < needed {
-            self.words.push(0u64)
+            self.words.push(0)
         }
     }
 }
-
-
 
 
 

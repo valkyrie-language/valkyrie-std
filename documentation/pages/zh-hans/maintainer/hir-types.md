@@ -1,235 +1,113 @@
-# HIR 类型系统
+# HIR 类型边界
 
 ## 概述
 
-HIR（High-level Intermediate Representation）是 Valkyrie 编译管线中位于语义分析和 MIR 之间的中间表示层。HIR 类型系统负责将 AST 中的类型声明转换为结构化的语义描述，为下游 MIR/LIR 提供类型信息。
+`HIR` 是语义层与中层分析之间的边界。它保存语言已经确认的类型事实，但不提前替任何 `target family` 做低层布局决定。
 
 ## 在管线中的位置
 
-```
-Stage 0 AST → ③ TypeChecker → SemanticModel → ④ HirBuilder → HIR → ⑤ HirToMirLowerer → EGraph<IKun>
-```
-
-HIR 消费 SemanticModel（已解析的符号和类型），不接触原始 AST。向下游 MIR 降级层提供类型定义和分派决策。
-
-## 文本类型边界
-
-`HIR` 从这一层开始必须只承接确定性的文本类型，不能再保留宽泛 `string`。
-
-- 字符串字面量在进入 `HIR` 前可以尚未固定编码
-- 但类型注解、推断结果和符号绑定一旦写入 `HIR`，就必须已经是 `char`、`utf8`、`utf16`、`utf32`、`c_str` 这类正式类型
-- `literal_char` 与 `literal_text` 只是 `HIR` 前的字面量占位概念，不能作为正式 `HIR` 类型继续向后传播
-- 如果语义绑定仍然把某个类型注解解释成历史遗留的 `string`，应直接报错，而不是继续向 `MIR/LIR` 传递
-- 如果上游无法提供更强的文本语义信息，`literal_char` 默认收敛为 `char`，`literal_text` 默认收敛为 `utf8`
-
-这样做不是语法洁癖，而是为了避免多后端实现把 `CLR` / `JVM` / `WASM` 的宿主字符串表示误当成语言级统一语义。
-
-此外，所有文本类型在语义上都视为不可变值。`HIR` 不应把文本上的 `+=` 当作“原地追加”降级，因为这会制造隐藏分配并掩盖 GC 压力来源。
-
-## HirTypeKind
-
-`HirTypeKind` 枚举定义了 Valkyrie 语言的全部七种类型声明：
-
-```csharp
-public enum HirTypeKind
-{
-    Class,
-    Structure,
-    Enums,
-    Flags,
-    Union,
-    Unite,
-    Trait
-}
+```text
+Parse
+  -> Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
 ```
 
-## HirTypeDef
+进入 `HIR` 时，名称、类型、约束和调用归属都应该已经闭合。
 
-`HirTypeDef` 是 HIR 层中类型定义的核心记录类型：
+## HIR 需要保留什么
 
-```csharp
-public sealed record HirTypeDef(
-    string Name,
-    string QualifiedName,
-    HirTypeKind Kind,
-    IReadOnlyList<HirMethod> Methods,
-    IReadOnlyList<HirVariantDef>? Variants,
-    HirTypeRef? BaseType,
-    int? EnumBaseType
-);
-```
+- 类型种类
+- 完整名字与可见性边界
+- 字段与方法签名
+- 变体与判别信息
+- 继承、约束与满足关系
+- 文本类型的最终收敛结果
 
-| 字段 | 说明 | 适用类型 |
-|:---|:---|:---|
-| `Name` | 类型名 | 全部 |
-| `QualifiedName` | 完全限定名 | 全部 |
-| `Kind` | 类型种类 | 全部 |
-| `Methods` | 方法列表 | Class / Structure / Union / Unite / Trait |
-| `Variants` | 变体列表 | Enums / Flags / Union / Unite |
-| `BaseType` | 父类引用 | Class |
-| `EnumBaseType` | 枚举底层整数类型 | Enums / Flags |
+这些事实属于语言语义本身，因此必须稳定保留到中层。
 
-## HirVariantDef
+## HIR 不能保留什么
 
-```csharp
-public sealed record HirVariantDef(
-    string Name,
-    HirTypeRef? PayloadType,
-    long? Discriminant
-);
-```
+- 具体对象布局
+- 字段偏移
+- 目标 ABI
+- 宿主字符串承载方式
+- 对象文件格式细节
 
-| 字段 | 说明 |
-|:---|:---|
-| `Name` | 变体名称 |
-| `PayloadType` | 变体携带的数据类型 |
-| `Discriminant` | 判值：Enums/Flags 为整数值，Union/Unite 为运行时 TypeInfo 判值 |
+这些内容都应该留到后续 family lowering、`validate` 和 `compile` 阶段。
 
-## 各类型到 HIR 的映射
+## 文本类型纪律
 
-### structure
+`HIR` 不能继续保留宽泛文本占位名。进入这一层后，文本类型必须已经收敛为明确种类，例如：
 
-值类型，栈分配：
+- `char`
+- `utf8`
+- `utf16`
+- `utf32`
+- `c_str`
 
-```valkyrie
-structure Point { x: i32, y: i32 }
-```
+原因是不同 family 对文本的承载方式差异极大，不能把宿主表示误当成语言统一语义。
 
-HIR：`Kind = Structure`，`Variants = null`，字段通过 `Methods` 中的 getter/setter 表达。
+## 类型种类
 
-### class
+`HIR` 需要区分语言中的主要类型形态，例如：
 
-引用类型，GC 堆分配：
+- `structure`
+- `class`
+- `enums`
+- `flags`
+- `union`
+- `unite`
+- `trait`
 
-```valkyrie
-class Animal { name: utf8, age: i32 }
-```
+这里的任务只是保留语言层种类，不是把它们压平成某个统一后端模型。
 
-HIR：`Kind = Class`，`BaseType` 可指定父类。
+## 变体与判别
 
-### enums
+对于 `enums`、`flags`、`union`、`unite` 这类带变体的类型，`HIR` 需要保留：
 
-离散枚举：
+- 变体名
+- 载荷类型
+- 判别所需的语言事实
 
-```valkyrie
-enums Status { Inactive = 0, Active = 1, Suspended = 2 }
-```
+但 `HIR` 不决定这些判别在某个具体 family 上如何编码。
 
-HIR：`Kind = Enums`，`Variants` 包含三个 `HirVariantDef`，各自带有 `Discriminant` 判值。
+## 约束与满足关系
 
-### flags
+`trait`、`imply`、继承和其他约束关系都属于语义闭合的一部分。`HIR` 需要知道：
 
-位标志组合：
+- 某个类型满足哪些约束
+- 某个调用依赖哪类分派事实
+- 某个类型引用是否已经绑定成功
 
-```valkyrie
-flags Permission { Read = 1, Write = 2, Execute = 4 }
-```
+但 `HIR` 不负责决定这些事实在运行时如何落地。
 
-HIR：`Kind = Flags`，`Variants` 包含带位值的变体。位运算由 IKun 节点承载。
+## 与下游的关系
 
-### union
+### 对 `MIR`
 
-代数数据类型（引用语义）：
+`MIR` 继续消费这些语义事实，用于：
 
-```valkyrie
-union Option<T> { Some(T), None }
-```
+- 分析控制流
+- 做规则重写
+- 做静态化
+- 做去虚化
 
-HIR：`Kind = Union`，每个变体一个 `HirVariantDef`，运行时通过 TypeInfo 判断当前变体。
+### 对 family lowering
 
-### unite
+family lowering 继续消费 `HIR/MIR` 中已经闭合的类型信息，但只能把它翻译为各自 family 的输入，不能反过来要求 `HIR` 为某个 family 长出专属字段。
 
-紧凑内联 union（值语义）：
+## 失败信号
 
-```valkyrie
-unite CompactOption<T> { Some(T), None }
-```
+只要出现下面任意一种情况，就说明 `HIR` 边界开始变坏：
 
-HIR：`Kind = Unite`。与 Union 的区别：
+- 为某个 family 往 `HIR` 里加入专属低层字段
+- 在 `HIR` 中引入对象文件或宿主格式细节
+- 让 `HIR` 保留尚未收敛的文本或调用语义
+- 让下游依赖 `HIR` 去补做本应在语义阶段完成的判断
 
-| 属性 | Union | Unite |
-|:---|:---|:---|
-| 分配语义 | 引用（GC 堆） | 值（栈或内联） |
-| 拷贝语义 | 引用拷贝 | 逐位拷贝 |
-| trait object | 支持 `dyn Trait` | 不支持 |
+## 一句话原则
 
-### trait
-
-结构类型约束：
-
-```valkyrie
-trait Display { to_utf8(self) -> utf8 }
-```
-
-trait 的实际定义数据由独立的 `HirTraitDef` 承载。`HirTypeKind.Trait` 仅用于类型引用场景（如 `HirTypeRef` 指向 trait 时）。
-
-## HirTraitDef
-
-```csharp
-public sealed record HirTraitDef(
-    string Name,
-    string QualifiedName,
-    IReadOnlyList<HirMethod> Methods
-);
-```
-
-## HirImplyDef
-
-```csharp
-public sealed record HirImplyDef(
-    string TargetType,
-    string ContractType,
-    IReadOnlyList<HirMethod> Methods,
-    IReadOnlyList<WitnessBinding> WitnessBindings
-);
-```
-
-## HirCallResolution
-
-```csharp
-public enum HirDispatchKind
-{
-    Static,
-    Witness,
-    Dynamic
-}
-```
-
-| 分派种类 | 说明 |
-|:---|:---|
-| `Static` | 直接按函数名调用 |
-| `Witness` | 通过 witness table 槽索引间接调用 |
-| `Dynamic` | 通过 trait object 的 TypeInfo 动态分派 |
-
-## 与下游的接口
-
-### 对 MIR 的影响
-
-`HirTypeDef` 的 `Variants` 信息被 `MirBuilder` 编码为 IKun 节点，支持模式匹配的下游优化（如 `match` 跳转表生成）。
-
-### 对 LIR 的影响
-
-`LirBuilder` 将 HIR 类型映射为 `GenerateValueType`：
-
-| HIR 类型 | LIR 降级 | 说明 |
-|:---|:---|:---|
-| `Enums` | 底层整数类型 | 判值作为常量比较 |
-| `Flags` | 底层整数类型 | 位运算由 IKun 承载 |
-| `Union` | ExternRef 或 Struct | 取决于布局策略 |
-| `Unite` | Struct | 紧凑内联布局 |
-| `Trait` | ExternRef | trait object 胖指针 |
-
-文本类型在这条链路上同样必须保持确定性。`HIR` 不得把宽泛 `string` 交给 `LIR` 再猜编码，否则后端之间会出现不一致的文本布局和调用约定。
-
-## HIR 的边界
-
-HIR 不做布局决策，仅保留纯语义信息：
-
-| HIR 知道 | HIR 不知道 |
-|:---|:---|
-| 类型种类（Class / Structure / Enums / ...） | 对象在内存中的具体布局 |
-| 变体名称与判值 | vtable 槽位排列 |
-| 字段名与类型引用 | 字段偏移量 |
-| 父类型引用 | GC 扫描策略 |
-
-对象布局决策在 `TargetArtifactEmitter` 中各后端自行完成。
+`HIR` 保存的是语言已经确认的类型事实，不是给所有后端共用的低层模板。

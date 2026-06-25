@@ -1,124 +1,116 @@
-# trait 推导与 Witness Table
+# trait 约束解析
 
 ## 概述
 
-Valkyrie 的 trait 系统采用结构子类型（structural subtyping），编译器在语义分析阶段自动判断每个类型是否满足 trait，无需显式声明。此过程在类型检查器的 Pass 2（声明检查）中执行。
-
-## 结构推导算法
-
-### 输入
-
-- 所有已声明的 trait 定义（来自全局 Scope）
-- 所有已声明的 class/structure 定义（来自全局 Scope）
-
-### 推导步骤
-
-对每个类型 `T` 和每个 trait `A`：
-
-**第一步：检查方法签名覆盖**
-
-遍历 trait `A` 要求的每个方法签名，在类型 `T` 的方法集中查找匹配：
-
-- 方法名相同
-- 参数数量相同
-- 每个参数类型兼容（目标 trait 参数类型可赋值给源类型参数）
-- 返回类型兼容（源返回类型可赋值给目标 trait 返回类型）
-
-若全部匹配，进入第二步。
-
-**第二步：推断关联类型**
-
-trait 可以声明关联类型（`type Item`、`type Iter`）。推导器从匹配到的实现方法签名中推断关联类型的具体映射：
-
-```valkyrie
-trait IntoIterator {
-    type Item
-    type Iter: Iterator<Item = Self::Item>
-    into_iterator(self) -> Self::Iter
-}
-```
-
-从 `into_iterator` 的返回类型推断出 `Iter`，再从 `Iter` 的 `Iterator` 实现推断出 `Item`。
-
-**第三步：验证关联类型约束**
-
-trait 中对关联类型的约束（如 `Iter: Iterator<Item = Self::Item>`）需要在第二步推断完成后验证。若推断的关联类型不满足约束，该类型不满足此 trait。
-
-**第四步：建立满足关系**
-
-通过以上检查的类型 `T` 被标记为满足 trait `A`，编译器记录此关系用于后续类型检查和代码生成。
-
-### 复杂度控制
-
-推导是 **O(N × M)** 的，其中 N 为类型数量，M 为 trait 数量。但 trait 通常远少于类型，且方法签名比对是常量时间的字符串匹配，因此实际开销可忽略。
-
-## Witness Table
-
-### 概念
-
-witness table 是编译器生成的编译期数据结构，记录"类型 `T` 满足 trait `A`"的证据。每条记录包含：
-
-- trait 名
-- 目标类型名
-- 每个 trait 方法对应的实现函数签名
-- 槽索引（slot index）：trait 方法在 witness table 中的位置
-
-### 生成时机
-
-在类型检查器确认结构推导结果后，为每个成功的 `(T, A)` 对生成一条 witness table 条目。
-
-### 编译期表示
-
-```csharp
-// (TraitName, SlotIndex, MethodName, TargetTypeName, ImplementationFunctionName)
-GenerateWitnessDispatchEntry binding
-```
-
-条目集合为静态全局表，运行时通过 `(TraitName, SlotIndex)` 键查找 `(TargetTypeName, ImplementationFunctionName)`。
-
-### 运行时表示
-
-在 NyarVM 中，witness table 以函数指针表形式存在。编译期生成的 witness entry 被编码为模块元数据，运行时加载后构建指针表。
-
-## Aura trait
-
-Aura trait 是语义 trait，需要显式声明，不能仅凭形状推导：
-
-| trait | 说明 |
-|:---|:---|
-| `Serializable` | 可序列化 |
-| `Sendable` | 可跨线程发送 |
-| `Syncable` | 可跨线程共享 |
-| `Cloneable` | 可克隆 |
-
-Aura trait 的满足关系由程序员显式声明或由编译器对特定场景自动注入（如 `structure` 自动获得 `Cloneable`）。外部类型绝不自动获得 Aura trait，必须通过包裹类封装。
+本文描述 `trait` 相关约束如何在语义阶段闭合。核心原则只有一条：满足关系必须在前端明确下来，不能把“这个类型到底满足哪个约束”拖给后端。
 
 ## 在管线中的位置
 
-```
-TypeChecker Pass 2
-  ├── 声明检查
-  │     ├── trait 定义验证
-  │     └── 结构推导（遍历所有 类型 × trait 对）
-  │           └── 生成 witness table 条目
-  ├── Pass 3: 体检查
-  │     └── 使用 trait 满足关系验证类型约束
-  └── SemanticModel
-        ├── 已解析符号表
-        ├── trait 满足关系表
-        └── witness table 条目集合
+```text
+Parse
+  -> Semantics
+  -> HIR
+  -> MIR
 ```
 
-## 与多文件编译的关系
+`trait` 解析属于 `Semantics`，不是 family lowering 或 backend 的职责。
 
-多文件场景中，trait 推导在全局声明收集完成后统一执行。详见 [multi-file.md](multi-file.md)。
+## 需要解决的问题
+
+语义阶段至少要回答下面这些问题：
+
+- 某个类型是否满足某个 `trait`
+- 关联类型是否已经成功推断
+- 约束链是否闭合
+- 某个调用应走哪种分派路线
+
+如果这些问题没有在这里得到答案，后续阶段就会被迫补语义，最终重新长出 `god object`。
+
+## 解析步骤
+
+### 1. 收集契约
+
+先收集所有：
+
+- `trait` 定义
+- 类型定义
+- 显式 `imply`
+- 约束子句
+
+### 2. 建立候选关系
+
+根据类型表面、显式声明和约束条件，建立候选满足关系。
+
+### 3. 检查签名一致性
+
+确认候选类型是否真正满足 `trait` 需要的方法、关联类型和约束边界。
+
+### 4. 固化满足事实
+
+一旦确认满足关系成立，就把这件事写入语义模型，供后续调用解析和中层分析使用。
+
+## 关联类型
+
+关联类型的关键不是“晚点再推”，而是必须在语义阶段闭合。也就是说：
+
+- 能推断的，在这里推断
+- 不能推断的，在这里报错
+- 约束不成立的，在这里报错
+
+不能把未定关联类型传到后端再补猜。
+
+## 证据对象的边界
+
+为了支持后续分派，编译器可以保留“满足关系的证据对象”或等价记录，但这类证据的边界必须非常克制：
+
+- 它表达的是语义事实
+- 它不是统一后端元数据格式
+- 它不能绑死某个具体 family 的编码方式
+
+换句话说，语义层可以说“这个类型满足这个 `trait`”，但不能提前规定所有 family 都必须用同一种低层表结构去承载它。
+
+## 显式与自动满足
+
+并不是所有 `trait` 都适合自动满足推导。维护时应区分两类：
+
+- 可以根据结构和签名自动确认的约束
+- 必须显式声明、不能只看形状的语义契约
+
+如果某种能力本质上依赖语义承诺、运行时安全或资源规则，就不该靠表面形状自动推导。
+
+## 与多文件的关系
+
+多文件场景下，`trait` 解析必须建立在完整声明图之上。也就是说：
+
+- 先完成全局声明收集
+- 再做跨文件约束闭合
+- 最后把满足关系写回统一语义结果
+
+详见 [multi-file.md](multi-file.md)。
 
 ## 对下游的影响
 
-### HIR
+### 对 `HIR`
 
-`HirTypeDef` 中不直接记录 trait 满足关系，此关系保留在 `SemanticModel` 中为 `HirBuilder` 所用。`HirBuilder` 在构建方法分派时查询 trait 满足关系。
+`HIR` 需要消费已经闭合的约束事实，用于：
 
-### LIR
+- 类型引用绑定
+- 方法调用归属
+- 泛型约束保留
 
-witness table 条目在 LIR 构建阶段被编码为 `GenerateWitnessDispatchEntry`，注入到 `GenerateModule` 的元数据段。
+### 对分派
+
+后续分派只能消费这里已经确认的事实，不能重新做 `trait` 满足判断。
+
+## 失败信号
+
+如果出现下面这些现象，就说明 `trait` 解析边界已经坏了：
+
+- `HIR` 之后还在重新判断满足关系
+- family lowering 里还在补做约束推断
+- backend 里还在猜某个调用是不是见证分派
+- 为某个单一 target 发明专属约束记录格式并强推给全系统
+
+## 一句话原则
+
+`trait` 满足关系属于语言语义真相，必须在前端闭合；后面的阶段只允许消费，不允许重判。

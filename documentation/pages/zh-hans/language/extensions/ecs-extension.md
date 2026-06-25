@@ -4,14 +4,14 @@ Valkyrie 语言的 ECS 扩展为游戏引擎实体-组件-系统架构提供一�
 
 ## 设计理念
 
-传统语言通过框架模拟 ECS 模式，Valkyrie 将 ECS 概念提升为语言原语：
+许多语言只能通过库和约定去模拟 ECS；`Valkyrie` 选择把这些概念直接提升为语言原语：
 
-| 传统语言 | Valkyrie |
+| 面向框架的写法 | Valkyrie |
 |:---|:---|
-| `class Position : IComponent` | `component Position { ... }` |
-| `class MovementSystem : SystemBase` | `system MovementSystem { ... }` |
-| `world.Query<Position, Velocity>()` | `query all = Query.all(Position, Velocity)` |
-| `entity.GetComponent<Position>()` | `entity.position` |
+| 通过普通数据类型手动注册组件 | `component Position { ... }` |
+| 通过调度对象声明系统逻辑 | `system MovementSystem { ... }` |
+| 通过查询 API 组合筛选条件 | `query all = Query.all(Position, Velocity)` |
+| 通过显式取值接口访问组件 | `entity.position` |
 
 ## Component 声明
 
@@ -61,8 +61,8 @@ component PlayerState {
 ### 组件约束
 
 - 组件仅包含数据字段，不包含方法
-- 字段类型必须为值类型或 `string`
-- 不允许嵌套组件引用（使用 Entity 引用代替）
+- 字段类型必须是稳定的数据语义类型
+- 不允许嵌套组件引用；跨实体关系应显式使用实体标识或等价引用
 
 ## System 声明
 
@@ -142,5 +142,4 @@ entity.position.x += 1.0;           # 修改组件字段
 entity.has(Position);                # 检查组件是否存在
 entity.remove(Position);             # 移除组件
 ```
-
 

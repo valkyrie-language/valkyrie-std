@@ -1,22 +1,19 @@
 namespace hello_world;
 
-let shared = 42;
+using std.io.{print_line};
 
-[clr("System.Console", "System.Console", "WriteLine")]
-micro console_write_line(value: utf8): unit
-
-⍝ ./hello_world_hello_world.exe
+⍝ ./hello_world.exe
 [main]
 micro hello_world() {
-    console_write_line("Hello World!")
-    ExitCode(add_one(shared) as i32)
+    print_line("Hello World!")
+    ExitCode(add_one(42) as i32)
 }
 
-⍝ ./hello_world_hello_world_utf8.exe 
+⍝ ./hello_world_utf8.exe 
 [main]
 micro hello_world_utf8() -> ExitCode {
-    console_write_line("你好，世界！")
-    return ExitCode(add_two(shared) as i32)
+    print_line("你好，世界！")
+    return ExitCode(add_two(42) as i32)
 }
 
 micro add_one(x: isize) {

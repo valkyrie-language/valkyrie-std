@@ -1,135 +1,84 @@
-# 模式匹配降级
+# 模式 lowering 边界
 
 ## 概述
 
-Valkyrie 的 `match` 表达式在 HIR 层保留为语义节点，在 MIR 降级阶段被展开为条件判断和跳转，最终在 LIR 层生成对应的控制流指令。
+本文关心的不是某个旧 lowering 节点名，而是模式匹配从高层语义进入低层控制流时，哪些边界必须保持稳定。
 
 ## 在管线中的位置
 
-```
-HIR
-  │
-  ├── HirMatchNode（语义节点：保留模式结构）
-  │
-  ▼
-MIR（HirToMirLowerer）
-  │
-  ├── 模式编译为决策树
-  ├── 生成 IKunMatch / IKunMatchCase 节点
-  ├── 执行穷尽性检查
-  │
-  ▼
-LIR（IkunTreeToLirLowerer）
-  │
-  ├── IKunMatch → 条件跳转链 / 跳转表
-  └── IKunMatchCase → 基本块
-```
-
-## 模式类型
-
-| 模式 | 语法 | MIR 降级策略 |
-|:---|:---|:---|
-| 通配 | `_` | 无条件匹配，总是成功 |
-| 绑定 | `x` | 无条件匹配 + 变量绑定 |
-| 字面量 | `42`、`"hello"`、`true` | 值相等比较 |
-| 枚举 | `Option.Some(x)` | 先检查判值，再递归匹配 payload |
-| 元组 | `(x, y)` | 按位置顺序匹配各元素 |
-| 命名结构 | `Point { x, y }` | 按字段名匹配，支持嵌套 |
-| 列表 | `[head, ..tail]` | 先检查长度，再按模式解构元素 |
-| 引用 | `ref x` | 绑定为引用而非拷贝 |
-| 类型强制 | `x as i32` | 运行时类型检查 + 绑定 |
-
-## 穷尽性检查
-
-在 HIR 构建阶段，编译器验证 `match` 表达式覆盖了被匹配类型的所有可能值：
-
-- `bool`：必须覆盖 `true` 和 `false`
-- `enums`：必须覆盖所有判值，或者有通配分支
-- `union`：必须覆盖所有变体，或者有通配分支
-- `Option<T>`：必须覆盖 `Some` 和 `None`
-- `Result<T, E>`：必须覆盖 `Ok` 和 `Err`
-
-穷尽性检查在模式编译之前执行。若检查失败，报告编译错误而非生成缺省分支。
-
-## 决策树编译
-
-模式匹配被编译为决策树，优化目标是减少平均比较次数：
-
-1. **收集所有分支的模式**，提取公共前缀
-2. **按区分度排序**：优先检查能最快缩小候选集的模式
-3. **生成 IKunMatch 节点**：
-   - 简单值比较 → IKunMatch 直接映射为 if-else 链
-   - 枚举/union → 优先编译为跳转表（若判值密集且连续）
-   - 列表/结构 → 逐字段展开为嵌套的 if-else
-
-## 跳转表优化
-
-当匹配目标是枚举且分支覆盖了连续判值时，编译器生成跳转表（switch table）代替 if-else 链：
-
-```
-match status {
-    case Inactive → ...
-    case Active   → ...
-    case Suspended → ...
-}
-```
-
-编译为：
-
 ```text
-// 将判值加载到寄存器
-load_discriminant status → tmp
-// 跳转表：[Inactive, Active, Suspended]
-jump_table tmp → [&case_0, &case_1, &case_2]
+Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Family Lane
 ```
 
-跳转表在 MIR 层表现为 `IKunJumpTable` 节点，在 LIR 层生成 `Switch` 指令。
+模式 lowering 发生在语义已经闭合之后，但仍然早于具体 family 编译。
 
-## 守卫（when 子句）
+## Lowering 之前必须已经确定的事
 
-`case pattern when guard` 被编译为嵌套条件：
+- 模式是否类型合法
+- 变量绑定是否成立
+- 穷尽性是否满足
+- 守卫的求值条件和顺序
 
-```
-match value {
-    case x when x > 0 → ...
-    case x            → ...
-}
-```
+如果这些问题还没解决，就不应进入 lowering。
 
-编译为：
+## Lowering 要做什么
 
-```text
-if (value matches case_1_pattern) {
-    if (guard_condition) { jump case_1_body }
-    else { fallthrough }
-}
-if (value matches case_2_pattern) {
-    jump case_2_body
-}
-```
+模式 lowering 的职责是把高层模式结构整理成更接近控制流的表示，例如：
 
-守卫条件在模式匹配成功后才求值。守卫失败时继续尝试下一个分支。
+- 分支选择树
+- 判别读取需求
+- 解构顺序
+- 跳转机会
 
-## 与效应系统的交互
+它的目标是让模式成为可分析、可优化的控制流问题。
 
-当 `match` 分支包含可能产生领域错误的表达式时，效应传播发生在各分支内部，不影响分支选择：
+## Lowering 不该做什么
 
-```valkyrie
-match result {
-    case Ok(v) → process(v)?
-    case Err(e) → default_value
-}
-```
+- 不该重新判定模式是否合法
+- 不该补做穷尽性检查
+- 不该决定某个 family 的最终编码格式
+- 不该把某个后端的跳转模型强推成公共结构
 
-`process(v)?` 的 `?` 短路只在 `Ok` 分支内生效。整个 `match` 表达式的效应为各分支效应的并集。
+## 跳转表与分支链
 
-## LIR 输出
+是否采用跳转表、条件链或其他布局，应该被视为中层与 family 的实现选择，而不是语言语义的一部分。
 
-模式匹配降级后在 LIR 层表现为以下结构：
+也就是说：
 
-| MIR 节点 | LIR 产物 |
-|:---|:---|
-| `IKunMatch` | 基本块链 + 条件跳转 |
-| `IKunMatchCase` | 单个基本块 |
-| `IKunJumpTable` | `Switch` 指令 + 跳转表 |
-| `IKunEnumDiscriminant` | `LoadField` 指令加载判值 |
+- 语言只关心匹配顺序和正确性
+- 中层关心控制流整理
+- family 关心如何承载这些控制流
+
+## 与判别值的关系
+
+模式 lowering 可以要求后续阶段拿到“某个变体的判别事实”，但不能提前把所有 family 的判别表示统一成一份物理格式。
+
+这类事实应该保持在“需要什么信息”的层次，而不是“必须长成什么二进制形状”的层次。
+
+## 与 family 的关系
+
+进入 `Partition` 之后，后续 family 可以各自决定：
+
+- 怎样承载条件分支
+- 怎样读取判别事实
+- 怎样实现守卫后的跳转
+
+但它们都只能消费已经 lowering 完成的语义结果，不能重新定义匹配语义。
+
+## 失败信号
+
+下面这些现象说明模式 lowering 边界开始坏掉：
+
+- 模式 lowering 里混入具体对象文件或字节码格式细节
+- 为支持某个后端污染公共模式结构
+- 后端里重新检查穷尽性或守卫语义
+- 公共 lowering 强迫所有 family 接受同一份终态格式
+
+## 一句话原则
+
+模式 lowering 负责把已闭合的模式语义整理成可承载的控制流事实，但不负责重新定义语义，也不负责统一所有后端的终态表示。

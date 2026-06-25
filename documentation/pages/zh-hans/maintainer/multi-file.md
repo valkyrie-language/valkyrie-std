@@ -1,133 +1,118 @@
-# 多文件语义分析
+# 多文件语义边界
 
 ## 概述
 
-Valkyrie 编译器支持两种分析模式：单文件分析和多文件分析。多文件分析需要处理跨文件类型引用、trait 推导、方法分派决议等问题。
+多文件编译的关键，不是做一堆工作区服务名词，而是保证“跨文件语义仍然只闭合一次”。文件变多，不代表语义边界可以变散。
 
 ## 在管线中的位置
 
+```text
+Source Set
+  -> Parse
+  -> Meta
+  -> Global Declaration Collection
+  -> Semantics
+  -> HIR
 ```
-多个 .v 文件 → ① Oak → ② MetaStager → 所有 Stage 0 AST
-                                        │
-          ┌─────────────────────────────┘
-          ▼
-   全局声明收集（所有文件） → 拓扑排序 → ③ TypeChecker（逐文件）
-```
 
-多文件编译在 TypeChecker 阶段之前插入全局声明收集和拓扑排序步骤。管线其余阶段（④~⑩）不变。
+多文件能力本质上是对 `Semantics` 前置补充全局视图，而不是单独再发明一条平行编译管线。
 
-## 两阶段分析模型
+## 两阶段模型
 
-多文件语义分析分为两个阶段：
+### 1. 声明收集
 
-### Phase 1：声明收集
+先建立全局声明视图，至少包括：
 
-遍历所有文件的 AST，收集：
+- 类型声明
+- 约束声明
+- 函数签名
+- 模块边界
+- 导入关系
 
-- 类型声明（`class`、`structure`、`enums`、`flags`、`union`、`unite`、`trait`）
-- 函数签名（`micro`、`mezzo`、`macro`）
-- 模块导入（`namespace`、`using`）
+这一步只负责收集，不负责把所有语义都做完。
 
-此阶段不做类型检查，仅记录签名。
+### 2. 语义闭合
 
-### Phase 2：体分析
+在全局视图稳定之后，再统一做：
 
-在全局声明表就绪后，按拓扑序逐文件分析：
-
-- 函数体类型检查
-- trait 满足性推导
-- 方法分派决议
+- 类型绑定
+- 约束解析
+- 方法分派归属
 - 效应检查
+- 跨文件引用验证
 
-## 全局声明表
+## 为什么必须先收集再闭合
 
-```csharp
-public sealed class GlobalDeclarationTable
-{
-    public Dictionary<string, ModuleSymbolTable> Modules { get; }
-    public Dictionary<string, HirTypeDef> Types { get; }
-    public Dictionary<string, HirTraitDef> Traits { get; }
-    public Dictionary<string, FunctionSignature> Functions { get; }
-    public Dictionary<string, HashSet<string>> TypeTraitSatisfactions { get; }
-    public Dictionary<(string TypeName, string TraitName), WitnessTable> WitnessTables { get; }
-}
-```
+如果不先建立全局声明图，就会出现下面这些问题：
 
-| 字段 | 说明 |
-|:---|:---|
-| `Modules` | 模块名到模块符号表的映射 |
-| `Types` | 完全限定类型名到类型定义 |
-| `Traits` | 完全限定 trait 名到 trait 定义 |
-| `Functions` | 完全限定函数名到函数签名 |
-| `TypeTraitSatisfactions` | 类型到满足的 trait 集合（Phase 2 填入） |
-| `WitnessTables` | trait 到 witness table 的映射（Phase 2 填入） |
+- 某个文件里的调用归属依赖另一个文件的声明
+- `trait` 满足关系无法完整判断
+- 导入顺序影响语义结果
+- 同一项目内的错误信息变得不稳定
 
-## 拓扑排序与依赖分析
+这会直接破坏语言语义的一致性。
 
-```
-解析 import/using → 构建模块依赖图 → 拓扑排序 → 按序分析
-```
+## 依赖图与顺序
 
-示例：
+多文件场景需要稳定的依赖图，但依赖图只是辅助语义闭合，不是新的语言真相。
 
-```
-math.v:   namespace math
-physics.v: using math; namespace physics
-game.v:   using math; using physics; namespace game
-```
+维护时应坚持：
 
-依赖图：
+- 先解析导入关系
+- 再形成稳定分析顺序
+- 最终输出统一语义结果
 
-```
-math.v (无依赖)
-  ├── physics.v (依赖 math.v)
-  └── game.v (依赖 math.v, physics.v)
-```
+不能让“文件遍历顺序”偷偷决定语言含义。
 
-拓扑序输出：`math.v → physics.v → game.v`
+## 循环依赖
 
-### 循环依赖处理
+循环依赖不是简单的工程问题，而是语义问题。处理时要区分：
 
-若文件 A 和 B 互相 `using` 对方的类型，报告诊断但不中断编译。只要类型不递归引用自身，即可通过部分检查。
+- 仅声明层面的互相可见
+- 需要完整定义才能成立的递归依赖
 
-## 模块可见性规则
+对于无法安全闭合的循环，必须给出明确诊断，而不是模糊放过。
 
-| 声明类型 | 跨文件可见 | 说明 |
-|:---|:---|:---|
-| `namespace` | 是 | 全局可见 |
-| `using` | 是 | 导入路径对所有后续文件生效 |
-| `class` / `structure` | 是 | 全局可见，需通过路径引用 |
-| `micro`（独立） | 是 | 独立 micro 全局可见，参与分派 |
-| `class` 内的 `micro` | 是 | 通过 `class.method()` 形式访问 |
-| `macro` | 是 | 编译期全局可见 |
-| 文件私有声明 | 否 | 文件作用域内使用 |
+## 跨文件约束与分派
 
-## Witness Table 跨文件传递
+多文件编译下，下面这些事实都必须仍然在语义阶段统一闭合：
 
-witness table 是编译器将"类型满足 trait"转化为可传递的编译期证据的核心数据结构。
+- 某个类型是否满足某个 `trait`
+- 某个调用最终绑定到哪里
+- 某个导入路径是否有效
+- 某个可见性边界是否被越过
 
-多文件场景构建流程：
-
-1. Phase 1：收集所有 trait 定义和 class 定义，构建候选满足关系
-2. Phase 2：逐文件分析函数体时，遇到 trait 约束则查询全局声明表
-3. 查询命中：生成对应 witness table 条目
-4. 查询未命中：报告诊断"类型 X 不满足 trait Y"
-
-witness table 条目在 NyarVM 运行时以函数指针表形式存在，编译期输出为 `GenerateWitnessDispatchEntry`。
-
-## 与现有组件的关系
-
-| 组件 | 角色 |
-|:---|:---|
-| `Valkyrie.TypeChecker` | Phase 2 体分析核心 |
-| `ValkyrieSemanticBridge` | 分析结果聚合器 |
-| `ValkyrieWorkspaceServices` | 源码解析服务 |
-| DeclarationCollector | Phase 1 声明收集（新） |
-| ModuleDependencyGraph | 拓扑排序模块（新） |
+这些都不应该拖到 `HIR` 之后再补。
 
 ## 增量编译
 
-多文件场景下的增量编译通过文件指纹（内容哈希）判断变化，重新分析变更文件及其反向依赖：
+增量编译可以改变“重算哪些文件”，但不能改变“语义在哪里闭合”。
 
-- 全量编译：`AnalyzeAll(asts, projectRoot)`
-- 增量编译：`AnalyzeIncremental(allAsts, changedAsts, previousState, projectRoot)`
+也就是说：
+
+- 增量只是优化执行范围
+- 语义边界仍然是同一条
+- 任何缓存都不能让旧语义结果跨越新的全局依赖变化
+
+## 与后续阶段的关系
+
+一旦多文件语义闭合完成，后续阶段就应当只看到统一结果，而不是继续关心源文件是一个还是多个。
+
+这保证：
+
+- `HIR` 只消费稳定语义
+- `MIR` 只做分析与优化
+- family lowering 不再处理跨文件解析问题
+
+## 失败信号
+
+出现下面这些情况时，说明多文件边界开始坏掉：
+
+- 文件遍历顺序影响最终语义
+- `HIR` 之后还在补跨文件符号解析
+- backend 还在处理导入或可见性问题
+- 增量缓存绕过了应当重新闭合的全局依赖变化
+
+## 一句话原则
+
+多文件只是扩大了输入集合，没有改变语义闭合位置；所有跨文件事实仍然必须在前端统一确定。

@@ -1,210 +1,88 @@
-# AWSL 到 GGScript 中间表示
+# AWSL 编译边界
 
 ## 概述
 
-AWSL 是 VOA 框架的模板语言。`AwslIr` 是 AWSL 编译到 GGScript 的中间表示层，目标是将 AWSL 模板转换为 GGScript AST，再由 Valkyrie 编译管线处理为 WASM，消除 JavaScript 依赖。
+本文描述模板语言 `AWSL` 应该如何接入主编译线。核心原则是：模板前端可以有自己的前置转换，但不能重新发明一条脱离主线的统一编译世界。
 
 ## 在管线中的位置
 
-```
-AWSL 源码 → Oak.WidgetParser → AWSL AST → AwslIrBuilder → GGScript AST
-                                                              │
-                          接入标准管线 ──────────────────────┘
-                              │
-                              ▼
-                         ② MetaStager → ... → ⑤ Dialect.Web 降级 → ... → ⑧ WASM Backend
-```
-
-AWSL 编译在标准管线之前插入：先由 Oak.WidgetParser 解析 AWSL 模板，再由 AwslIrBuilder 转换为 GGScript AST，然后接入标准管线。Web 方言（`Dialect.Web`）在 MIR 优化阶段处理。
-
-## 转换管道
-
-```
-AWSL Source (.awsl)
-  │
-  ├── Oak.WidgetParser（文本解码 → WidgetParseResult）
-  │
-  ▼
-AWSL AST
-  │
-  ├── AwslIrBuilder（AST → AwslIr 转换）
-  │
-  ▼
-AwslIr / IKunTree（GGScript IR）
-  │
-  ├── Dialect.Web（方言降级，Nyar.Optimizer）
-  │
-  ▼
-WasmBackend（代码生成）
-  │
-  ├── Acorn.Wasm.Encode（二进制编码）
-  │
-  ▼
-.wasm
+```text
+AWSL Source
+  -> AWSL Parse
+  -> AWSL Frontend Lowering
+  -> 接入标准语义主线
+  -> HIR
+  -> MIR
+  -> Partition
+  -> 对应 Family Lane
 ```
 
-## 核心映射
+也就是说，`AWSL` 是语言入口扩展，不是新的总后端。
 
-### 响应式原语
+## 前置转换需要做什么
 
-| AWSL 概念 | GGScript IR 表示 | 说明 |
-|:---|:---|:---|
-| `let x = 0`（mutable） | `Signal<i32>` | 可写响应式值 |
-| `let x = 0`（immutable） | `let x: i32 = 0` | 不可变值 |
-| `{expr}` 插值 | `Signal.bind(expr)` | 响应式绑定 |
-| `memo(fn)` | `Computed<T>` | 派生状态 |
-| `effect(fn)` | `Effect<()>` | 副作用 |
-| `on:click={fn}` | `EventListener<Click>` | 事件处理器 |
+在接入标准主线前，`AWSL` 需要先把模板特有结构整理成可进入语言语义的形式，例如：
 
-### 模板结构
+- 节点树
+- 插值表达式
+- 条件与循环模板结构
+- 组件边界
+- 岛屿与宿主提示
 
-| AWSL 节点 | GGScript IR 表示 |
-|:---|:---|
-| `<div class="c">` | `ElementNode { tag: "div", attrs: { "class": String("c") } }` |
-| `{variable}` 插值 | `InterpolationNode { expr: ExprId(variable) }` |
-| `<if condition={expr}>` | `ConditionalNode { cond: expr, then: nodes[], else: nodes[] }` |
-| `<loop item in {list}>` | `ForNode { item: Sym, iterable: expr, body: nodes[] }` |
-| `<Client>` / `<Server>` | `IslandNode { kind: Client \| Server, body: nodes[] }` |
-| `<Head>` / `<Script>` | `MetaNode { kind: Head \| Script, content: nodes[] }` |
-| `<Suspense>` | `SuspenseNode { fallback: nodes[], content: nodes[] }` |
+这一步的目标是消解模板表面语法，而不是提前决定目标平台细节。
 
-### 生命周期
+## 不应该在前置转换里做什么
 
-| AWSL | GGScript IR |
-|:---|:---|
-| `onMount(fn)` | `on_mount(self, fn)` |
-| `onDestroy(fn)` | `on_destroy(self, fn)` |
-| `beforeUpdate(fn)` | `before_update(self, fn)` |
-| `afterUpdate(fn)` | `after_update(self, fn)` |
+- 不应该提前固化某个浏览器 API
+- 不应该提前决定最终打包形式
+- 不应该把宿主桥接直接写成模板语言真相
+- 不应该绕过标准 `Semantics -> HIR -> MIR -> Partition` 主线
 
-## IR 树结构
+## Web 相关能力
 
-```
-CompilationUnit
-├── ComponentDecl(name, props, irNodes, css, islands)
-│   ├── PropsDecl { fields: [{name, type, default}] }
-│   ├── IRNode[]
-│   │   ├── ElementNode(tag, attrs, children, id)
-│   │   │   ├── AttrNode[]
-│   │   │   │   ├── StaticAttr(name, value)
-│   │   │   │   ├── DynamicAttr(name, exprId)
-│   │   │   │   └── EventAttr(event, handlerId)
-│   │   │   └── IRNode[]
-│   │   ├── TextNode(text)
-│   │   ├── InterpolationNode(exprId)
-│   │   ├── ConditionalNode(condExprId, thenNodes, elseNodes)
-│   │   ├── ForNode(varName, iterableExprId, bodyNodes, keyExprId?)
-│   │   ├── IslandNode(kind, componentRef, props)
-│   │   ├── MetaNode(kind, contentNodes)
-│   │   └── SuspenseNode(fallbackNodes, contentNodes)
-│   ├── StyledCss[] { scope, css }
-│   └── SignalDecl[] { name, type, initialValue }
-│
-├── ConfigDecl { pwa?, hmr?, ssr? }
-└── RouteManifest { entries: [{path, component}] }
-```
+`AWSL` 常常与 `web` 能力关系紧密，但这不代表它可以跳过 family 边界。
 
-## WebDialect 桥接
+正确边界应当是：
 
-不再生成 JavaScript 的 `addEventListener` 等调用，改为通过 GGScript 的 `[wasm_import]` 声明桥接到浏览器 API：
+- 模板语义先进入标准语义主线
+- `web` 相关事实在后续 `WASM Browser/Node` 路线中继续处理
+- 宿主绑定、胶水与打包留到相应 family 与 package 阶段
 
-```v
-[wasm_import(module = "voa_web")]
-extern micro voa_document_query(selector: string): i32
+## 组件与岛屿
 
-[wasm_import(module = "voa_web")]
-extern micro voa_element_set_text(handle: i32, text: string): void
+像组件、岛屿、服务端片段、挂载提示这类概念，可以在前置转换中保留为语言级构件，但必须避免两种坏味道：
 
-[wasm_import(module = "voa_web")]
-extern micro voa_element_add_event_listener(handle: i32, event_type: string, callback: fn): void
+- 直接把它们写死成某个宿主框架私有对象模型
+- 直接把浏览器打包策略写成公共语义结构
 
-[wasm_import(module = "voa_web")]
-extern micro voa_dom_create_element(tag: string): i32
+## SSR 与客户端边界
 
-[wasm_import(module = "voa_web")]
-extern micro voa_dom_append_child(parent: i32, child: i32): void
+如果同一份模板需要服务端渲染与客户端激活，那么这件事应该在：
 
-[wasm_import(module = "voa_web")]
-extern micro voa_dom_set_attribute(element: i32, name: string, value: string): void
+- 语义层保留必要边界
+- `Partition` 后决定进入哪些 family 路线
+- `Package` 阶段组装最终交付物
 
-[wasm_import(module = "voa_web")]
-extern micro voa_dom_set_class_list(element: i32, class_name: string): void
+而不是在模板前置转换里直接拼完整产物。
 
-[wasm_import(module = "voa_web")]
-extern micro voa_dom_remove_child(parent: i32, child: i32): void
-```
+## 与主线的关系
 
-## 编译示例
+`AWSL` 接入完成后，后续仍然必须遵守主线约束：
 
-### 输入（AWSL）
+- 语义在前端闭合
+- `Partition` 后按 family 分流
+- 后端先 `validate` 再 `compile`
+- 最终以 `ArtifactSet` 交付
 
-```awsl
-<widget name="Counter">
-    <div class="counter">
-        <button on:click={() => count = count + 1}>
-            +1
-        </button>
-        <span>Count: {count}</span>
-    </div>
-</widget>
+## 失败信号
 
-<script>
-    let count: i32 = 0
-</script>
-```
+出现下面这些情况时，说明 `AWSL` 边界开始坏掉：
 
-### 输出（GGScript IR）
+- 模板前置转换直接生成某个 family 的终态输入
+- 浏览器宿主细节被当成模板语言语义本身
+- SSR、激活、胶水、打包被塞进同一个模板中间对象
+- `AWSL` 自己长成一条平行的大而全编译管线
 
-```v
-component Counter
-{
-    signal count: i32 = 0
+## 一句话原则
 
-    fn handle_increment()
-    {
-        count = count + 1
-    }
-
-    fn render(self: Counter): ElementNode
-    {
-        return ElementNode("div", { class: "counter" }, [
-            ElementNode("button", { click: self.handle_increment }, [
-                TextNode("+1")
-            ]),
-            ElementNode("span", {}, [
-                TextNode("Count: "),
-                InterpolationNode(bind(count))
-            ])
-        ])
-    }
-}
-```
-
-## Islands 架构映射
-
-```
-<Client>  →  ClientIsland(componentRef, hydrationStrategy)
-<Server>  →  ServerOnly(componentRef)
-```
-
-Hydration 策略：
-
-| 策略 | 行为 |
-|:---|:---|
-| `eager` | 立即 hydrate |
-| `lazy` | IntersectionObserver 进入视口时 hydrate |
-| `idle` | requestIdleCallback 时 hydrate |
-| `none` | 纯 SSR，不 hydrate |
-
-## SSR 集成
-
-GGScript 版本 SSR 通过 `ValkyrieRuntime` 的 `evaluate` 能力实现：
-
-```v
-micro render_page_ssr(component: Component, props: map): string
-{
-    let runtime = ValkyrieRuntime.create()
-    let instance = runtime.instantiate(component, props)
-    return runtime.render_to_string(instance)
-}
-```
+`AWSL` 可以有自己的前置转换，但最终必须回到统一语义主线，再在 `Partition` 后进入各自 family。

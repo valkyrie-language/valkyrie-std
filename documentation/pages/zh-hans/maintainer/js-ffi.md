@@ -1,78 +1,95 @@
-# JS FFI 体系
+# JS FFI 边界
 
-Valkyrie 通过属性标注实现与 JavaScript 的类型安全互操作。所有 JS 桥接代码由 `JsBridgeGenerator` 自动生成。
+## 概述
+
+本文描述 `JavaScript` 绑定应该放在哪一层。核心原则是：`JS FFI` 属于宿主绑定与打包问题，不属于语言语义本身。
 
 ## 在管线中的位置
 
-```
-GenerateModule → ⑧ WASM Backend → ⑩ Packaging
-                                      │
-                                      └── JsBridgeGenerator：生成 JS glue
-```
-
-JS FFI 不涉及编译管线的语义阶段（①~⑦）。注解在 TypeChecker 阶段验证类型签名，实际 JS 胶水代码在 Packaging 阶段由 `JsBridgeGenerator` 生成。
-
-## 两种标注
-
-| 属性 | 含义 | 加载方式 |
-|:---|:---|:---|
-| `[js_builtin("scope.path")]` | 浏览器内置全局 API | 直接调用，同步 |
-| `[js("package", "export")]` | npm 依赖中的导出 | `import()` 动态加载，异步 |
-
-## 关键区别
-
-| | `[js_builtin]` | `[js]` |
-|:---|:---|:---|
-| 体积 | 零依赖，不增加 bundle | 增加 import 的库体积 |
-| 性能 | 同步调用 | 异步调用 |
-| 隔离 | 不序列化 WASM 反射 | 需要 JS bridge 层 |
-| 可 DCE | `pure` 标记可被 Dead Code Elimination | 标识为副作用 |
-| 适用 | `Math.floor`、`console.log`、`Date.now` | `axios.get`、`lodash.debounce` |
-
-## 胶水代码生成
-
-`JsBridgeGenerator` 按 Valkyrie 函数签名和标注自动生成 JS 胶水代码：
-
-```
-Valkyrie 函数签名: micro my_sin(x: f64) -> f64 [js_builtin("Math.sin"), pure]
-     ↓
-JsBridgeGenerator 生成: export function my_sin(x) { return Math.sin(x) }
+```text
+Semantics
+  -> HIR
+  -> MIR
+  -> Partition
+  -> WASM Browser/Node Lane
+  -> Backend Input
+  -> Validate
+  -> Compile
+  -> Package
 ```
 
-`pure` 标注表示无副作用，优化器可删除未使用的调用。
+`JavaScript` 相关绑定主要落在 `WASM Browser/Node` 这条路线的后半段，而不是公共前端。
 
-## 模块依赖声明
+## 前端需要确认什么
 
-使用 `[js]` 的模块需在 `legion.von` 中声明依赖：
+语义阶段只需要确认：
 
-```toml
-[dependencies]
-"axios" = "^1.0.0"
-"lodash" = "^4.17.0"
-```
+- 标注是否合法
+- 参数和返回语义是否可绑定
+- 调用是否需要宿主能力
 
-## ModuleScope
+这一步只确认“能不能绑定”，不生成具体宿主胶水。
 
-胶水代码被包装在 ModuleScope 函数中，保证模块隔离：
+## 后续阶段负责什么
 
-```javascript
-export default async function({ Module, ready })
-{
-    await ready;
-    return {
-        greet: async function(name)
-        {
-            return Module.greet(name);
-        },
-        debug: Module.debug
-    };
-}
-```
+### lane / backend
 
-## PWA 支持
+- 保留宿主绑定需要的最小事实
+- 验证当前 family 是否支持对应绑定
 
-PWA 支持通过 `PwaGenerator` 实现，自动生成 Service Worker：
+### package
 
-- 自动缓存所有 WASM 输出
-- 自动更新流程
-- 离线唤醒与通知
+- 生成宿主胶水
+- 组织模块依赖
+- 产出 sidecar 和运行说明
+
+也就是说，真正的 `JS glue` 属于交付层，不属于公共语义层。
+
+## 两类绑定来源
+
+维护时可以区分两类来源：
+
+- 面向宿主内建能力的绑定
+- 面向外部包或模块导出的绑定
+
+但不管是哪一类，都必须被视为宿主契约，而不是语言标准库语义本身。
+
+## 与标准库的边界
+
+如果某个能力属于统一标准库语义，就应该先进 `std` 或 `std.adaptor.*` 的边界，再由宿主路线决定如何绑定。
+
+如果某个能力本来就是浏览器或 `Node` 专属 API，就不应伪装成全平台标准库能力。
+
+## 与 `WASM` family 的关系
+
+`JS FFI` 不等于全部 `WASM`。维护时要明确区分：
+
+- `wasm-browser`
+- `wasm-node`
+- `wasi`
+
+只有前两者才通常需要 `JavaScript` 宿主绑定；`wasi` 不能被这套桥接逻辑污染。
+
+## 依赖与打包
+
+依赖声明、模块导入、胶水装配和运行时包装都属于交付层决策。它们可以影响：
+
+- sidecar 文件
+- 启动脚本
+- 运行契约
+- 产物布局
+
+但不应该回灌到语言语义模型里。
+
+## 失败信号
+
+只要出现下面这些现象，就说明 `JS FFI` 边界开始坏掉：
+
+- 在前端直接硬编码宿主胶水细节
+- 把浏览器 API 当成语言统一语义
+- 让 `wasi` 路线被 `browser/node` 绑定逻辑污染
+- 把依赖装配和模块加载策略塞进统一公共后端结构
+
+## 一句话原则
+
+`JS FFI` 是宿主绑定与打包问题，不是语言语义问题；公共层只保留绑定事实，具体胶水留到对应 family 的交付阶段。

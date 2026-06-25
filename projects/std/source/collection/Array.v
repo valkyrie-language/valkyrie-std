@@ -99,11 +99,11 @@ imply ArrayIterator<T>: std.iterator.Iterator {
 }
 
 [host_contract]
-private micro __array_host_length<T>(array: Array<T>): usize {
+private micro __array_host_length<T>(array: [T]): usize {
     return array.length
 }
 
 [host_contract]
-private micro __array_host_get<T>(array: Array<T>, index: usize): T {
+private micro __array_host_get<T>(array: [T], index: usize): T {
     return array[index]
 }

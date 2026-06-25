@@ -1,168 +1,95 @@
-# async / await 编译
+# async 编译边界
 
 ## 概述
 
-Valkyrie 的异步编程通过 `future<T>` 类型和后缀表达式（`.await` / `.awake` / `.block`）实现。编译器将这些高级语义降级为协程状态机和代数效应调用。
+异步语义的关键，不是某个具体状态机长什么样，而是哪些事实必须在前端和中层闭合，哪些事实可以留到不同 family 自己实现。
 
 ## 在管线中的位置
 
-```
-AST
-  │
-  ▼
-TypeChecker
-  ├── 验证 .await / .awake / .block 的使用上下文
-  ├── 检查 future<T> 类型流
-  └── 验证 .block 不在禁止的上下文中使用（如 on_update）
-
-SemanticModel
-
-HirBuilder
-  ├── .await → HirAwaitNode
-  ├── .awake → HirAwakeNode
-  └── .block → HirBlockNode
-
-HirToMirLowerer
-  ├── .await → perform AsyncWait(future)
-  ├── .awake → perform AsyncSpawn(future)
-  └── .block → perform AsyncBlock(future)
-        │
-        ▼
-  IKunCatch / IKunResume（通过代数效应框架）
-
-IkunTreeToLirLowerer
-  ├── 协程状态机生成
-  └── 调度器 API 调用
-```
-
-## 三种后缀的编译
-
-### .await
-
-**语义**：挂起当前协程直到 future 完成，返回 `T`。
-
-**类型规则**：`future<T>.await → T`
-
-**编译流程**：
-
-1. HirBuilder 将 `.await` 编码为 `HirAwaitNode(futureExpr)`
-2. HirToMirLowerer 展开为 `perform AsyncWait(futureExpr)`
-3. 此 `perform` 被挂起的协程注册到调度器
-4. future 完成后，调度器通过 `resume` 恢复协程
-5. 编译器在包含 `.await` 的函数上生成协程状态机
-
-**状态机生成**：
-
-```
-函数 f 包含 .await:
-  → 编译器将 f 拆分为多个基本块
-  → 每个 .await 处插入挂起点（suspend point）
-  → 生成状态枚举（每个挂起点一个状态）
-  → 恢复时从对应状态继续执行
-```
-
-### .awake
-
-**语义**：触发异步操作后立即返回 `void`，不等待结果。
-
-**类型规则**：`future<T>.awake → void`
-
-**编译流程**：
-
-1. HirToMirLowerer 展开为 `perform AsyncSpawn(futureExpr)`
-2. `AsyncSpawn` 将 future 提交到调度器，不注册回调
-3. 调用者继续执行
-4. 无状态机生成，无挂起点
-
-### .block
-
-**语义**：阻塞当前线程直到 future 完成，返回 `T`。
-
-**类型规则**：`future<T>.block → T`
-
-**编译流程**：
-
-1. HirToMirLowerer 展开为 `perform AsyncBlock(futureExpr)`
-2. 生成阻塞等待循环（在允许的上下文中）
-3. 编译器在 TypeChecker 阶段验证 `.block` 仅用于同步函数中
-
-## 状态机生成细节
-
-当函数包含 `.await` 时，编译器执行以下变换：
-
-### 状态枚举
-
-```csharp
-// 为每个函数生成
-enum F_State {
-    Start,
-    AfterAwait1,
-    AfterAwait2,
-    // ...
-    Done
-}
-```
-
-### 局部变量提升
-
-所有在 `.await` 前后都存活的局部变量被提升到状态机结构体中：
-
-```csharp
-struct F_Frame {
-    state: F_State,
-    // 跨挂起点存活的局部变量
-    var_x: i32,
-    var_y: string,
-    // future 句柄
-    future_1: FutureHandle,
-}
-```
-
-### 控制流重构
-
-原始函数体被重写为 `loop + match state` 结构：
-
 ```text
-loop {
-    match state {
-        Start → {
-            // 初始化代码
-            state = AfterAwait1;
-            return AsyncAction::Suspend(future_handle_1);
-        }
-        AfterAwait1 → {
-            let result = resume_value;
-            // 后续代码
-            state = Done;
-            return AsyncAction::Complete(result);
-        }
-    }
-}
+Semantics
+  -> HIR
+  -> MIR
+  -> Optimize
+  -> Partition
+  -> Family Lane
 ```
 
-## 后端处理
+异步相关的上下文检查、类型闭合和控制流边界，必须在前端与中层完成。
 
-### NyarVM 后端
+## 语义阶段必须确认的事
 
-NyarVM 运行时直接支持协程原语（`CoroutineYield` / `CoroutineResume` / `CoroutineSpawn`）。`.await` 编译为 `CoroutineYield` + `CoroutineResume` 序列，由 NyarVM 调度器驱动。
+至少要确认：
 
-### WASM 后端
+- 哪些位置允许挂起
+- 哪些位置允许阻塞
+- `future`、恢复值和返回值是否一致
+- 当前函数是否因此具备异步边界
 
-编译为 WASM 时，异步操作通过 JS 桥接层实现。`.await` 被编译为对 `voa-runtime.js` 中调度器的调用，使用 `Promise` 作为底层异步原语。
+这些都属于语言规则，不能拖给后端决定。
 
-### JVM 后端
+## 中层需要保留的事实
 
-编译为 JVM 字节码时，协程状态机映射为 `class` 实例。`.await` 使用项目 Loom 的虚拟线程（Virtual Thread）或传统线程池。
+进入 `HIR/MIR` 后，系统需要保留：
 
-## 上下文检查
+- 挂起点
+- 恢复点
+- 跨挂起仍然存活的局部状态
+- 调度与恢复所需的最小控制流事实
 
-编译器在 TypeChecker 阶段对 `.block` 进行上下文检查：
+这能支持后续把异步逻辑变成状态机、协程帧或其他 family 能接受的形式。
 
-| 上下文 | `.block` 是否允许 |
-|:---|:---|
-| `system` 生命周期回调 | 禁止（阻塞主线程导致卡顿） |
-| `micro`（非 system） | 允许 |
-| `on_load` / `on_unload` | 允许但产生警告 |
-| `on_update` | 禁止 |
+## 不应该在公共层固定的事
 
-禁止上下文中使用 `.block` 产生编译错误。
+- 具体调度器 API
+- 宿主线程模型
+- 某个运行时的唤醒方式
+- 某个 family 的对象布局
+
+这些都不应该被抬升成统一公共模型。
+
+## `.await`
+
+`.await` 的语言语义是“挂起当前计算，等待结果恢复”。维护时要坚持：
+
+- 它首先是控制流事实
+- 它不是某个特定宿主 API 名称
+- 它不是某个单一 family 的运行时调用约定
+
+## `.awake`
+
+`.awake` 这类“启动但不等待”的语义，也应该先在前端闭合为明确行为，再由 family 各自决定如何安排调度。
+
+## `.block`
+
+`.block` 这类阻塞行为必须在语义阶段就严格检查上下文。
+
+原因很简单：
+
+- 是否允许阻塞，属于语言和宿主规则
+- 一旦放到后端再判，就会出现不同 target 行为分裂
+
+所以，禁止阻塞的上下文必须尽早失败。
+
+## Family 差异
+
+不同 family 当然可以有不同实现：
+
+- 某些路线偏向协程帧
+- 某些路线偏向宿主任务系统
+- 某些路线可能根本不支持某类异步语义
+
+但这些差异只能体现在 family `validate` 与 `compile`，不能回灌到公共异步语义层。
+
+## 失败信号
+
+只要出现下面这些现象，就说明异步边界开始坏掉：
+
+- 为某个 family 把公共异步模型绑死成专属状态机结构
+- 在 backend 里重新判断某个位置能不能挂起
+- 在 emit 阶段才决定 `.block` 是否允许
+- 把宿主调度器 API 直接提升为语言语义
+
+## 一句话原则
+
+异步的语言规则必须前置闭合；不同 family 只实现自己的承载方式，不重新定义异步语义。
