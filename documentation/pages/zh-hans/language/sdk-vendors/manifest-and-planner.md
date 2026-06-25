@@ -104,24 +104,27 @@ planner 需要在现有“收集所有依赖源码”的基础上，再增加一
 
 ## 推荐装配流程
 
-```text
-项目 manifest
-    ↓
-target profile / publish format
-    ↓
-第三方构建器注入默认 sdk
-    ↓
-有效依赖闭包
-    ↓
-按 `sdk-vendor` / target / publish / abi 过滤 `sdk` 包
-    ↓
-收集 `host_provider` 声明
-    ↓
-为每个 `host_contract` 计算候选集
-    ↓
-冲突检查
-    ↓
-唯一绑定
+```mermaid
+flowchart TD
+    Manifest[项目 manifest]
+    TargetProfile[target profile / publish format]
+    BuilderInject[第三方构建器注入默认 sdk]
+    Closure[有效依赖闭包]
+    Filter[按 sdk-vendor / target / publish / abi 过滤]
+    Providers[收集 host_provider 声明]
+    Candidates[为每个 host_contract 计算候选集]
+    Conflict[冲突检查]
+    Unique[唯一绑定]
+
+    Manifest --> TargetProfile --> BuilderInject --> Closure --> Filter --> Providers --> Candidates --> Conflict --> Unique
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Manifest,TargetProfile,BuilderInject,Closure,Filter,Providers,Candidates phase;
+    class Conflict boundary;
+    class Unique delivery;
 ```
 
 ## `host_provider` 可见性规则

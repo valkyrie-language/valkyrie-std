@@ -25,10 +25,28 @@ yearly.major.minor.patch
 
 ## 稳定状态判断
 
-```
-yearly == 0  →  预研版（不稳定，API 任意变更）
-yearly > 0 && major == 0  →  测试版（公开测试，可能破坏性变更）
-yearly > 0 && major > 0   →  稳定版（向后兼容维护）
+```mermaid
+flowchart TD
+    Version[YearlyVersion]
+    Research[yearly == 0]
+    Preview[yearly > 0 && major == 0]
+    Stable[yearly > 0 && major > 0]
+
+    ResearchResult[预研版\n不稳定，API 任意变更]
+    PreviewResult[测试版\n公开测试，可能破坏性变更]
+    StableResult[稳定版\n向后兼容维护]
+
+    Version --> Research --> ResearchResult
+    Version --> Preview --> PreviewResult
+    Version --> Stable --> StableResult
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Version phase;
+    class Research,Preview,Stable boundary;
+    class ResearchResult,PreviewResult,StableResult delivery;
 ```
 
 与传统 `SemVer` 的关键区别是：`YearlyVersion` 通过 `yearly=0` 和 `major=0` 两个维度显式表达预研期和测试期，避免把稳定性藏在额外后缀里。

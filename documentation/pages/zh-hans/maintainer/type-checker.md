@@ -2,8 +2,24 @@
 
 ## 在管线中的位置
 
-```
-AST → MetaStager → Stage 0 AST → TypeChecker → SemanticModel → HirBuilder
+```mermaid
+flowchart LR
+    AST[AST]
+    MetaStager[MetaStager]
+    Stage0[Stage 0 AST]
+    TypeChecker[TypeChecker]
+    SemanticModel[SemanticModel]
+    HirBuilder[HirBuilder]
+
+    AST --> MetaStager --> Stage0 --> TypeChecker --> SemanticModel --> HirBuilder
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class AST,MetaStager,TypeChecker phase;
+    class Stage0 boundary;
+    class SemanticModel,HirBuilder delivery;
 ```
 
 类型检查器消费 MetaStager 输出后的纯 Stage 0 AST，输出包含绑定结果和诊断的 `SemanticModel`。
@@ -41,6 +57,23 @@ AST → MetaStager → Stage 0 AST → TypeChecker → SemanticModel → HirBuil
 2. 遍历语句和表达式
 3. 对每个节点执行类型推断和验证
 4. 收集诊断
+
+```mermaid
+flowchart TD
+    Pass1[Pass 1\n声明收集]
+    Pass2[Pass 2\n声明检查]
+    Pass3[Pass 3\n体检查]
+    SemanticModel[SemanticModel]
+
+    Pass1 --> Pass2 --> Pass3 --> SemanticModel
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Pass1,Pass2,Pass3 phase;
+    class SemanticModel delivery;
+```
 
 ## 作用域管理
 

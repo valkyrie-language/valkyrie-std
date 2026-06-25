@@ -6,13 +6,24 @@
 
 ## 在管线中的位置
 
-```text
-Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane
+```mermaid
+flowchart LR
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+
+    Semantics --> HIR --> MIR --> Optimize --> Partition --> FamilyLane
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,HIR,MIR,Optimize phase;
+    class Partition boundary;
+    class FamilyLane delivery;
 ```
 
 效应相关的约束、捕获关系和恢复语义，必须在前端与中层先闭合，再进入不同 family。
@@ -49,6 +60,39 @@ Semantics
 - 哪些边界可以做静态化或局部优化
 
 这一步的目标是让效应成为可分析控制流，而不是发明新的统一终态格式。
+
+```mermaid
+flowchart TD
+    Frontend[前端语义]
+    Middle[中层表达]
+    Family[Family 实现]
+
+    Exposure[暴露哪些效应]
+    Capture[捕获与恢复是否合法]
+    Interrupts[中断点]
+    Resume[恢复点]
+    Propagation[剩余传播]
+    RuntimeShape[运行时承载方式]
+    Validate[validate]
+    Compile[compile]
+
+    Frontend --> Exposure
+    Frontend --> Capture
+    Middle --> Interrupts
+    Middle --> Resume
+    Middle --> Propagation
+    Family --> RuntimeShape
+    Family --> Validate
+    Family --> Compile
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Frontend,Middle phase;
+    class Family boundary;
+    class Exposure,Capture,Interrupts,Resume,Propagation,RuntimeShape,Validate,Compile delivery;
+```
 
 ## 运行时与 family 的边界
 

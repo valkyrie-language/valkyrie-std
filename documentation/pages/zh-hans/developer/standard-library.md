@@ -14,17 +14,28 @@
 
 ## 分层模型
 
-```text
-std.*
-  -> 语言级语义接口
-  -> HIR / MIR 中保留能力边界
-  -> Partition
-  -> target family lane
-  -> std.adaptor.<family>.* / std.adaptor.<host>.*
-  -> Backend Input
-  -> Validate
-  -> Compile
-  -> ArtifactSet
+```mermaid
+flowchart LR
+    Std[std.*]
+    SemanticAPI[语言级语义接口]
+    Middle[HIR / MIR 中保留能力边界]
+    Partition[Partition]
+    Lane[target family lane]
+    Adaptor[std.adaptor.<family>.* / std.adaptor.<host>.*]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    ArtifactSet[ArtifactSet]
+
+    Std --> SemanticAPI --> Middle --> Partition --> Lane --> Adaptor --> BackendInput --> Validate --> Compile --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Std,SemanticAPI,Middle phase;
+    class Partition,Validate boundary;
+    class Lane,Adaptor,BackendInput,Compile,ArtifactSet delivery;
 ```
 
 这里最关键的边界有两个：

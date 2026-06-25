@@ -24,6 +24,28 @@ Legion 管理的是**程序集**的依赖关系图，而不仅仅是包。包是
 | **Package** | 单包开发，独立库或应用 | `legion.von` |
 | **Script** | 一次性脚本执行，无需配置文件 | 无 |
 
+```mermaid
+flowchart LR
+    Workspace[Workspace]
+    Package[Package]
+    Script[Script]
+
+    WorkspaceConfig[voa.workspace.v]
+    PackageConfig[legion.von]
+    NoConfig[无配置文件]
+
+    Workspace --> WorkspaceConfig
+    Package --> PackageConfig
+    Script --> NoConfig
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Workspace,Package,Script boundary;
+    class WorkspaceConfig,PackageConfig,NoConfig phase;
+```
+
 ## 快速开始
 
 ```bash
@@ -269,16 +291,32 @@ legion test           # 执行 scripts.test
 
 `script/` 目录下的 `.v` 文件自动注册为脚本，文件名（不含扩展名）即为脚本名：
 
-```
-my-package/
-├── legion.von
-├── script/
-│   ├── hello.v       # → legion hello
-│   ├── deploy.v      # → legion deploy
-│   └── ci/
-│       └── lint.v    # → 不会自动发现（仅扫描一级）
-└── source/
-    └── main.v
+```mermaid
+flowchart TD
+    Package[my-package/]
+    Manifest[legion.von]
+    ScriptDir[script/]
+    Hello[hello.v -> legion hello]
+    Deploy[deploy.v -> legion deploy]
+    CiDir[ci/]
+    Lint[lint.v -> 不会自动发现]
+    Source[source/main.v]
+
+    Package --> Manifest
+    Package --> ScriptDir
+    ScriptDir --> Hello
+    ScriptDir --> Deploy
+    ScriptDir --> CiDir
+    CiDir --> Lint
+    Package --> Source
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Package,Manifest,Source phase;
+    class ScriptDir,CiDir boundary;
+    class Hello,Deploy,Lint delivery;
 ```
 
 手动在 `legion.von` 的 `scripts` 字段定义的脚本优先级高于自动发现。
@@ -432,18 +470,23 @@ micro fib_30() -> unit {
 
 多 target 测试产出示例：
 
-```
-.cache/
-├── test/
-│   ├── nyar/
-│   │   └── test.if_expression/
-│   │       └── test_if_expression.nyar
-│   ├── clr/
-│   │   └── test.if_expression/
-│   │       └── test_if_expression.dll
-│   └── jvm/
-│       └── test.if_expression/
-│           └── test_if_expression.class
+```mermaid
+flowchart TD
+    Cache[.cache/test/]
+    Nyar[nyar/test.if_expression/test_if_expression.nyar]
+    Clr[clr/test.if_expression/test_if_expression.dll]
+    JVM[jvm/test.if_expression/test_if_expression.class]
+
+    Cache --> Nyar
+    Cache --> Clr
+    Cache --> JVM
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Cache boundary;
+    class Nyar,Clr,JVM delivery;
 ```
 
 ### 外部 Runner 管理
@@ -572,6 +615,28 @@ Legion 调用 VCC 作为编译后端。VCC 不知道 Legion 的存在——VCC �
 3. VCC 从 `vendors` 目录读取依赖进行编译
 
 VCC 可独立使用而无需 Legion，这种设计确保了编译器与包管理器的严格分离。
+
+```mermaid
+flowchart LR
+    Registry[注册表]
+    Legion[Legion]
+    Vendors[vendors/]
+    VCC[VCC]
+    ArtifactSet[ArtifactSet]
+
+    Registry -->|提供程序集与元数据| Legion
+    Legion -->|解析并落成本地依赖视图| Vendors
+    Vendors -->|只暴露稳定依赖结果| VCC
+    VCC -->|编译与打包| ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Registry,Legion,VCC phase;
+    class Vendors boundary;
+    class ArtifactSet delivery;
+```
 
 ## 环境变量
 

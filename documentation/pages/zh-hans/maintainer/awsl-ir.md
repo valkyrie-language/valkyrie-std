@@ -6,15 +6,26 @@
 
 ## 在管线中的位置
 
-```text
-AWSL Source
-  -> AWSL Parse
-  -> AWSL Frontend Lowering
-  -> 接入标准语义主线
-  -> HIR
-  -> MIR
-  -> Partition
-  -> 对应 Family Lane
+```mermaid
+flowchart LR
+    AWSLSource[AWSL Source]
+    AWSLParse[AWSL Parse]
+    AWSLLowering[AWSL Frontend Lowering]
+    SemanticMain[接入标准语义主线]
+    HIR[HIR]
+    MIR[MIR]
+    Partition[Partition]
+    FamilyLane[对应 Family Lane]
+
+    AWSLSource --> AWSLParse --> AWSLLowering --> SemanticMain --> HIR --> MIR --> Partition --> FamilyLane
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class AWSLSource,AWSLParse,AWSLLowering,SemanticMain,HIR,MIR phase;
+    class Partition boundary;
+    class FamilyLane delivery;
 ```
 
 也就是说，`AWSL` 是语言入口扩展，不是新的总后端。
@@ -57,13 +68,46 @@ AWSL Source
 
 ## SSR 与客户端边界
 
-如果同一份模板需要服务端渲染与客户端激活，那么这件事应该在：
+如果同一份模板需要服务端渲染与客户端激活，那么这件事也不能一概而论，而要看最终部署模型：
 
-- 语义层保留必要边界
-- `Partition` 后决定进入哪些 family 路线
-- `Package` 阶段组装最终交付物
+- 如果是 `CDN` 部署，客户端静态资源走 `CDN`，服务端仍然是独立服务交付
+- 如果是 `SSR` 部署，才允许在交付阶段按运行契约把服务端与客户端资源组织成同一组部署单元
+- 不管采用哪种模式，语义层都只保留必要边界
+- `Partition` 之后再决定进入哪些 family 路线
 
-而不是在模板前置转换里直接拼完整产物。
+也就是说，是否“合一”是部署与交付策略，不是模板前置转换阶段的职责。
+
+```mermaid
+flowchart TD
+    Template[模板语义]
+    Partition[Partition]
+    ServerLane[服务端 Family]
+    ClientLane[客户端 Family]
+    ServerPackage[Server Package]
+    ServerArtifact[服务端服务交付物]
+    CdnPackage[CDN Package]
+    CdnClient[客户端静态交付物]
+    SsrPackage[SSR Package]
+    UnifiedArtifact[统一部署单元]
+
+    Template --> Partition
+    Partition --> ServerLane
+    Partition --> ClientLane
+    ServerLane --> ServerPackage --> ServerArtifact
+    ClientLane --> CdnPackage
+    CdnPackage --> CdnClient
+    ServerLane --> SsrPackage
+    ClientLane --> SsrPackage
+    SsrPackage --> UnifiedArtifact
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Template,ServerLane,ClientLane phase;
+    class Partition boundary;
+    class ServerPackage,ServerArtifact,CdnPackage,CdnClient,SsrPackage,UnifiedArtifact delivery;
+```
 
 ## 与主线的关系
 

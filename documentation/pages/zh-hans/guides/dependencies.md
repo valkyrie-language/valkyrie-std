@@ -27,18 +27,29 @@ exact-lib = "1.0.0"
 
 ## 依赖解析流程
 
-```
-legion resolve
-  → 读取 legion.von
-  → 构建依赖图（DependencyGraph）
-  → 递归解析每个依赖
-       ├── 查询注册表（IRegistry.GetPackageAsync）
-       ├── 解析版本约束
-       ├── 检测版本冲突
-       └── 递归解析传递依赖
-  → 下载并缓存程序集（PackageCache）
-  → 安装到 vendors/ 目录
-  → 生成锁文件（lock.von）
+```mermaid
+flowchart TD
+    Resolve[legion resolve]
+    Manifest[读取 legion.von]
+    Graph[构建依赖图]
+    Query[查询注册表]
+    Constraint[解析版本约束]
+    Conflict[检测版本冲突]
+    Transitive[递归解析传递依赖]
+    Cache[下载并缓存程序集]
+    Vendors[安装到 vendors/]
+    Lockfile[生成 lock.von]
+
+    Resolve --> Manifest --> Graph
+    Graph --> Query --> Constraint --> Conflict --> Transitive --> Cache --> Vendors --> Lockfile
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Resolve,Manifest,Graph,Query,Constraint,Transitive,Cache phase;
+    class Conflict boundary;
+    class Vendors,Lockfile delivery;
 ```
 
 ## 锁文件（lock.von）

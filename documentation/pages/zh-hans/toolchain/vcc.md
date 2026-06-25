@@ -27,21 +27,33 @@ Hello, Valkyrie
 
 ## 编译流程
 
-```text
-源码 .v
-  -> Parse
-  -> Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane
-  -> Backend Input
-  -> Validate
-  -> Compile
-  -> Encode
-  -> Package
-  -> ArtifactSet
+```mermaid
+flowchart TD
+    Source[源码 .v]
+    Parse[Parse]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    Encode[Encode]
+    Package[Package]
+    ArtifactSet[ArtifactSet]
+
+    Source --> Parse --> Semantics --> HIR --> MIR --> Optimize --> Partition
+    Partition --> FamilyLane --> BackendInput --> Validate --> Compile --> Encode --> Package --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Parse,Semantics,HIR,MIR,Optimize phase;
+    class Partition,Validate boundary;
+    class FamilyLane,BackendInput,Compile,Encode,Package,ArtifactSet delivery;
 ```
 
 ## 多后端代码生成
@@ -91,9 +103,24 @@ VCC 不直接读取配置文件。配置通过命令行参数和环境变量传�
 
 VCC 不知道 Legion 的存在。Legion 负责填充 `vendors/`，VCC 从 `vendors/` 读取依赖编译。两者通过 `vendors/` 目录解耦。
 
-```
-Legion: 解析依赖 → 下载程序集 → 放入 vendors/
-VCC:    读取 vendors/ → 编译源码 → 输出字节码
+```mermaid
+flowchart LR
+    Legion[Legion]
+    Vendors[vendors/]
+    VCC[VCC]
+    ArtifactSet[ArtifactSet]
+
+    Legion -->|解析依赖并准备本地依赖视图| Vendors
+    Vendors -->|只暴露稳定依赖结果| VCC
+    VCC -->|编译并打包| ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Legion,VCC phase;
+    class Vendors boundary;
+    class ArtifactSet delivery;
 ```
 
 ## 嵌入原则

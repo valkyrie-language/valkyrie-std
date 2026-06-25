@@ -78,17 +78,36 @@ my_workspace/
 
 `voa-runtime.js` 是 VOA 前端应用的**唯一必要脚本**，按需加载 WASM 模块和 JS 胶水：
 
-```
-index.html
-  └── <script src="voa-runtime.js">
-        ├── 响应式内核（Signal / Effect / Memo）
-        ├── DOM 操作
-        ├── Island 架构（HydrationScheduler）
-        ├── WASM 模块注册表（registerModule / loadModule）
-        ├── 字符串编组（readString / allocString）
-        ├── DOM 句柄表（storeDomHandle / getDomHandle）
-        ├── Vue / React Bridge
-        └── 应用启动（boot / autoBoot）
+```mermaid
+flowchart TD
+    HTML[index.html]
+    Runtime[voa-runtime.js]
+    Reactive[响应式内核]
+    DOM[DOM 操作]
+    Island[Island 架构]
+    ModuleRegistry[WASM 模块注册表]
+    StringMarshal[字符串编组]
+    DomHandles[DOM 句柄表]
+    Bridge[Vue / React Bridge]
+    Boot[应用启动]
+
+    HTML --> Runtime
+    Runtime --> Reactive
+    Runtime --> DOM
+    Runtime --> Island
+    Runtime --> ModuleRegistry
+    Runtime --> StringMarshal
+    Runtime --> DomHandles
+    Runtime --> Bridge
+    Runtime --> Boot
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class HTML,Runtime phase;
+    class Island,ModuleRegistry boundary;
+    class Reactive,DOM,StringMarshal,DomHandles,Bridge,Boot delivery;
 ```
 
 ## Island 架构
@@ -123,20 +142,32 @@ Valkyrie 通过属性标注声明 JS 互操作：
 
 ## 编译架构
 
-```text
-.awsl 源码
-  -> AWSL 前置转换
-  -> 标准语义主线
-  -> Partition
-  -> WASM Browser/Node Lane
-  -> Package
-  -> .wasm + 宿主胶水 + 静态资源
+```mermaid
+flowchart TD
+    AWSL[.awsl 源码]
+    AWSLPre[AWSL 前置转换]
+    SemanticMain[标准语义主线]
+    Partition[Partition]
+    WasmLane[WASM Browser/Node Lane]
+    WasmPackage[Package]
+    WasmArtifacts[.wasm + 宿主胶水 + 静态资源]
 
-.v 源码
-  -> 标准语义主线
-  -> 对应 family lane
-  -> Package
-  -> 对应交付物
+    VSource[.v 源码]
+    FamilyLane[对应 family lane]
+    GenericPackage[Package]
+    GenericArtifacts[对应交付物]
+
+    AWSL --> AWSLPre --> SemanticMain --> Partition --> WasmLane --> WasmPackage --> WasmArtifacts
+    VSource --> SemanticMain
+    Partition --> FamilyLane --> GenericPackage --> GenericArtifacts
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class AWSL,AWSLPre,VSource,SemanticMain phase;
+    class Partition boundary;
+    class WasmLane,WasmPackage,WasmArtifacts,FamilyLane,GenericPackage,GenericArtifacts delivery;
 ```
 
 VOA 不实现自己的平行编译器。它只在主线之上增加：

@@ -12,6 +12,41 @@
 - family 不支持的开放语义必须编译期硬失败
 - family 的成功结果必须统一落到 `ArtifactSet`
 
+```mermaid
+flowchart TD
+    Partition[Partition 后输入]
+    Lane[Family Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    ArtifactSet[ArtifactSet]
+
+    CLR[CLR]
+    JVM[JVM]
+    WASM[WASM Browser/Node]
+    WASI[WASI]
+    Native[Native]
+    NyarVM[NyarVM]
+    Shader[Shader]
+
+    Partition --> Lane --> BackendInput --> Validate --> Compile --> ArtifactSet
+    Lane --> CLR
+    Lane --> JVM
+    Lane --> WASM
+    Lane --> WASI
+    Lane --> Native
+    Lane --> NyarVM
+    Lane --> Shader
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Partition,Lane,BackendInput phase;
+    class Validate boundary;
+    class Compile,ArtifactSet,CLR,JVM,WASM,WASI,Native,NyarVM,Shader delivery;
+```
+
 ## `NyarVM`
 
 ### 输入前提

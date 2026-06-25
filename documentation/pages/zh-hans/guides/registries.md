@@ -27,6 +27,25 @@ maven settings   ←→ legion login      （共享 ~/.m2/settings.xml）
 
 **只需登录一次，所有工具都能用。**
 
+```mermaid
+flowchart LR
+    OfficialCLI[官方 CLI]
+    CredentialStore[共享凭据存储]
+    Legion[Legion]
+
+    OfficialCLI --> CredentialStore
+    Legion --> CredentialStore
+    CredentialStore --> OfficialCLI
+    CredentialStore --> Legion
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class OfficialCLI,Legion phase;
+    class CredentialStore boundary;
+```
+
 ## 自动凭据发现
 
 `legion login` 自动按优先级顺序尝试发现凭据：
@@ -34,6 +53,27 @@ maven settings   ←→ legion login      （共享 ~/.m2/settings.xml）
 1. **优先级 10** — 官方 CLI 配置文件（如 `.npmrc`、`settings.xml`）
 2. **优先级 20** — 环境变量（如 `NODE_AUTH_TOKEN`、`NUGET_API_KEY`）
 3. **优先级 100** — 手动输入的令牌
+
+```mermaid
+flowchart TD
+    Login[legion login]
+    CliConfig[优先级 10\nCLI 配置文件]
+    EnvVar[优先级 20\n环境变量]
+    Manual[优先级 100\n手动令牌]
+    Verified[验证通过]
+
+    Login --> CliConfig --> Verified
+    Login --> EnvVar --> Verified
+    Login --> Manual --> Verified
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Login phase;
+    class CliConfig,EnvVar,Manual boundary;
+    class Verified delivery;
+```
 
 ```bash
 # 如果已通过 npm CLI 登录过，直接运行

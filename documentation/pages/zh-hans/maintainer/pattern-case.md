@@ -6,12 +6,22 @@
 
 ## 在管线中的位置
 
-```text
-Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Family Lane
+```mermaid
+flowchart LR
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    FamilyLane[Family Lane]
+
+    Semantics --> HIR --> MIR --> Optimize --> FamilyLane
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,HIR,MIR,Optimize phase;
+    class FamilyLane delivery;
 ```
 
 模式相关的穷尽性、绑定和守卫语义，必须在 `Semantics` 与 `HIR` 这一侧先稳定下来。
@@ -38,6 +48,38 @@ Semantics
 - 守卫条件
 
 这样中层仍然能看到真实的模式语义，而不是过早被压扁。
+
+```mermaid
+flowchart TD
+    SemanticsBoundary[语义阶段]
+    HIRBoundary[HIR]
+    MIRBoundary[MIR]
+    BackendBoundary[Family / Backend]
+
+    Exhaustiveness[穷尽性]
+    Binding[变量绑定]
+    GuardRules[守卫顺序]
+    PatternShape[高层模式结构]
+    DecisionTree[决策树]
+    BranchPruning[分支裁剪]
+    CarryOnly[只消费控制流事实]
+
+    SemanticsBoundary --> Exhaustiveness
+    SemanticsBoundary --> Binding
+    SemanticsBoundary --> GuardRules
+    HIRBoundary --> PatternShape
+    MIRBoundary --> DecisionTree
+    MIRBoundary --> BranchPruning
+    BackendBoundary --> CarryOnly
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class SemanticsBoundary,HIRBoundary,MIRBoundary phase;
+    class BackendBoundary boundary;
+    class Exhaustiveness,Binding,GuardRules,PatternShape,DecisionTree,BranchPruning,CarryOnly delivery;
+```
 
 ## MIR 需要做什么
 

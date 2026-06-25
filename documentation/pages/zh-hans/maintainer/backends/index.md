@@ -6,21 +6,32 @@
 
 ## 在管线中的位置
 
-```text
-Source
-  -> Parse
-  -> Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Target Lowering Lane
-  -> Backend Input
-  -> Validate
-  -> Compile
-  -> Encode
-  -> Package
-  -> ArtifactSet
+```mermaid
+flowchart LR
+    Source[Source]
+    Parse[Parse]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    Lane[Target Lowering Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    Encode[Encode]
+    Package[Package]
+    ArtifactSet[ArtifactSet]
+
+    Source --> Parse --> Semantics --> HIR --> MIR --> Optimize --> Partition --> Lane --> BackendInput --> Validate --> Compile --> Encode --> Package --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Source,Parse,Semantics,HIR,MIR,Optimize phase;
+    class Partition,Validate boundary;
+    class Lane,BackendInput,Compile,Encode,Package,ArtifactSet delivery;
 ```
 
 维护者需要特别记住：

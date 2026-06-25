@@ -109,21 +109,32 @@ MRO(Child) = [Child, Base1, GrandBase, Base2]
 
 ## 在管线中的位置
 
-```
-TypeChecker Pass 2（声明检查）
-  │
-  ├── 展开继承语法糖
-  │     ├── 生成基类字段（自动或具名命名）
-  │     ├── 检测字段名冲突
-  │     └── 构建 MRO 序列
-  ├── Pass 3: 体检查
-  │     └── 解析 super.method() 按 MRO 查找
-  │
-  └── SemanticModel（继承已展开，后续阶段不感知原始继承关系）
+```mermaid
+flowchart TD
+    Pass2[TypeChecker Pass 2]
+    Expand[展开继承语法糖]
+    Fields[生成基类字段]
+    Conflicts[检测字段名冲突]
+    MRO[构建 MRO 序列]
+    Pass3[TypeChecker Pass 3]
+    SuperResolve[按 MRO 解析 super.method()]
+    SemanticModel[SemanticModel]
+    HirBuilder[HirBuilder]
+    ExpandedTypes[展开后的类型定义]
 
-HirBuilder
-  │
-  └── 接收的是展开后的类型定义，无继承概念
+    Pass2 --> Expand
+    Expand --> Fields
+    Expand --> Conflicts
+    Expand --> MRO
+    Pass2 --> Pass3 --> SuperResolve --> SemanticModel --> HirBuilder --> ExpandedTypes
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Pass2,Pass3,HirBuilder phase;
+    class Expand,Conflicts,MRO,SuperResolve boundary;
+    class Fields,SemanticModel,ExpandedTypes delivery;
 ```
 
 ## 继承校验

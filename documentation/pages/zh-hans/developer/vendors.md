@@ -24,6 +24,27 @@
 vendors/<registry>@<endpoint>/<org>.<package>@<version>/
 ```
 
+```mermaid
+flowchart LR
+    Registry[registry]
+    Endpoint[endpoint]
+    Package[org.package]
+    Version[version]
+    VendorPath[vendors/<registry>@<endpoint>/<org>.<package>@<version>/]
+
+    Registry --> VendorPath
+    Endpoint --> VendorPath
+    Package --> VendorPath
+    Version --> VendorPath
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Registry,Endpoint,Package,Version phase;
+    class VendorPath delivery;
+```
+
 | 元素 | 说明 | 示例 |
 |:---|:---|:---|
 | `registry` | 注册表名称 | `npm`、`maven`、`valhalla` |
@@ -74,6 +95,26 @@ vendors/<registry>@<endpoint>/<org>.<package>@<version>/
 | 1 | 当前项目 | 同项目中的其他模块 |
 | 2 | `vendors/` | 包管理阶段已解析完成的依赖 |
 | 3 | 全局 `vendors/` | 系统级全局依赖 |
+
+```mermaid
+flowchart TD
+    Project[当前项目]
+    Vendors[vendors/]
+    GlobalVendors[全局 vendors/]
+    Compiler[编译主线]
+
+    Project --> Compiler
+    Vendors --> Compiler
+    GlobalVendors --> Compiler
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Project,GlobalVendors phase;
+    class Vendors boundary;
+    class Compiler delivery;
+```
 
 ## 设计原理
 

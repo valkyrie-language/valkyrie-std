@@ -9,6 +9,24 @@
 3. 宿主实现层：由 `sdk`、`std.adaptor.*` 或第三方 vendor 包提供 `host_provider`。
 4. 装配层：由 `manifest`、planner 与第三方构建器共同决定当前构建的有效依赖闭包，并把 `host_provider` 候选集收敛到唯一实现。
 
+```mermaid
+flowchart TD
+    Language[语言层]
+    Std[标准入口层]
+    HostImpl[宿主实现层]
+    Assembly[装配层]
+
+    Language --> Std --> HostImpl --> Assembly
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Language,Std phase;
+    class HostImpl boundary;
+    class Assembly delivery;
+```
+
 ## 职责边界
 
 ### `std`
@@ -84,37 +102,73 @@
 
 ### 官方抽象包
 
-```text
-projects/std
-  source/net/http.v
-  source/console/_.v
+```mermaid
+flowchart TD
+    StdPkg[projects/std]
+    StdNet[source/net/http.v]
+    StdConsole[source/console/_.v]
+
+    StdPkg --> StdNet
+    StdPkg --> StdConsole
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class StdPkg phase;
+    class StdNet,StdConsole delivery;
 ```
 
 ### 官方宿主包
 
-```text
-projects/sdk.browser
-projects/sdk.dotnet
-projects/sdk.jvm
-projects/sdk.wasi
-projects/sdk.nyar
+```mermaid
+flowchart LR
+    Browser[projects/sdk.browser]
+    Dotnet[projects/sdk.dotnet]
+    JVM[projects/sdk.jvm]
+    WASI[projects/sdk.wasi]
+    Nyar[projects/sdk.nyar]
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Browser,Dotnet,JVM,WASI,Nyar delivery;
 ```
 
 ### 发行版默认包
 
-```text
-projects/std.adaptor.clr
-projects/std.adaptor.jvm
-projects/std.adaptor.wasm
-projects/std.adaptor.nyar
+```mermaid
+flowchart LR
+    Clr[projects/std.adaptor.clr]
+    JVM[projects/std.adaptor.jvm]
+    Wasm[projects/std.adaptor.wasm]
+    Nyar[projects/std.adaptor.nyar]
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Clr,JVM,Wasm,Nyar delivery;
 ```
 
 ### 第三方 vendor 包
 
-```text
-vendors/tencent.wechat.sdk
-vendors/tencent.wechat.sdk.net
-vendors/tencent.wechat.sdk.storage
+```mermaid
+flowchart TD
+    VendorRoot[vendors/tencent.wechat.sdk]
+    VendorNet[vendors/tencent.wechat.sdk.net]
+    VendorStorage[vendors/tencent.wechat.sdk.storage]
+
+    VendorRoot --> VendorNet
+    VendorRoot --> VendorStorage
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class VendorRoot phase;
+    class VendorNet,VendorStorage delivery;
 ```
 
 命名不要求所有人都使用同一前缀，但必须满足两条约束：

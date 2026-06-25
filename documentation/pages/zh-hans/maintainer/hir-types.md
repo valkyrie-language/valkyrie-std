@@ -6,13 +6,24 @@
 
 ## 在管线中的位置
 
-```text
-Parse
-  -> Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
+```mermaid
+flowchart LR
+    Parse[Parse]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+
+    Parse --> Semantics --> HIR --> MIR --> Optimize --> Partition
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Parse,Semantics,MIR,Optimize phase;
+    class HIR boundary;
+    class Partition delivery;
 ```
 
 进入 `HIR` 时，名称、类型、约束和调用归属都应该已经闭合。
@@ -37,6 +48,38 @@ Parse
 - 对象文件格式细节
 
 这些内容都应该留到后续 family lowering、`validate` 和 `compile` 阶段。
+
+```mermaid
+flowchart TD
+    HIRKeep[HIR 保留]
+    HIRDrop[HIR 不保留]
+
+    TypeKinds[类型种类]
+    Names[完整名字与可见性]
+    Signatures[字段与方法签名]
+    Constraints[约束与满足关系]
+    ObjectLayout[对象布局]
+    FieldOffset[字段偏移]
+    ABI[目标 ABI]
+    HostText[宿主文本承载]
+
+    HIRKeep --> TypeKinds
+    HIRKeep --> Names
+    HIRKeep --> Signatures
+    HIRKeep --> Constraints
+    HIRDrop --> ObjectLayout
+    HIRDrop --> FieldOffset
+    HIRDrop --> ABI
+    HIRDrop --> HostText
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class HIRKeep phase;
+    class HIRDrop boundary;
+    class TypeKinds,Names,Signatures,Constraints,ObjectLayout,FieldOffset,ABI,HostText delivery;
+```
 
 ## 文本类型纪律
 

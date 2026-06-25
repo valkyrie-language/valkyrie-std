@@ -6,11 +6,22 @@
 
 ## 在管线中的位置
 
-```text
-Parse
-  -> Semantics
-  -> HIR
-  -> MIR
+```mermaid
+flowchart LR
+    Parse[Parse]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+
+    Parse --> Semantics --> HIR --> MIR
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Parse,Semantics phase;
+    class HIR boundary;
+    class MIR delivery;
 ```
 
 `trait` 解析属于 `Semantics`，不是 family lowering 或 backend 的职责。
@@ -48,6 +59,23 @@ Parse
 ### 4. 固化满足事实
 
 一旦确认满足关系成立，就把这件事写入语义模型，供后续调用解析和中层分析使用。
+
+```mermaid
+flowchart TD
+    Collect[收集契约]
+    Candidates[建立候选关系]
+    Signature[检查签名一致性]
+    Seal[固化满足事实]
+
+    Collect --> Candidates --> Signature --> Seal
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Collect,Candidates,Signature phase;
+    class Seal delivery;
+```
 
 ## 关联类型
 

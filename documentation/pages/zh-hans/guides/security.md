@@ -18,6 +18,35 @@ legion audit --json       # JSON 格式输出
 - 签名验证（Valhalla 注册表）
 - 依赖过期警告
 
+```mermaid
+flowchart LR
+    Dependencies[依赖集合]
+    Audit[legion audit]
+    CVE[已知 CVE 漏洞匹配]
+    License[许可证互斥检查]
+    Signature[签名验证]
+    Outdated[依赖过期警告]
+    Report[审计报告]
+
+    Dependencies --> Audit
+    Audit --> CVE
+    Audit --> License
+    Audit --> Signature
+    Audit --> Outdated
+    CVE --> Report
+    License --> Report
+    Signature --> Report
+    Outdated --> Report
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Dependencies,Audit phase;
+    class CVE,License,Signature,Outdated boundary;
+    class Report delivery;
+```
+
 ## 审计输出示例
 
 ```

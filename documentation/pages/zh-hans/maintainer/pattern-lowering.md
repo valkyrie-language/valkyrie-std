@@ -6,13 +6,24 @@
 
 ## 在管线中的位置
 
-```text
-Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane
+```mermaid
+flowchart LR
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+
+    Semantics --> HIR --> MIR --> Optimize --> Partition --> FamilyLane
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,HIR,MIR,Optimize phase;
+    class Partition boundary;
+    class FamilyLane delivery;
 ```
 
 模式 lowering 发生在语义已经闭合之后，但仍然早于具体 family 编译。
@@ -53,6 +64,35 @@ Semantics
 - 语言只关心匹配顺序和正确性
 - 中层关心控制流整理
 - family 关心如何承载这些控制流
+
+```mermaid
+flowchart TD
+    Language[语言语义]
+    Middle[中层控制流整理]
+    Family[Family 承载]
+
+    MatchOrder[匹配顺序]
+    Correctness[正确性]
+    BranchLayout[分支布局]
+    GuardFlow[守卫流向]
+    BranchModel[条件分支模型]
+    DiscriminantRead[判别读取]
+
+    Language --> MatchOrder
+    Language --> Correctness
+    Middle --> BranchLayout
+    Middle --> GuardFlow
+    Family --> BranchModel
+    Family --> DiscriminantRead
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Language,Middle phase;
+    class Family boundary;
+    class MatchOrder,Correctness,BranchLayout,GuardFlow,BranchModel,DiscriminantRead delivery;
+```
 
 ## 与判别值的关系
 

@@ -6,16 +6,27 @@
 
 ## 在管线中的位置
 
-```text
-Semantics
-  -> HIR
-  -> MIR
-  -> Partition
-  -> WASM Browser/Node Lane
-  -> Backend Input
-  -> Validate
-  -> Compile
-  -> Package
+```mermaid
+flowchart LR
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Partition[Partition]
+    WasmLane[WASM Browser/Node Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    Package[Package]
+
+    Semantics --> HIR --> MIR --> Partition --> WasmLane --> BackendInput --> Validate --> Compile --> Package
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,HIR,MIR phase;
+    class Partition,Validate boundary;
+    class WasmLane,BackendInput,Compile,Package delivery;
 ```
 
 `JavaScript` 相关绑定主要落在 `WASM Browser/Node` 这条路线的后半段，而不是公共前端。
@@ -44,6 +55,35 @@ Semantics
 - 产出 sidecar 和运行说明
 
 也就是说，真正的 `JS glue` 属于交付层，不属于公共语义层。
+
+```mermaid
+flowchart TD
+    Frontend[前端语义]
+    LaneBackend[lane / backend]
+    PackageStage[package]
+
+    BindingLegal[标注是否合法]
+    SignatureBinding[参数返回是否可绑定]
+    MinFacts[保留最小绑定事实]
+    SupportCheck[当前 family 是否支持]
+    Glue[生成宿主胶水]
+    Sidecar[组织模块依赖与 sidecar]
+
+    Frontend --> BindingLegal
+    Frontend --> SignatureBinding
+    LaneBackend --> MinFacts
+    LaneBackend --> SupportCheck
+    PackageStage --> Glue
+    PackageStage --> Sidecar
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Frontend phase;
+    class LaneBackend boundary;
+    class PackageStage,BindingLegal,SignatureBinding,MinFacts,SupportCheck,Glue,Sidecar delivery;
+```
 
 ## 两类绑定来源
 

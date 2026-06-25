@@ -6,13 +6,24 @@
 
 ## 在管线中的位置
 
-```text
-Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane
+```mermaid
+flowchart LR
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+
+    Semantics --> HIR --> MIR --> Optimize --> Partition --> FamilyLane
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,HIR,MIR,Optimize phase;
+    class Partition boundary;
+    class FamilyLane delivery;
 ```
 
 异步相关的上下文检查、类型闭合和控制流边界，必须在前端与中层完成。
@@ -38,6 +49,39 @@ Semantics
 - 调度与恢复所需的最小控制流事实
 
 这能支持后续把异步逻辑变成状态机、协程帧或其他 family 能接受的形式。
+
+```mermaid
+flowchart TD
+    Frontend[前端语义]
+    Middle[HIR / MIR]
+    Family[Family 实现]
+
+    Suspend[挂起是否合法]
+    Block[阻塞是否合法]
+    FutureType[future / 返回值闭合]
+    SuspendPoint[挂起点]
+    ResumePoint[恢复点]
+    LiveState[跨挂起存活状态]
+    Frame[协程帧 / 状态机]
+    Scheduler[调度器与宿主 API]
+
+    Frontend --> Suspend
+    Frontend --> Block
+    Frontend --> FutureType
+    Middle --> SuspendPoint
+    Middle --> ResumePoint
+    Middle --> LiveState
+    Family --> Frame
+    Family --> Scheduler
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Frontend,Middle phase;
+    class Family boundary;
+    class Suspend,Block,FutureType,SuspendPoint,ResumePoint,LiveState,Frame,Scheduler delivery;
+```
 
 ## 不应该在公共层固定的事
 

@@ -8,13 +8,24 @@
 
 ## 在管线中的位置
 
-```text
-HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane Lowering
-  -> Backend Input
+```mermaid
+flowchart LR
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    LaneLowering[Family Lane Lowering]
+    BackendInput[Backend Input]
+
+    HIR --> MIR --> Optimize --> Partition --> LaneLowering --> BackendInput
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class HIR,MIR,Optimize phase;
+    class Partition boundary;
+    class LaneLowering,BackendInput delivery;
 ```
 
 如果某条路线仍然需要 `LIR`，它应该只是某个 lane 内部或相邻 lowering 阶段的低层表示，而不是重新取代 family 分流。
@@ -88,6 +99,30 @@ HIR
 - `JVM` 可以有自己的低层输入路线
 - `WASM` 和 `WASI` 可以共享 family 基础，但宿主差异仍需保留
 - `Native` 必须保留自己的对象格式与平台边界
+
+```mermaid
+flowchart TD
+    Partition[Partition]
+    LIR[可选 LIR]
+    CLR[CLR 路线]
+    JVM[JVM 路线]
+    WASM[WASM / WASI 路线]
+    Native[Native 路线]
+
+    Partition --> LIR
+    LIR --> CLR
+    LIR --> JVM
+    LIR --> WASM
+    LIR --> Native
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class LIR phase;
+    class Partition boundary;
+    class CLR,JVM,WASM,Native delivery;
+```
 
 ## 典型失败信号
 

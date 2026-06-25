@@ -6,13 +6,24 @@
 
 ## 在管线中的位置
 
-```text
-Source Set
-  -> Parse
-  -> Meta
-  -> Global Declaration Collection
-  -> Semantics
-  -> HIR
+```mermaid
+flowchart LR
+    SourceSet[Source Set]
+    Parse[Parse]
+    Meta[Meta]
+    GlobalDecl[Global Declaration Collection]
+    Semantics[Semantics]
+    HIR[HIR]
+
+    SourceSet --> Parse --> Meta --> GlobalDecl --> Semantics --> HIR
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class SourceSet,Parse,Meta,Semantics phase;
+    class GlobalDecl boundary;
+    class HIR delivery;
 ```
 
 多文件能力本质上是对 `Semantics` 前置补充全局视图，而不是单独再发明一条平行编译管线。
@@ -40,6 +51,24 @@ Source Set
 - 方法分派归属
 - 效应检查
 - 跨文件引用验证
+
+```mermaid
+flowchart TD
+    Collection[声明收集]
+    GlobalView[全局声明视图]
+    Closure[语义闭合]
+    UnifiedResult[统一语义结果]
+
+    Collection --> GlobalView --> Closure --> UnifiedResult
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Collection,Closure phase;
+    class GlobalView boundary;
+    class UnifiedResult delivery;
+```
 
 ## 为什么必须先收集再闭合
 

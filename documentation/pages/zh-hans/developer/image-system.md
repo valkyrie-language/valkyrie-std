@@ -26,19 +26,36 @@
 
 典型关系如下：
 
-```text
-Source
-  -> Semantics
-  -> HIR / MIR / Optimize
-  -> Partition
-  -> Family Lane
-  -> Backend Input
-  -> Validate / Compile
-  -> Encode / Package
-      -> 资源编解码
-      -> 图像格式转换
-      -> 纹理与附属资产组织
-  -> ArtifactSet
+```mermaid
+flowchart TD
+    Source[Source]
+    Semantics[Semantics]
+    Middle[HIR / MIR / Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+    BackendInput[Backend Input]
+    ValidateCompile[Validate / Compile]
+    EncodePackage[Encode / Package]
+    ResourceCodec[资源编解码]
+    ImageTransform[图像格式转换]
+    TexturePackaging[纹理与附属资产组织]
+    ArtifactSet[ArtifactSet]
+
+    Source --> Semantics --> Middle --> Partition --> FamilyLane --> BackendInput --> ValidateCompile --> EncodePackage
+    EncodePackage --> ResourceCodec
+    EncodePackage --> ImageTransform
+    EncodePackage --> TexturePackaging
+    ResourceCodec --> ArtifactSet
+    ImageTransform --> ArtifactSet
+    TexturePackaging --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,Middle phase;
+    class Partition,ValidateCompile boundary;
+    class FamilyLane,BackendInput,EncodePackage,ResourceCodec,ImageTransform,TexturePackaging,ArtifactSet delivery;
 ```
 
 这意味着图像系统是交付链的一部分，不是语言中层本体。

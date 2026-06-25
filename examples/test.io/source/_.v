@@ -16,11 +16,11 @@ micro hello_world_utf8() -> ExitCode {
     return ExitCode(add_two(42) as i32)
 }
 
-micro add_one(x: isize) {
+micro add_one(x: isize) -> isize {
     let one = 1;
     return x + one;
 }
 
-micro add_two(x: isize) {
+micro add_two(x: isize) -> isize {
     return add_one(add_one(x))
 }

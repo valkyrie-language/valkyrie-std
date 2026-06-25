@@ -10,6 +10,9 @@
         {
             target: "clr-microsoft-unknown-managed",
             msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
         }
     ]
 }

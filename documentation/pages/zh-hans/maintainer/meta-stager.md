@@ -6,6 +6,24 @@
 
 Valkyrie 的 MSP 系统由 `MetaStager` 引擎驱动，位于编译管线中 Parse 与 Analyze 之间，负责对 AST 执行编译期变换，消除所有元代码节点（`<% ... %>`），最终生成纯 Stage 0 运行时代码。
 
+```mermaid
+flowchart LR
+    Parse[Parse]
+    MetaStager[MetaStager]
+    Stage0[纯 Stage 0 AST]
+    Analyze[Analyze / Semantics]
+
+    Parse --> MetaStager --> Stage0 --> Analyze
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Parse,Analyze phase;
+    class MetaStager boundary;
+    class Stage0 delivery;
+```
+
 ## 核心概念
 
 ### 阶段划分
@@ -184,6 +202,35 @@ Escape 时按以下规则转为 AST 节点：
 3. 遇到容器节点（`FunctionBody`、`DeclareMicro`）→ 递归进入内部
 4. 如果本轮处理了任何元节点 → 重新遍历结果，直到无元节点为止
 5. 深度限制为 64，防止无限展开
+
+```mermaid
+flowchart TD
+    Traverse[遍历 AST 节点]
+    MetaNode{遇到元节点?}
+    StageNode[StageNode 分发处理]
+    Replace[替换为展开结果]
+    Container{遇到容器节点?}
+    Recurse[递归进入内部]
+    Repeat{本轮处理过元节点?}
+    Restart[重新遍历结果]
+    Done[结束]
+
+    Traverse --> MetaNode
+    MetaNode -- 是 --> StageNode --> Replace --> Container
+    MetaNode -- 否 --> Container
+    Container -- 是 --> Recurse --> Repeat
+    Container -- 否 --> Repeat
+    Repeat -- 是 --> Restart --> Traverse
+    Repeat -- 否 --> Done
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Traverse,StageNode,Recurse,Restart phase;
+    class MetaNode,Container,Repeat boundary;
+    class Replace,Done delivery;
+```
 
 ## 宏的生命周期
 

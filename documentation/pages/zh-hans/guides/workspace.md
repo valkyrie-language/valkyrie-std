@@ -36,23 +36,60 @@ test = "legion run test --all"
 
 Legion 自动扫描 `packages/` 和 `projects/` 目录，发现包含 `legion.von` 的子目录并注册为工作区成员。无需手动维护 `members` 列表。
 
+```mermaid
+flowchart TD
+    WorkspaceRoot[工作区根目录]
+    Packages[packages/]
+    Projects[projects/]
+    LegionManifest[legion.von]
+    Members[工作区成员]
+
+    WorkspaceRoot --> Packages
+    WorkspaceRoot --> Projects
+    Packages --> LegionManifest
+    Projects --> LegionManifest
+    LegionManifest --> Members
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class WorkspaceRoot,Packages,Projects phase;
+    class LegionManifest boundary;
+    class Members delivery;
+```
+
 ## 目录结构
 
-```
-my_workspace/
-├── legions.von
-├── packages/
-│   ├── core/
-│   │   ├── legion.von
-│   │   └── src/
-│   ├── utils/
-│   │   ├── legion.von
-│   │   └── src/
-│   └── web/
-│       ├── legion.von
-│       └── src/
-├── vendors/
-└── lock.von
+```mermaid
+flowchart TD
+    Workspace[my_workspace/]
+    RootManifest[legions.von]
+    Packages[packages/]
+    Core[core/]
+    CoreManifest[core/legion.von]
+    Utils[utils/]
+    UtilsManifest[utils/legion.von]
+    Web[web/]
+    WebManifest[web/legion.von]
+    Vendors[vendors/]
+    Lock[lock.von]
+
+    Workspace --> RootManifest
+    Workspace --> Packages
+    Packages --> Core --> CoreManifest
+    Packages --> Utils --> UtilsManifest
+    Packages --> Web --> WebManifest
+    Workspace --> Vendors
+    Workspace --> Lock
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Workspace,Packages phase;
+    class Core,Utils,Web boundary;
+    class RootManifest,CoreManifest,UtilsManifest,WebManifest,Vendors,Lock delivery;
 ```
 
 ## 命令
@@ -74,6 +111,23 @@ legion workspace build-order
 1. core          （无内部依赖）
 2. utils         （依赖 core）
 3. web           （依赖 core、utils）
+```
+
+```mermaid
+flowchart LR
+    Core[core]
+    Utils[utils]
+    Web[web]
+
+    Core --> Utils
+    Core --> Web
+    Utils --> Web
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Core,Utils,Web delivery;
 ```
 
 ## 共享依赖

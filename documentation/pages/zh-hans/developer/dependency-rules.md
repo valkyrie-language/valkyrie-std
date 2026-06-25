@@ -13,16 +13,27 @@
 
 ## 推荐分层
 
-```text
-Source / Parse
-  -> Semantics
-  -> HIR / MIR / Optimize
-  -> Partition
-  -> Family Lane
-  -> Backend Input
-  -> Validate / Compile
-  -> Encode / Package
-  -> Toolchain
+```mermaid
+flowchart TD
+    SourceParse[Source / Parse]
+    Semantics[Semantics]
+    Middle[HIR / MIR / Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+    BackendInput[Backend Input]
+    ValidateCompile[Validate / Compile]
+    EncodePackage[Encode / Package]
+    Toolchain[Toolchain]
+
+    SourceParse --> Semantics --> Middle --> Partition --> FamilyLane --> BackendInput --> ValidateCompile --> EncodePackage --> Toolchain
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class SourceParse,Semantics,Middle,Toolchain phase;
+    class Partition,ValidateCompile boundary;
+    class FamilyLane,BackendInput,EncodePackage delivery;
 ```
 
 依赖只能沿这个方向向下走，不能逆流。

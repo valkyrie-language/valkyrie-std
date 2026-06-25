@@ -2,15 +2,28 @@
 
 ## 测试分层
 
-```text
-单元测试
-  -> 验证单一规则、单一阶段或单一组件
+```mermaid
+flowchart TD
+    Unit[单元测试]
+    Integration[集成测试]
+    E2E[端到端测试]
 
-集成测试
-  -> 验证多个阶段或多个模块之间的协作
+    Unit --> Integration --> E2E
 
-端到端测试
-  -> 验证真实输入到真实交付物的完整链路
+    UnitDesc[验证单一规则、单一阶段或单一组件]
+    IntegrationDesc[验证多个阶段或多个模块之间的协作]
+    E2EDesc[验证真实输入到真实交付物的完整链路]
+
+    Unit --> UnitDesc
+    Integration --> IntegrationDesc
+    E2E --> E2EDesc
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Unit,Integration,E2E boundary;
+    class UnitDesc,IntegrationDesc,E2EDesc phase;
 ```
 
 测试的目标不是重复实现细节，而是验证长期稳定边界是否仍然成立。
@@ -31,13 +44,28 @@
 
 ### 目录约定
 
-```text
-my-project/
-├── legion.von
-├── source/
-└── test/
-    ├── basic_test.v
-    └── bench_test.v
+```mermaid
+flowchart TD
+    Project[my-project/]
+    Manifest[legion.von]
+    Source[source/]
+    Test[test/]
+    Basic[basic_test.v]
+    Bench[bench_test.v]
+
+    Project --> Manifest
+    Project --> Source
+    Project --> Test
+    Test --> Basic
+    Test --> Bench
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Project,Manifest,Source phase;
+    class Test boundary;
+    class Basic,Bench delivery;
 ```
 
 ### 测试标注

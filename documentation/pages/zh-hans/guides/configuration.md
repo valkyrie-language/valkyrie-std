@@ -53,6 +53,28 @@ define_config(voa) {
 | `backend` | 后端项目 | `clr` / `jvm` / `native` |
 | `library` | 共享库 | `lib` |
 
+```mermaid
+flowchart LR
+    Frontend[frontend]
+    Backend[backend]
+    Library[library]
+
+    Wasm[wasm]
+    Managed[clr / jvm / native]
+    Lib[lib]
+
+    Frontend --> Wasm
+    Backend --> Managed
+    Library --> Lib
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Frontend,Backend,Library boundary;
+    class Wasm,Managed,Lib delivery;
+```
+
 ## 编译目标
 
 目标使用**目标三元组**（Target Triple）格式：`arch-vendor-os[-abi]`，完整定义见[目标三元组规范](../toolchain/target-triples.md)。
@@ -100,6 +122,27 @@ voa.config.production.v   # 生产环境
 | `VOA_ENV` | 当前环境 |
 
 优先级：环境变量 > 环境配置文件 > 基础配置 > 默认值。
+
+```mermaid
+flowchart TD
+    EnvVar[环境变量]
+    EnvFile[环境配置文件]
+    BaseFile[基础配置文件]
+    Default[默认值]
+    FinalConfig[最终配置]
+
+    EnvVar --> FinalConfig
+    EnvFile --> FinalConfig
+    BaseFile --> FinalConfig
+    Default --> FinalConfig
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class EnvVar,EnvFile,BaseFile,Default phase;
+    class FinalConfig delivery;
+```
 
 ## 全栈示例
 

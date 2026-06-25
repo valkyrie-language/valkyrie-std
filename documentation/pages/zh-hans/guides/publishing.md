@@ -2,8 +2,23 @@
 
 ## 发布流程
 
-```
-源代码 → 构建 → 打包（legion pack） → 发布（legion publish） → 注册表
+```mermaid
+flowchart LR
+    Source[源代码]
+    Build[构建]
+    Pack[打包\nlegion pack]
+    Publish[发布\nlegion publish]
+    Registry[注册表]
+
+    Source --> Build --> Pack --> Publish --> Registry
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Source,Build phase;
+    class Pack,Publish boundary;
+    class Registry delivery;
 ```
 
 ## 准备工作

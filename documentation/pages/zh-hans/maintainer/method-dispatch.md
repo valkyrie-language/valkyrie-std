@@ -6,12 +6,23 @@
 
 ## 在管线中的位置
 
-```text
-Semantics
-  -> HIR
-  -> MIR
-  -> Partition
-  -> Family Lane
+```mermaid
+flowchart LR
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+
+    Semantics --> HIR --> MIR --> Partition --> FamilyLane
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Semantics,HIR,MIR phase;
+    class Partition boundary;
+    class FamilyLane delivery;
 ```
 
 分派归属在 `Semantics` 闭合，不属于后端职责。
@@ -40,6 +51,30 @@ Semantics
 ### 动态分派
 
 如果语言允许某类运行时分派，那么这里也必须明确标注“这是动态分派”，而不是把它伪装成普通静态调用。
+
+```mermaid
+flowchart TD
+    CallSite[方法调用]
+    Direct[直接分派]
+    Constrained[约束分派]
+    Dynamic[动态分派]
+
+    DirectDesc[目标唯一确定]
+    ConstrainedDesc[依赖 trait / 见证 / 约束证据]
+    DynamicDesc[显式保留运行时分派事实]
+
+    CallSite --> Direct --> DirectDesc
+    CallSite --> Constrained --> ConstrainedDesc
+    CallSite --> Dynamic --> DynamicDesc
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class CallSite phase;
+    class Direct,Constrained,Dynamic boundary;
+    class DirectDesc,ConstrainedDesc,DynamicDesc delivery;
+```
 
 ## 歧义处理
 

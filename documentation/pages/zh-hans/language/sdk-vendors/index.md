@@ -47,24 +47,27 @@ Valkyrie 的 `sdk` 体系用于承载“宿主平台 / 运行时 / 厂商 API �
 
 ## 最小心智模型
 
-```text
-std 稳定函数入口
-    ↓
-host_contract 标记
-    ↓
-host_provider 实现
-    ↓
-有效依赖闭包
-    ↓
-构建器默认 sdk 注入
-    ↓
-planner 过滤可见 sdk
-    ↓
-底层宿主 bind 属性
-    ↓
-编译期静态绑定
-    ↓
-底层宿主特性标注（js/clr/jvm/c/wasi/...）
+```mermaid
+flowchart TD
+    Std[std 稳定函数入口]
+    HostContract[host_contract 标记]
+    HostProvider[host_provider 实现]
+    Closure[有效依赖闭包]
+    BuilderInject[构建器默认 sdk 注入]
+    Planner[planner 过滤可见 sdk]
+    Bind[底层宿主 bind 属性]
+    StaticBind[编译期静态绑定]
+    HostAttr[底层宿主特性标注]
+
+    Std --> HostContract --> HostProvider --> Closure --> BuilderInject --> Planner --> Bind --> StaticBind --> HostAttr
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Std,HostContract,HostProvider,Closure,BuilderInject,Planner phase;
+    class Bind boundary;
+    class StaticBind,HostAttr delivery;
 ```
 
 ## 适用场景

@@ -21,10 +21,33 @@
 
 固定主线如下：
 
-```text
-Source -> Parse -> Semantics -> HIR -> MIR -> Optimize -> Partition
-       -> Target Lowering Lane -> Backend Input -> Validate -> Compile
-       -> Encode -> Package -> ArtifactSet
+```mermaid
+flowchart LR
+    Source[Source]
+    Parse[Parse]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    Lane[Target Lowering Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    Compile[Compile]
+    Encode[Encode]
+    Package[Package]
+    ArtifactSet[ArtifactSet]
+
+    Source --> Parse --> Semantics --> HIR --> MIR --> Optimize --> Partition
+    Partition --> Lane --> BackendInput --> Validate --> Compile --> Encode --> Package --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Parse,Semantics,HIR,MIR,Optimize phase;
+    class Partition,Validate boundary;
+    class Lane,BackendInput,Compile,Encode,Package,ArtifactSet delivery;
 ```
 
 其中：
@@ -205,22 +228,34 @@ Source -> Parse -> Semantics -> HIR -> MIR -> Optimize -> Partition
 
 ## 标准编译主线
 
-```text
-Source
-  -> Parse
-  -> Meta
-  -> Semantics
-  -> HIR
-  -> MIR
-  -> Optimize
-  -> Partition
-  -> Family Lane
-  -> Backend Input
-  -> Validate
-  -> Backend Compile
-  -> Encode
-  -> Package
-  -> ArtifactSet
+```mermaid
+flowchart TD
+    Source[Source]
+    Parse[Parse]
+    Meta[Meta]
+    Semantics[Semantics]
+    HIR[HIR]
+    MIR[MIR]
+    Optimize[Optimize]
+    Partition[Partition]
+    FamilyLane[Family Lane]
+    BackendInput[Backend Input]
+    Validate[Validate]
+    BackendCompile[Backend Compile]
+    Encode[Encode]
+    Package[Package]
+    ArtifactSet[ArtifactSet]
+
+    Source --> Parse --> Meta --> Semantics --> HIR --> MIR --> Optimize --> Partition
+    Partition --> FamilyLane --> BackendInput --> Validate --> BackendCompile --> Encode --> Package --> ArtifactSet
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Parse,Meta,Semantics,HIR,MIR,Optimize phase;
+    class Partition,Validate boundary;
+    class FamilyLane,BackendInput,BackendCompile,Encode,Package,ArtifactSet delivery;
 ```
 
 这条主线里最重要的分界线有三处：

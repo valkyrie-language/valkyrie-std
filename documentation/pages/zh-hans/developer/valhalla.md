@@ -43,12 +43,26 @@
 
 ## 逻辑分层
 
-```text
-Valhalla
-├── 核心数据与签名
-├── 客户端访问与校验
-├── 服务端接口与存储
-└── Legion 注册表适配层
+```mermaid
+flowchart TD
+    Valhalla[Valhalla]
+    Core[核心数据与签名]
+    Client[客户端访问与校验]
+    Server[服务端接口与存储]
+    LegionAdaptor[Legion 注册表适配层]
+
+    Valhalla --> Core
+    Valhalla --> Client
+    Valhalla --> Server
+    Valhalla --> LegionAdaptor
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Valhalla phase;
+    class Core,Client,Server boundary;
+    class LegionAdaptor delivery;
 ```
 
 ## 安全模型

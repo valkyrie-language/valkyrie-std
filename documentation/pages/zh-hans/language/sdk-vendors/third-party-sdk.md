@@ -37,21 +37,44 @@
 
 ## 推荐目录结构
 
-```text
-projects/
-  tencent.wechat.sdk/
-    legion.von
-    source/
-      net.v
-      storage.v
-      login.v
-  unity.engine.sdk/
-    legion.von
-    source/
-      net.v
-      console.v
-      storage.v
-      application.v
+```mermaid
+flowchart TD
+    Projects[projects/]
+    Wechat[tencent.wechat.sdk]
+    WechatManifest[legion.von]
+    WechatSource[source/]
+    WechatNet[net.v]
+    WechatStorage[storage.v]
+    WechatLogin[login.v]
+    Unity[unity.engine.sdk]
+    UnityManifest[legion.von]
+    UnitySource[source/]
+    UnityNet[net.v]
+    UnityConsole[console.v]
+    UnityStorage[storage.v]
+    UnityApp[application.v]
+
+    Projects --> Wechat
+    Wechat --> WechatManifest
+    Wechat --> WechatSource
+    WechatSource --> WechatNet
+    WechatSource --> WechatStorage
+    WechatSource --> WechatLogin
+    Projects --> Unity
+    Unity --> UnityManifest
+    Unity --> UnitySource
+    UnitySource --> UnityNet
+    UnitySource --> UnityConsole
+    UnitySource --> UnityStorage
+    UnitySource --> UnityApp
+
+    classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
+    classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
+    classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
+
+    class Projects,Wechat,Unity phase;
+    class WechatSource,UnitySource boundary;
+    class WechatManifest,WechatNet,WechatStorage,WechatLogin,UnityManifest,UnityNet,UnityConsole,UnityStorage,UnityApp delivery;
 ```
 
 这里故意把 `tencent.wechat.sdk` 和 `unity.engine.sdk` 都放进 `projects/`，因为这正是最容易理解的工程组织方式：
