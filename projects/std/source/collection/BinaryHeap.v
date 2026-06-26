@@ -23,12 +23,12 @@ imply BinaryHeap<T> {
 
         let length: usize = self.data.length()
         if length == 1 {
-            return self.data.remove(0)
+            return self.data.remove(1)
         }
 
-        let result: T = self.data.get(0).unwrap()
-        let last: T = self.data.remove(length - 1).unwrap()
-        self.data.set(0, last)
+        let result: T = self.data.get(1).unwrap()
+        let last: T = self.data.remove(length).unwrap()
+        self.data.set(1, last)
         self.sift_down(0)
         return Some(result)
     }
@@ -53,14 +53,14 @@ imply BinaryHeap<T> {
         let mut cursor: usize = index
         while cursor > 0 {
             let parent: usize = (cursor - 1) / 2
-            let current: T = self.data.get(cursor).unwrap()
-            let parent_value: T = self.data.get(parent).unwrap()
+            let current: T = self.data.get(cursor + 1).unwrap()
+            let parent_value: T = self.data.get(parent + 1).unwrap()
             if current >= parent_value {
                 break
             }
 
-            self.data.set(cursor, parent_value)
-            self.data.set(parent, current)
+            self.data.set(cursor + 1, parent_value)
+            self.data.set(parent + 1, current)
             cursor = parent
         }
     }
@@ -73,11 +73,11 @@ imply BinaryHeap<T> {
             let right: usize = 2 * cursor + 2
             let mut smallest: usize = cursor
 
-            if left < length && self.data.get(left).unwrap() < self.data.get(smallest).unwrap() {
+            if left < length && self.data.get(left + 1).unwrap() < self.data.get(smallest + 1).unwrap() {
                 smallest = left
             }
 
-            if right < length && self.data.get(right).unwrap() < self.data.get(smallest).unwrap() {
+            if right < length && self.data.get(right + 1).unwrap() < self.data.get(smallest + 1).unwrap() {
                 smallest = right
             }
 
@@ -85,9 +85,9 @@ imply BinaryHeap<T> {
                 break
             }
 
-            let current: T = self.data.get(cursor).unwrap()
-            self.data.set(cursor, self.data.get(smallest).unwrap())
-            self.data.set(smallest, current)
+            let current: T = self.data.get(cursor + 1).unwrap()
+            self.data.set(cursor + 1, self.data.get(smallest + 1).unwrap())
+            self.data.set(smallest + 1, current)
             cursor = smallest
         }
     }

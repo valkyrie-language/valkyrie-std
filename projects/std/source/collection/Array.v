@@ -15,13 +15,7 @@ imply Array<T> {
     }
 
     [host_contract]
-    micro get(self, ordinal: usize): Option<T> {
-        if ordinal == 0 || ordinal > self.length() {
-            return None
-        }
-
-        return Some(self::[ordinal - 1])
-    }
+    micro get(self, ordinal: usize): Option<T>
 
     micro first(self): Option<T> {
         return self.get(1)

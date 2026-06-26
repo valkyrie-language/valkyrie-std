@@ -38,7 +38,7 @@ imply ArrayList<T> {
             return
         }
 
-        insert(self._items, ordinal - 1, value)
+        insert(self._items, ordinal, value)
     }
 
     [host_contract]
@@ -47,7 +47,7 @@ imply ArrayList<T> {
             return None
         }
 
-        return Some(remove(self._items, ordinal - 1))
+        return Some(remove(self._items, ordinal))
     }
 
     [host_contract]
@@ -83,7 +83,7 @@ imply ArrayList<T> {
             return None
         }
 
-        return Some(self._items::[ordinal - 1])
+        return Some(self._items[ordinal])
     }
 
     [host_contract]
@@ -92,7 +92,7 @@ imply ArrayList<T> {
             return
         }
 
-        self._items::[ordinal - 1] = value
+        self._items[ordinal] = value
     }
 
     [host_contract]

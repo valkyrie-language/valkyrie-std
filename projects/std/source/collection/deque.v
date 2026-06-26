@@ -16,7 +16,7 @@ imply Deque<T> {
 
     [host_contract]
     micro push_front(mut self, value: T): unit {
-        self.data.insert(0, value)
+        self.data.insert(1, value)
     }
 
     [host_contract]
@@ -30,7 +30,7 @@ imply Deque<T> {
             return None
         }
 
-        return self.data.remove(0)
+        return self.data.remove(1)
     }
 
     [host_contract]

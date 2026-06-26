@@ -40,7 +40,7 @@ imply SwissSet<T> {
         }
 
         let index: usize = slot.unwrap()
-        let state: i32 = self._states.get(index).unwrap()
+        let state: i32 = self._states.get(index + 1).unwrap()
         if state == 1 {
             return false
         }
@@ -49,8 +49,8 @@ imply SwissSet<T> {
             self._used = self._used + 1
         }
 
-        self._states.set(index, 1)
-        self._values.set(index, Some(value))
+        self._states.set(index + 1, 1)
+        self._values.set(index + 1, Some(value))
         self._length = self._length + 1
         return true
     }
@@ -62,8 +62,8 @@ imply SwissSet<T> {
         }
 
         let index: usize = slot.unwrap()
-        self._states.set(index, 2)
-        self._values.set(index, None)
+        self._states.set(index + 1, 2)
+        self._values.set(index + 1, None)
         self._length = self._length - 1
         return true
     }
@@ -100,8 +100,8 @@ imply SwissSet<T> {
     micro iter(self, f: micro(T) -> unit) -> unit {
         let mut index: usize = 0
         while index < self._states.length() {
-            if self._states.get(index).unwrap() == 1 {
-                f(self._values.get(index).unwrap().unwrap())
+            if self._states.get(index + 1).unwrap() == 1 {
+                f(self._values.get(index + 1).unwrap().unwrap())
             }
 
             index = index + 1
@@ -112,8 +112,8 @@ imply SwissSet<T> {
         let mut result: List<T> = ArrayList::new(self._length)
         let mut index: usize = 0
         while index < self._states.length() {
-            if self._states.get(index).unwrap() == 1 {
-                result.push(self._values.get(index).unwrap().unwrap())
+            if self._states.get(index + 1).unwrap() == 1 {
+                result.push(self._values.get(index + 1).unwrap().unwrap())
             }
 
             index = index + 1
@@ -126,7 +126,7 @@ imply SwissSet<T> {
         let mut result: Self = Self::new(values.length())
         let mut index: usize = 0
         while index < values.length() {
-            result.insert(values.get(index).unwrap())
+            result.insert(values.get(index + 1).unwrap())
             index = index + 1
         }
 
@@ -143,12 +143,12 @@ imply SwissSet<T> {
         let mut index: usize = value_hash % slot_count
         let mut probe: usize = 0
         while probe < slot_count {
-            let state: i32 = self._states.get(index).unwrap()
+            let state: i32 = self._states.get(index + 1).unwrap()
             if state == 0 {
                 return None
             }
 
-            if state == 1 && self._values.get(index).unwrap().unwrap() == value {
+            if state == 1 && self._values.get(index + 1).unwrap().unwrap() == value {
                 return Some(index)
             }
 
@@ -165,7 +165,7 @@ imply SwissSet<T> {
         let mut index: usize = value_hash % slot_count
         let mut probe: usize = 0
         while probe < slot_count {
-            let state: i32 = self._states.get(index).unwrap()
+            let state: i32 = self._states.get(index + 1).unwrap()
             if state == 0 {
                 if first_deleted.is_some() {
                     return first_deleted
@@ -178,7 +178,7 @@ imply SwissSet<T> {
                 first_deleted = Some(index)
             }
 
-            if state == 1 && self._values.get(index).unwrap().unwrap() == value {
+            if state == 1 && self._values.get(index + 1).unwrap().unwrap() == value {
                 return Some(index)
             }
 
@@ -218,8 +218,8 @@ imply SwissSet<T> {
 
         let mut cursor: usize = 0
         while cursor < old_states.length() {
-            if old_states.get(cursor).unwrap() == 1 {
-                self.insert(old_values.get(cursor).unwrap().unwrap())
+            if old_states.get(cursor + 1).unwrap() == 1 {
+                self.insert(old_values.get(cursor + 1).unwrap().unwrap())
             }
 
             cursor = cursor + 1

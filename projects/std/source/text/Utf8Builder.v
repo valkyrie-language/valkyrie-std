@@ -56,7 +56,7 @@ imply Utf8Builder {
     micro concat(mut self, other: Self) -> Self {
         let mut index: usize = 0
         while index < other.bytes.length() {
-            self.bytes.push(other.bytes.get(index).unwrap())
+            self.bytes.push(other.bytes.get(index + 1).unwrap())
             index = index + 1
         }
 
@@ -68,7 +68,7 @@ imply Utf8Builder {
         let mut bytes: [u8] = []
         let mut index: usize = 0
         while index < self.bytes.length() {
-            push(bytes, self.bytes.get(index).unwrap())
+            push(bytes, self.bytes.get(index + 1).unwrap())
             index = index + 1
         }
 

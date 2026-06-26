@@ -43,7 +43,7 @@ imply OrderedMap<K, V>: Map<K, V> {
             return Some(entry.value)
         }
 
-        let slot: usize = self._entries.length()
+        let slot: usize = self._entries.length() + 1
         self._entries.push(OrderedMapEntry {
             key: key,
             value: value,
@@ -127,7 +127,7 @@ imply OrderedMap<K, V>: Map<K, V> {
         let keys: List<K> = self.keys()
         let mut i: usize = 0
         while i < keys.length() {
-            let key: K = keys.get(i).unwrap()
+            let key: K = keys.get(i + 1).unwrap()
             f(key, self.get(key).unwrap())
             i = i + 1
         }
@@ -147,9 +147,9 @@ imply OrderedMap<K, V> {
     micro find_slot(self, key: K): Option<usize> {
         let mut cursor: usize = 0
         while cursor < self._entries.length() {
-            let entry: OrderedMapEntry<K, V> = self._entries.get(cursor).unwrap()
+            let entry: OrderedMapEntry<K, V> = self._entries.get(cursor + 1).unwrap()
             if entry.active && entry.key == key {
-                return Some(cursor)
+                return Some(cursor + 1)
             }
 
             cursor = cursor + 1

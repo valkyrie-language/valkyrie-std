@@ -66,7 +66,7 @@ imply BTreeSet<T> {
 
         let mut index: usize = 0
         while index < values.length() {
-            let current: T = values.get(index).unwrap()
+            let current: T = values.get(index + 1).unwrap()
             if current != value {
                 self.insert(current)
             }
@@ -102,7 +102,7 @@ imply BTreeSet<T> {
         let items: List<T> = self.to_list()
         let mut index: usize = 0
         while index < items.length() {
-            f(items.get(index).unwrap())
+            f(items.get(index + 1).unwrap())
             index = index + 1
         }
     }
@@ -118,7 +118,7 @@ imply BTreeSet<T> {
             let leaf: BTreeSetNode<T> = current.unwrap()
             let mut cursor: usize = 0
             while cursor < leaf.keys.length() {
-                result.push(leaf.keys.get(cursor).unwrap())
+                result.push(leaf.keys.get(cursor + 1).unwrap())
                 cursor = cursor + 1
             }
 
@@ -140,7 +140,7 @@ imply BTreeSet<T> {
         if node.leaf {
             let mut cursor: usize = 0
             while cursor < node.keys.length() {
-                if node.keys.get(cursor).unwrap() == value {
+                if node.keys.get(cursor + 1).unwrap() == value {
                     return true
                 }
 
@@ -150,38 +150,38 @@ imply BTreeSet<T> {
             return false
         }
 
-        return self.search_node(node.children.get(self.find_child_index(node, value)).unwrap(), value)
+        return self.search_node(node.children.get(self.find_child_index(node, value) + 1).unwrap(), value)
     }
 
     micro insert_non_full(mut self, node: BTreeSetNode<T>, value: T): unit {
         if node.leaf {
             let mut insert_at: usize = 0
             while insert_at < node.keys.length() {
-                if value < node.keys.get(insert_at).unwrap() {
+                if value < node.keys.get(insert_at + 1).unwrap() {
                     break
                 }
 
                 insert_at = insert_at + 1
             }
 
-            node.keys.insert(insert_at, value)
+            node.keys.insert(insert_at + 1, value)
             return
         }
 
         let mut child_index: usize = self.find_child_index(node, value)
-        let child: BTreeSetNode<T> = node.children.get(child_index).unwrap()
+        let child: BTreeSetNode<T> = node.children.get(child_index + 1).unwrap()
         if self.is_full(child) {
             self.split_child(node, child_index)
-            if value >= node.keys.get(child_index).unwrap() {
+            if value >= node.keys.get(child_index + 1).unwrap() {
                 child_index = child_index + 1
             }
         }
 
-        self.insert_non_full(node.children.get(child_index).unwrap(), value)
+        self.insert_non_full(node.children.get(child_index + 1).unwrap(), value)
     }
 
     micro split_child(self, parent: BTreeSetNode<T>, child_index: usize): unit {
-        let child: BTreeSetNode<T> = parent.children.get(child_index).unwrap()
+        let child: BTreeSetNode<T> = parent.children.get(child_index + 1).unwrap()
         let right: BTreeSetNode<T> = BTreeSetNode {
             leaf: child.leaf,
             keys: ArrayList::new(4),
@@ -191,33 +191,33 @@ imply BTreeSet<T> {
 
         if child.leaf {
             while child.keys.length() > 1 {
-                right.keys.push(child.keys.remove(1).unwrap())
+                right.keys.push(child.keys.remove(2).unwrap())
             }
 
             right.next = child.next
             child.next = Some(right)
 
-            parent.children.insert(child_index + 1, right)
-            parent.keys.insert(child_index, parent.children.get(child_index + 1).unwrap().keys.get(0).unwrap())
+            parent.children.insert(child_index + 2, right)
+            parent.keys.insert(child_index + 1, parent.children.get(child_index + 2).unwrap().keys.get(1).unwrap())
             return
         }
 
-        let separator: T = child.keys.get(1).unwrap()
-        right.keys.push(child.keys.remove(2).unwrap())
-        child.keys.remove(1)
+        let separator: T = child.keys.get(2).unwrap()
+        right.keys.push(child.keys.remove(3).unwrap())
+        child.keys.remove(2)
 
         while child.children.length() > 2 {
-            right.children.push(child.children.remove(2).unwrap())
+            right.children.push(child.children.remove(3).unwrap())
         }
 
-        parent.children.insert(child_index + 1, right)
-        parent.keys.insert(child_index, separator)
+        parent.children.insert(child_index + 2, right)
+        parent.keys.insert(child_index + 1, separator)
     }
 
     micro leftmost_leaf(self, node: BTreeSetNode<T>): BTreeSetNode<T> {
         let mut current: BTreeSetNode<T> = node
         while !current.leaf {
-            current = current.children.get(0).unwrap()
+            current = current.children.get(1).unwrap()
         }
 
         return current
@@ -226,7 +226,7 @@ imply BTreeSet<T> {
     micro find_child_index(self, node: BTreeSetNode<T>, value: T): usize {
         let mut cursor: usize = 0
         while cursor < node.keys.length() {
-            if value < node.keys.get(cursor).unwrap() {
+            if value < node.keys.get(cursor + 1).unwrap() {
                 return cursor
             }
 
