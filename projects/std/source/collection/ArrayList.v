@@ -83,7 +83,7 @@ imply ArrayList<T> {
             return None
         }
 
-        return Some(self._items[ordinal])
+        return self._items.get(ordinal)
     }
 
     [host_contract]
@@ -92,7 +92,24 @@ imply ArrayList<T> {
             return
         }
 
-        self._items[ordinal] = value
+        remove(self._items, ordinal)
+        insert(self._items, ordinal, value)
+    }
+
+    suffix `[ ]`(self, ordinal: usize): Option<T> {
+        return self.get(ordinal)
+    }
+
+    suffix `[ ]=`(mut self, ordinal: usize, value: T): unit {
+        self.set(ordinal, value)
+    }
+
+    suffix `⁅ ⁆`(self, cardinal: usize): Option<T> {
+        return self.get(cardinal + 1)
+    }
+
+    suffix `⁅ ⁆=`(mut self, cardinal: usize, value: T): unit {
+        self.set(cardinal + 1, value)
     }
 
     [host_contract]
@@ -112,7 +129,7 @@ structure ArrayListIterator<T> {
     _index: usize
 }
 
-imply ArrayList<T>: std.iterator.IntoIterator {
+imply ArrayList<T>: std::iterator::IntoIterator {
     type Item = T;
     type Iter = ArrayListIterator<T>;
 
@@ -124,11 +141,11 @@ imply ArrayList<T>: std.iterator.IntoIterator {
     }
 }
 
-imply ArrayList<T>: std.iterator.FromIterator {
+imply ArrayList<T>: std::iterator::FromIterator {
     type Item = T;
 
     micro from_iterator<I>(iter: I) -> Self
-        where I: std.iterator.Iterator<Item = T>
+        where I: std::iterator::Iterator<Item = T>
     {
         let mut result: Self = Self::new(0)
         loop item in iter {
@@ -139,7 +156,7 @@ imply ArrayList<T>: std.iterator.FromIterator {
     }
 }
 
-imply ArrayListIterator<T>: std.iterator.Iterator {
+imply ArrayListIterator<T>: std::iterator::Iterator {
     type Item = T;
 
     micro has_next(self): bool {

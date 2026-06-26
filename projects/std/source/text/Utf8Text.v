@@ -256,7 +256,7 @@ imply Utf8Text {
     }
 }
 
-imply Utf8Text: std.iterator.IntoIterator {
+imply Utf8Text: std::iterator::IntoIterator {
     type Item = char;
     type Iter = Utf8Iterator;
 

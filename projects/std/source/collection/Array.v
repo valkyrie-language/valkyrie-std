@@ -17,6 +17,9 @@ imply Array<T> {
     [host_contract]
     micro get(self, ordinal: usize): Option<T>
 
+    [host_contract]
+    micro set(mut self, ordinal: usize, value: T): unit
+
     micro first(self): Option<T> {
         return self.get(1)
     }
@@ -42,6 +45,22 @@ imply Array<T> {
 
         return false
     }
+
+    suffix `[ ]`(self, ordinal: usize): Option<T> {
+        return self.get(ordinal)
+    }
+
+    suffix `[ ]=`(mut self, ordinal: usize, value: T): unit {
+        self.set(ordinal, value)
+    }
+
+    suffix `⁅ ⁆`(self, cardinal: usize): Option<T> {
+        return self.get(cardinal + 1)
+    }
+
+    suffix `⁅ ⁆=`(mut self, cardinal: usize, value: T): unit {
+        self.set(cardinal + 1, value)
+    }
 }
 
 structure ArrayIterator<T> {
@@ -49,7 +68,7 @@ structure ArrayIterator<T> {
     _index: usize
 }
 
-imply Array<T>: std.iterator.IntoIterator {
+imply Array<T>: std::iterator::IntoIterator {
     type Item = T;
     type Iter = ArrayIterator<T>;
 
@@ -61,11 +80,11 @@ imply Array<T>: std.iterator.IntoIterator {
     }
 }
 
-imply Array<T>: std.iterator.FromIterator {
+imply Array<T>: std::iterator::FromIterator {
     type Item = T;
 
     micro from_iterator<I>(iter: I) -> Self
-        where I: std.iterator.Iterator<Item = T>
+        where I: std::iterator::Iterator<Item = T>
     {
         let mut result: [T] = []
         loop item in iter {
@@ -76,7 +95,7 @@ imply Array<T>: std.iterator.FromIterator {
     }
 }
 
-imply ArrayIterator<T>: std.iterator.Iterator {
+imply ArrayIterator<T>: std::iterator::Iterator {
     type Item = T;
 
     micro has_next(self): bool {

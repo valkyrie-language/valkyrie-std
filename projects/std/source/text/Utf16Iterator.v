@@ -5,7 +5,7 @@ structure Utf16Iterator {
     _offset: usize,
 }
 
-imply Utf16Iterator: std.iterator.Iterator {
+imply Utf16Iterator: std::iterator::Iterator {
     type Item = char;
 
     micro new(text: &Utf16Text) -> Self {

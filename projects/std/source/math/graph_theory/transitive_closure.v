@@ -35,7 +35,7 @@ micro transitive_successors(graph: DirectedGraph, start: utf8) -> [utf8] {
         .filter(micro(node: utf8) -> bool {
             return node != start
         })
-        |> std.iterator.collect_array()
+        |> std::iterator::collect_array()
 }
 
 # 计算传递前驱闭包
@@ -72,5 +72,5 @@ micro transitive_predecessors(graph: DirectedGraph, start: utf8) -> [utf8] {
         .filter(micro(node: utf8) -> bool {
             return node != start
         })
-        |> std.iterator.collect_array()
+        |> std::iterator::collect_array()
 }

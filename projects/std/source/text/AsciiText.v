@@ -52,7 +52,7 @@ imply AsciiText {
     }
 }
 
-imply AsciiText: std.iterator.IntoIterator {
+imply AsciiText: std::iterator::IntoIterator {
     type Item = char;
     type Iter = AsciiIterator;
 
@@ -61,7 +61,7 @@ imply AsciiText: std.iterator.IntoIterator {
     }
 }
 
-imply AsciiIterator: std.iterator.Iterator {
+imply AsciiIterator: std::iterator::Iterator {
     type Item = char;
 
     micro has_next(self): bool {
