@@ -29,8 +29,8 @@ micro legion_normalize_short_target(value: utf8) -> utf8 {
     if value == "jvm" || value == "jvm-openjdk-unknown-managed" {
         return "jvm-openjdk-unknown-managed"
     }
-    if value == "wasm" || value == "wasm32-unknown-web-webassembly" {
-        return "wasm32-unknown-web-webassembly"
+    if value == "wasm" || value == "wasm32-unknown-browser-wasm" {
+        return "wasm32-unknown-browser-wasm"
     }
     if value == "nyar" || value == "nyar-unknown-unknown" {
         return "nyar-unknown-unknown"

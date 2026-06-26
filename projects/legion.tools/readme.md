@@ -33,40 +33,10 @@
 - `projects/nyar.language/source/valkyrie`：提供 `Valkyrie` 语言前端
 - `legion.tools`：基于该前端整合工作流，而不是重复实现语义层
 
-## 工作流位置
+## 文档
 
-`legion.tools` 自己知道并组织如下调用链：
-
-```text
-用户 / CI
-    -> legion.tools
-    -> source/valkyrie
-    -> nyar
-    -> target family / runtime / packaging
-```
-
-在这条链路里：
-
-- `source/valkyrie` 负责前端解析、绑定、类型检查与诊断
-- `nyar` 负责 `OA / EGraph / PE` 元优化核心
-- `legion.tools` 负责把创建、构建、测试、运行、打包、发布等工作流编排起来
-
-## 工具层边界
-
-`legion.tools` 应负责：
-
-- 项目创建与初始化
-- workspace、依赖与配置解析
-- 调用 `source/valkyrie` 执行前端分析
-- 串联构建、测试、运行、打包、发布工作流
-- 组织缓存、产物目录与交付记录
-
-`legion.tools` 不应负责：
-
-- 重新实现一套 `Valkyrie` parser、binder 或 type checker
-- 自己维护一套平行的优化主线
-- 自己定义 `OA / EGraph / PE` 核心协议
-- 把工具层临时状态抬升成语言语义事实
+- [工作流](./documentation/pages/zh-hans/workflow.md)
+- [架构](./documentation/pages/zh-hans/architecture.md)
 
 ## 目标
 

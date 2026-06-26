@@ -1,12 +1,21 @@
 {
-    name: "test.minimal_cli",
+    name: "test.fs",
     version: "0.0.0.0",
-    description: "最小命令行测试",
+    description: "文件系统功能测试",
     license: "MIT",
-    dependencies: {},
+    dependencies: {
+        "std": true
+    },
     build: [
         {
-            target: "clr-microsoft-unknown-managed"
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        },
+        {
+            target: "jvm-openjdk-unknown-managed"
+        },
+        {
+            target: "wasm32-unknown-browser-wasm"
         }
     ]
 }

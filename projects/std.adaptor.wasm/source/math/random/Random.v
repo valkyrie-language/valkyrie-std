@@ -1,15 +1,17 @@
 namespace std.adaptor.wasm.math.random;
 
+using std.math.random.{Random};
+
 [host_provider(std::math::random::__host_new)]
 micro host_new() -> std.math.random.Random {
-    return std.math.random.Random {
+    return Random {
         _state: 0
     }
 }
 
 [host_provider(std::math::random::__host_with_seed)]
 micro host_with_seed(seed: i32) -> std.math.random.Random {
-    return std.math.random.Random {
+    return Random {
         _state: seed
     }
 }

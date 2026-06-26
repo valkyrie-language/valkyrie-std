@@ -1,7 +1,0 @@
-{
-    name: "test.wasm_extcall",
-    version: "0.0.0.0",
-    description: "WASM外部函数调用测试",
-    dependencies: { "std": false },
-    build: [{ target: "wasm32-unknown-web-webassembly" }]
-}
