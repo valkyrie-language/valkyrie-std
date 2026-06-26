@@ -5,24 +5,26 @@ namespace std.collection;
 class Array<T> {}
 
 imply Array<T> {
+    [host_contract]
     micro length(self): usize {
-        return __array_host_length::<T>(self)
+        return self.length
     }
 
     micro is_empty(self): bool {
         return self.length() == 0
     }
 
-    micro get(self, index: usize): Option<T> {
-        if index >= self.length() {
+    [host_contract]
+    micro get(self, ordinal: usize): Option<T> {
+        if ordinal == 0 || ordinal > self.length() {
             return None
         }
 
-        return Some(__array_host_get::<T>(self, index))
+        return Some(self::[ordinal - 1])
     }
 
     micro first(self): Option<T> {
-        return self.get(0)
+        return self.get(1)
     }
 
     micro last(self): Option<T> {
@@ -31,12 +33,12 @@ imply Array<T> {
             return None
         }
 
-        return self.get(item_count - 1)
+        return self.get(item_count)
     }
 
     micro contains(self, value: T): bool {
-        let mut i: usize = 0
-        while i < self.length() {
+        let mut i: usize = 1
+        while i <= self.length() {
             if self.get(i).unwrap() == value {
                 return true
             }
@@ -92,18 +94,8 @@ imply ArrayIterator<T>: std.iterator.Iterator {
             return None
         }
 
-        let value: T = self._array.get(self._index).unwrap()
+        let value: T = self._array.get(self._index + 1).unwrap()
         self._index = self._index + 1
         return Some(value)
     }
-}
-
-[host_contract]
-private micro __array_host_length<T>(array: [T]): usize {
-    return array.length
-}
-
-[host_contract]
-private micro __array_host_get<T>(array: [T], index: usize): T {
-    return array[index]
 }

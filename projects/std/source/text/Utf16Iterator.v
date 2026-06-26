@@ -49,7 +49,7 @@ imply Utf16Iterator: std.iterator.Iterator {
     }
 
     private micro code_unit_at(self, offset: usize) -> u16 {
-        return __utf16_host_char_at(self._text, offset as isize)
+        return self._text.char_at(offset as isize)
     }
 
     private micro is_high_surrogate(self, value: u16) -> bool {
@@ -60,6 +60,3 @@ imply Utf16Iterator: std.iterator.Iterator {
         return value >= 0xDC00 && value <= 0xDFFF
     }
 }
-
-[host_contract]
-micro __utf16_host_char_at(value: utf16, index: isize): u16

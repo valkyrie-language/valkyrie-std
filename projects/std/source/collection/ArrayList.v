@@ -8,16 +8,19 @@ class ArrayList<T> {
 }
 
 imply ArrayList<T> {
+    [host_contract]
     micro new(capacity: usize): Self {
-        return __array_list_host_new::<T>(capacity)
+        return ArrayList { _items: [], _capacity: capacity }
     }
 
+    [host_contract]
     micro capacity(self): usize {
-        return __array_list_host_capacity(self)
+        return self._items.length
     }
 
+    [host_contract]
     micro push(mut self, value: T): unit {
-        __array_list_host_push(self, value)
+        push(self._items, value)
     }
 
     micro pop(mut self): Option<T> {
@@ -26,31 +29,35 @@ imply ArrayList<T> {
             return None
         }
 
-        return self.remove(size - 1)
+        return self.remove(size)
     }
 
-    micro insert(mut self, index: usize, value: T): unit {
-        if index > self.length() {
+    [host_contract]
+    micro insert(mut self, ordinal: usize, value: T): unit {
+        if ordinal == 0 || ordinal > self.length() + 1 {
             return
         }
 
-        __array_list_host_insert(self, index, value)
+        insert(self._items, ordinal - 1, value)
     }
 
-    micro remove(mut self, index: usize): Option<T> {
-        if index >= self.length() {
+    [host_contract]
+    micro remove(mut self, ordinal: usize): Option<T> {
+        if ordinal == 0 || ordinal > self.length() {
             return None
         }
 
-        return Some(__array_list_host_remove(self, index))
+        return Some(remove(self._items, ordinal - 1))
     }
 
+    [host_contract]
     micro clear(mut self): unit {
-        __array_list_host_clear(self)
+        self._items = []
     }
 
+    [host_contract]
     micro length(self): usize {
-        return __array_list_host_length(self)
+        return self._items.length
     }
 
     micro is_empty(self): bool {
@@ -58,7 +65,7 @@ imply ArrayList<T> {
     }
 
     micro first(self): Option<T> {
-        return self.get(0)
+        return self.get(1)
     }
 
     micro last(self): Option<T> {
@@ -67,84 +74,37 @@ imply ArrayList<T> {
             return None
         }
 
-        return self.get(size - 1)
+        return self.get(size)
     }
 
-    micro get(self, index: usize): Option<T> {
-        if index >= self.length() {
+    [host_contract]
+    micro get(self, ordinal: usize): Option<T> {
+        if ordinal == 0 || ordinal > self.length() {
             return None
         }
 
-        return Some(__array_list_host_get(self, index))
+        return Some(self._items::[ordinal - 1])
     }
 
-    micro set(mut self, index: usize, value: T): unit {
-        if index >= self.length() {
+    [host_contract]
+    micro set(mut self, ordinal: usize, value: T): unit {
+        if ordinal == 0 || ordinal > self.length() {
             return
         }
 
-        __array_list_host_set(self, index, value)
+        self._items::[ordinal - 1] = value
     }
 
+    [host_contract]
     micro contains(self, value: T): bool {
-        return __array_list_host_contains(self, value)
-    }
-}
-
-[host_contract]
-private micro __array_list_host_new<T>(capacity: usize): ArrayList<T> {
-    return ArrayList { _items: [], _capacity: capacity }
-}
-
-[host_contract]
-private micro __array_list_host_capacity<T>(list: ArrayList<T>): usize {
-    return list._items.length
-}
-
-[host_contract]
-private micro __array_list_host_push<T>(list: ArrayList<T>, value: T): unit {
-    push(list._items, value)
-}
-
-[host_contract]
-private micro __array_list_host_insert<T>(list: ArrayList<T>, index: usize, value: T): unit {
-    insert(list._items, index, value)
-}
-
-[host_contract]
-private micro __array_list_host_remove<T>(list: ArrayList<T>, index: usize): T {
-    return remove(list._items, index)
-}
-
-[host_contract]
-private micro __array_list_host_clear<T>(list: ArrayList<T>): unit {
-    list._items = []
-}
-
-[host_contract]
-private micro __array_list_host_length<T>(list: ArrayList<T>): usize {
-    return list._items.length
-}
-
-[host_contract]
-private micro __array_list_host_get<T>(list: ArrayList<T>, index: usize): T {
-    return list._items[index]
-}
-
-[host_contract]
-private micro __array_list_host_set<T>(list: ArrayList<T>, index: usize, value: T): unit {
-    list._items[index] = value
-}
-
-[host_contract]
-private micro __array_list_host_contains<T>(list: ArrayList<T>, value: T): bool {
-    loop item in list._items {
-        if item == value {
-            return true
+        loop item in self._items {
+            if item == value {
+                return true
+            }
         }
-    }
 
-    return false
+        return false
+    }
 }
 
 structure ArrayListIterator<T> {
@@ -191,7 +151,7 @@ imply ArrayListIterator<T>: std.iterator.Iterator {
             return None
         }
 
-        let value: T = self._list.get(self._index).unwrap()
+        let value: T = self._list.get(self._index + 1).unwrap()
         self._index = self._index + 1
         return Some(value)
     }

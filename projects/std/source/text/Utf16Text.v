@@ -10,8 +10,9 @@ class Utf16Text {
 }
 
 imply Utf16Text {
+    [host_contract]
     micro length(self) -> isize {
-        return __utf16_host_length(self)
+        return self._repr.length
     }
 
     micro is_empty(self) -> bool {
@@ -22,90 +23,70 @@ imply Utf16Text {
         return false
     }
 
+    [host_contract]
     micro sub_string(self, start: isize, count: isize) -> utf16 {
-        return __utf16_host_sub_string(self, start, count)
+        return self
     }
 
+    [host_contract]
     micro concat(self, other: utf16) -> utf16 {
-        return __utf16_host_concat(self, other)
+        return self
     }
 
+    [host_contract]
     micro contains(self, value: utf16) -> bool {
-        return __utf16_host_contains(self, value)
+        return false
     }
 
+    [host_contract]
     micro starts_with(self, prefix: utf16) -> bool {
-        return __utf16_host_starts_with(self, prefix)
+        return false
     }
 
+    [host_contract]
     micro ends_with(self, suffix: utf16) -> bool {
-        return __utf16_host_ends_with(self, suffix)
+        return false
     }
 
+    [host_contract]
     micro index_of(self, value: utf16) -> isize {
-        return __utf16_host_index_of(self, value)
+        return -1
     }
 
+    [host_contract]
     micro trim(self) -> utf16 {
-        return __utf16_host_trim(self)
+        return self
     }
 
+    [host_contract]
     micro to_lower(self) -> utf16 {
-        return __utf16_host_to_lower(self)
+        return self
     }
 
+    [host_contract]
     micro to_upper(self) -> utf16 {
-        return __utf16_host_to_upper(self)
+        return self
     }
 
+    [host_contract]
     micro replace(self, old_value: utf16, new_value: utf16) -> utf16 {
-        return __utf16_host_replace(self, old_value, new_value)
+        return self
     }
 
+    [host_contract]
     micro equals(self, other: utf16) -> bool {
-        return __utf16_host_equals(self, other)
+        return false
+    }
+
+    [host_contract]
+    private micro char_at(self, offset: isize) -> u16 {
+        return self._repr::[offset as usize]
     }
 
     micro chars(self) -> Utf16Iterator {
         return Utf16Iterator::new(self)
     }
 }
-
-[host_contract]
-micro __utf16_host_length(value: utf16): isize
-
-[host_contract]
-micro __utf16_host_sub_string(value: utf16, start: isize, count: isize): utf16
-
-[host_contract]
-micro __utf16_host_concat(lhs: utf16, rhs: utf16): utf16
-
-[host_contract]
-micro __utf16_host_contains(value: utf16, other: utf16): bool
-
-[host_contract]
-micro __utf16_host_starts_with(value: utf16, prefix: utf16): bool
-
-[host_contract]
-micro __utf16_host_ends_with(value: utf16, suffix: utf16): bool
-
-[host_contract]
-micro __utf16_host_index_of(value: utf16, other: utf16): isize
-
-[host_contract]
-micro __utf16_host_trim(value: utf16): utf16
-
-[host_contract]
-micro __utf16_host_to_lower(value: utf16): utf16
-
-[host_contract]
-micro __utf16_host_to_upper(value: utf16): utf16
-
-[host_contract]
-micro __utf16_host_replace(value: utf16, old_value: utf16, new_value: utf16): utf16
-
-[host_contract]
-micro __utf16_host_equals(value: utf16, other: utf16): bool
 
 imply Utf16Text: std.iterator.IntoIterator {
     type Item = char;
