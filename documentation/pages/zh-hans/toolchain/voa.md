@@ -1,13 +1,23 @@
-# VOA 全栈框架
+﻿# Asgard CLI 与 VOA 编译实现
 
-VOA（Valkyrie of Asgard）是 Valkyrie 语言的全栈 Web 开发框架，灵感来自 Ruby on Rails 的"约定优于配置"哲学，定位类似 Next.js / Nuxt.js。
+**Asgard** 是 GUI 应用框架，**用户 CLI 为 `asgard`**（`asgard build` / `asgard dev` / `asgard pack`）。底层编译由 Rust crate **`voa`** 实现（`cargo build -p voa --bin asgard`）。
+
+| | Asgard（用户面） | VOA（实现） |
+|:---|:---|:---|
+| 角色 | 框架 + CLI 命令 | 编译管线（解析、降级、编译、写 dist） |
+| 典型路径 | `valkyrie.v/projects/asgard/` | `valkyrie.rs/projects/voa/` |
+| 用户配置 | 依赖 `asgard` / `asgard.ui` 等包 | `voa.config.v` |
+
+统一编译架构：[Asgard GUI 统一编译架构](../../projects/asgard/documentation/pages/zh-hans/architecture/gui-compilation.md)。UI 策略：[UI 渲染策略](../../projects/asgard/documentation/pages/zh-hans/architecture/ui-rendering.md)。
+
+Asgard 采用约定优于配置，为应用提供类似 Next.js / Nuxt 的 **工程化构建体验**（约定目录、`voa.config.v`）。**`asgard` 是独立 CLI**；`legion` 负责 V 包依赖与通用构建。
 
 ## 核心理念
 
 | 原则 | 说明 |
 |:---|:---|
 | 约定优于配置 | 遵循命名约定即可自动生效，无需显式配置 |
-| 前后端统一语言 | 前端进入 `WASM Browser/Node` 路线，后端进入 `CLR` / `JVM` / `Native` 等 family |
+| 前后端统一语言 | **Web** 走 WASM；**Android/iOS/小程序** 走各自宿主字节码（DEX / Mach-O / 宿主字节码） |
 | 类型共享 | 数据类型只需定义一次，前后端共享 |
 | 函数调用 | 前端直接调用后端函数，框架自动处理网络通信 |
 | 项目导向 | 每个项目都是独立的 Valkyrie 包，管理自身依赖 |
@@ -18,23 +28,22 @@ VOA（Valkyrie of Asgard）是 Valkyrie 语言的全栈 Web 开发框架，灵�
 | 层 | 技术 | 说明 |
 |:---|:---|:---|
 | 编译主线 | `valkyrie.v` 主编译线 | 复用语义闭合、family lowering 与交付体系 |
-| 前端 | WASM | 编译目标为 WebAssembly + JS 胶水代码 |
-| 后端 | CLR（优先） | 也可运行于 JVM、Native |
-| UI | AWSL | `.awsl` 组件文件 |
+| 逻辑字节码 | **按 `platform`** | `browser` → WASM；`android` → DEX；`ios` → Mach-O；`wechat-miniprogram` → 宿主字节码 |
+| UI | AWSL → RenderIR → **编入制品** | 各宿主原生视图消费（见 [UI 渲染策略](../guides/ui-rendering.md)） |
 | 脚本 | Valkyrie 语言 | `.v` 脚本文件 |
-| 运行时 | `voa-runtime.js` | 唯一入口，按需加载 JS 胶水 + WASM |
+| Web 运行时 | `boot.js` + WASM | 仅 `platform: browser`；响应式在 WASM 内 |
 | 包管理 | Legion | 依赖管理与构建工具 |
-| 配置 | `voa.config.v` | 由 Legion 管理的项目配置 |
+| 配置 | `voa.config.v` | `platform` 选字节码后端；`build.mode` 控制 debug 侧车 |
 
 ## 命令体系
 
 | 命令 | 说明 |
 |:---|:---|
-| `voa dev` | 启动开发服务器 |
-| `voa start` | 启动生产服务器 |
-| `voa build` | 构建项目 |
-| `voa add` | 添加依赖 |
-| `voa remove` | 移除依赖 |
+| `asgard dev` | 开发模式构建 + HMR 开发服务器（browser；监视 `source/` 变更并热重载） |
+| `asgard build` | 生产构建 |
+| `asgard pack` | 按 `publish` 组装交付物（apk / ipa / mini-program 等） |
+| `asgard add` | 添加依赖（规划中） |
+| `asgard remove` | 移除依赖（规划中） |
 | `voa install` | 安装所有依赖 |
 | `voa run` | 运行脚本 |
 | `voa clean` | 清理构建产物 |
@@ -70,44 +79,41 @@ my_workspace/
 
 | 类型 | 编译目标 | 说明 |
 |:---|:---|:---|
-| **前端项目** | `wasm` | 编译为 WebAssembly + JS 胶水代码 |
+| **GUI 项目** | 按 `platform` | `browser` → WASM；移动/小程序 → 对应宿主字节码 |
 | **后端项目** | `clr` / `jvm` / `native` | 编译为对应平台字节码 |
 | **共享项目** | `lib` | 编译为库，供其他项目依赖 |
 
-## 运行时架构
+## 运行时架构（`platform: browser`）
 
-`voa-runtime.js` 是 VOA 前端应用的**唯一必要脚本**，按需加载 WASM 模块和 JS 胶水：
+**仅 Web** 走 WASM 路线。其它 `platform` 由宿主运行时加载 **制品内编入的 RenderIR** 与对应字节码（见 [统一编译架构](../guides/asgard-gui-compilation.md)）。
+
+浏览器交付物为 **`boot.js`（加载器）+ WASM 模块 + 每路由 JS 胶水**。没有独立的 JS 框架 runtime；AWSL 的 `let mut` 响应式与渲染逻辑均在 WASM 中。
 
 ```mermaid
 flowchart TD
     HTML[index.html]
-    Runtime[voa-runtime.js]
-    Reactive[响应式内核]
-    DOM[DOM 操作]
-    Island[Island 架构]
-    ModuleRegistry[WASM 模块注册表]
-    StringMarshal[字符串编组]
-    DomHandles[DOM 句柄表]
-    Bridge[Vue / React Bridge]
-    Boot[应用启动]
+    Boot[boot.js]
+    Wasm[WASM 模块]
+    Glue[组件胶水 c/*.js]
+    Reactive[细粒度响应式 / 渲染]
+    DOM[dom_* js_builtin]
+    Island[Island 挂载]
 
-    HTML --> Runtime
-    Runtime --> Reactive
-    Runtime --> DOM
-    Runtime --> Island
-    Runtime --> ModuleRegistry
-    Runtime --> StringMarshal
-    Runtime --> DomHandles
-    Runtime --> Bridge
-    Runtime --> Boot
+    HTML --> Boot
+    Boot --> Wasm
+    Boot --> Glue
+    Wasm --> Reactive
+    Wasm --> DOM
+    Glue --> Island
+    Boot --> Island
 
     classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
     classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
     classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
 
-    class HTML,Runtime phase;
-    class Island,ModuleRegistry boundary;
-    class Reactive,DOM,StringMarshal,DomHandles,Bridge,Boot delivery;
+    class HTML,Boot,Wasm phase;
+    class Glue,Island boundary;
+    class Reactive,DOM delivery;
 ```
 
 ## Island 架构

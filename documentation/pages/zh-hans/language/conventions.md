@@ -147,7 +147,7 @@ Valkyrie 使用以下关键字进行类型抽象：
 | `.v` | Valkyrie 源码 |
 | `.script` | Gnosis Script 源码 |
 | `.shader` | Gnosis Shader 源码 |
-| `.awsl` | AWSL 源码 |
+| `.awsl` | AWSL 源码（Vue 式 SFC，VOA） |
 | `.widget` | Gnosis Widget 源码 |
 | `.hermes` | Hermes 源码 |
 | `.schema` | Gnosis Schema 源码 |

@@ -4,7 +4,7 @@ micro parse_i32(s: utf8) -> Option<i32> {
     let mut result: i32 = 0
     let mut sign: i32 = 1
     let mut i: usize = 0
-    let slen: usize = s.length() as usize
+    let string_length: usize = s.length() as usize
 
     if slen == 0 {
         return None
@@ -33,32 +33,26 @@ micro parse_i32(s: utf8) -> Option<i32> {
 
 micro parse_i64(s: utf8) -> Option<i64> {
     let opt: Option<i32> = parse_i32(s)
-    match opt {
-        case Some(value):
-            return Some(value as i64)
-        case None:
-            return None
+    if opt.is_some() {
+        return Some(opt.unwrap() as i64)
     }
+    return None
 }
 
 micro parse_f32(s: utf8) -> Option<f32> {
     let opt: Option<i32> = parse_i32(s)
-    match opt {
-        case Some(value):
-            return Some(value as f32)
-        case None:
-            return None
+    if opt.is_some() {
+        return Some(opt.unwrap() as f32)
     }
+    return None
 }
 
 micro parse_f64(s: utf8) -> Option<f64> {
     let opt: Option<i32> = parse_i32(s)
-    match opt {
-        case Some(value):
-            return Some(value as f64)
-        case None:
-            return None
+    if opt.is_some() {
+        return Some(opt.unwrap() as f64)
     }
+    return None
 }
 
 micro parse_bool(s: utf8) -> Option<bool> {

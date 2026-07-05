@@ -1,0 +1,10 @@
+{
+    name: "voa_core",
+    version: "0.1.0.0",
+    description: "VOA 框架核心运行时",
+    license: "MIT",
+    type: "library",
+    target: "lib",
+    dependencies: {},
+    devDependencies: {}
+}

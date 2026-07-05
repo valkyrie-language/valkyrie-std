@@ -40,14 +40,14 @@
 
             <div class="comment-form">
                 <h3 class="comment-form-title">发表评论</h3>
-                <Input label="昵称" placeholder="你的名字" value={newCommentAuthor} on:input={(e) => { newCommentAuthor = e.value }} />
+                <Input label="昵称" placeholder="你的名字" value={newCommentAuthor} on:input={(e: ValueChangeEvent) => { newCommentAuthor = e.value }} />
                 <div class="comment-form-field">
                     <label class="comment-form-label">评论内容</label>
                     <textarea
                         class="comment-textarea"
                         placeholder="写下你的想法..."
                         value={newCommentContent}
-                        on:input={(e) => { newCommentContent = e.value }}
+                        on:input={(e: InputEvent) => { newCommentContent = e.target.value }}
                     />
                 </div>
                 <Button variant="primary" label="提交评论" on:click={submitComment} />

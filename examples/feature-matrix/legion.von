@@ -1,0 +1,16 @@
+{
+    name: "feature-matrix",
+    version: "0.1.0",
+    description: "语言特性矩阵验收夹具（cov + legion test/bench）",
+    auto_link: {
+        core: false,
+        std: false
+    },
+    dependencies: {},
+    build: [
+        { target: "nyar" },
+        { target: "clr" },
+        { target: "wasm" },
+        { target: "jvm" }
+    ]
+}

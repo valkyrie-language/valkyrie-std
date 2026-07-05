@@ -126,7 +126,7 @@ let x: f64 = "3.14"  # VALK2005：类型 'utf8' 不可转换为 'f64'
 | VALK_S002 | 未检查的可空值 | Error | 使用 `if let Some(val) = opt` 或 `opt!` 操作符 |
 | VALK_S003 | 不安全的类型转换 | Warning | 使用 `as?` 安全转换，或实现 `TryFrom<>` trait |
 | VALK_S004 | 除零检查缺失 | Warning | 添加 `if divisor != 0` 检查 |
-| VALK_S005 | 缓冲区溢出风险 | Error | 使用有界数组访问，或范围检查 `if idx < arr.len()` |
+| VALK_S005 | 缓冲区溢出风险 | Error | 使用有界数组访问，或范围检查 `if idx < arr.length()` |
 
 ## 使用方式
 

@@ -6,6 +6,10 @@ micro get_text(key: utf8) -> utf8 {
     return __player_prefs_get_string(key)
 }
 
+micro set_text(key: utf8, value: utf8) {
+    __player_prefs_set_string(key, value)
+}
+
 # 直接绑定 Unity `PlayerPrefs.GetString`
 
 [clr("UnityEngine", "UnityEngine.PlayerPrefs", "GetString")]

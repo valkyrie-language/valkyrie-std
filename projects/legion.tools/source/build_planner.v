@@ -197,26 +197,28 @@ micro resolve_workspace_member_dir(project_dir: utf8, dependency_name: utf8) -> 
     }
 
     let workspace_dir: utf8 = workspace_root_dir(workspace_manifest_path)
-    match legion_read_workspace_manifest(workspace_manifest_path) {
-        case Fine(workspace_manifest):
-            loop member in workspace_manifest.members {
-                let member_dir: utf8 = path_join(workspace_dir, member)
-                let member_manifest_path: utf8 = path_join(member_dir, "legion.von")
-                if !std.io.file_exists(member_manifest_path) {
-                    continue
-                }
+    let workspace_result: VonParseResult<LegionWorkspaceManifest> = legion_read_workspace_manifest(workspace_manifest_path)
+    let workspace_failure: VonDiagnostic? = von_parse_take_fail(workspace_result)
+    if workspace_failure.is_none() {
+        let workspace_manifest: LegionWorkspaceManifest = von_parse_take_fine(workspace_result).unwrap()
+        loop member in workspace_manifest.members {
+            let member_dir: utf8 = path_join(workspace_dir, member)
+            let member_manifest_path: utf8 = path_join(member_dir, "legion.von")
+            if !std.io.file_exists(member_manifest_path) {
+                continue
+            }
 
-                let auto_link: WorkspaceAutoLinkResult = try_load_workspace_auto_link(member_dir)
-                match legion_read_project_manifest(member_manifest_path, auto_link.core, auto_link.std, auto_link.has_default) {
-                    case Fine(member_manifest):
-                        let member_name: utf8 = legion_project_name(member_dir, member_manifest)
-                        if member_name == dependency_name {
-                            return member_dir
-                        }
-                    case Fail(error):
+            let auto_link: WorkspaceAutoLinkResult = try_load_workspace_auto_link(member_dir)
+            let member_result: VonParseResult<LegionProjectManifest> = legion_read_project_manifest(member_manifest_path, auto_link.core, auto_link.std, auto_link.has_default)
+            let member_failure: VonDiagnostic? = von_parse_take_fail(member_result)
+            if member_failure.is_none() {
+                let member_manifest: LegionProjectManifest = von_parse_take_fine(member_result).unwrap()
+                let member_name: utf8 = legion_project_name(member_dir, member_manifest)
+                if member_name == dependency_name {
+                    return member_dir
                 }
             }
-        case Fail(error):
+        }
     }
     return ""
 }
@@ -255,22 +257,23 @@ micro collect_source_closure_recursive(
 
         let dependency_manifest_path: utf8 = path_join(dependency_dir, "legion.von")
         let auto_link: WorkspaceAutoLinkResult = try_load_workspace_auto_link(dependency_dir)
-        match legion_read_project_manifest(dependency_manifest_path, auto_link.core, auto_link.std, auto_link.has_default) {
-            case Fine(dependency_manifest):
-                match collect_source_closure_recursive(
-                    dependency_dir,
-                    dependency_manifest,
-                    include_test_sources,
-                    visited_package_names,
-                    package_names,
-                    package_dirs,
-                    files) {
-                    case Fine(done):
-                    case Fail(error):
-                        return Fail(error)
-                }
-            case Fail(error):
-                return Fail(error)
+        let dependency_result: VonParseResult<LegionProjectManifest> = legion_read_project_manifest(dependency_manifest_path, auto_link.core, auto_link.std, auto_link.has_default)
+        let dependency_failure: VonDiagnostic? = von_parse_take_fail(dependency_result)
+        if dependency_failure.is_some() {
+            return Fail(dependency_failure.unwrap())
+        }
+        let dependency_manifest: LegionProjectManifest = von_parse_take_fine(dependency_result).unwrap()
+        let closure_result: VonParseResult<bool> = collect_source_closure_recursive(
+            dependency_dir,
+            dependency_manifest,
+            include_test_sources,
+            visited_package_names,
+            package_names,
+            package_dirs,
+            files)
+        let closure_failure: VonDiagnostic? = von_parse_take_fail(closure_result)
+        if closure_failure.is_some() {
+            return Fail(closure_failure.unwrap())
         }
     }
 
@@ -283,54 +286,55 @@ micro collect_source_closure(context: LegionBuildContext, manifest: LegionProjec
     let mut package_dirs: [utf8] = []
     let mut files: [utf8] = []
 
-    match collect_source_closure_recursive(
+    let closure_result: VonParseResult<bool> = collect_source_closure_recursive(
         context.project_dir,
         manifest,
         context.include_test_sources,
         visited_package_names,
         package_names,
         package_dirs,
-        files) {
-        case Fine(done):
-            sort_texts(package_names)
-            sort_texts(package_dirs)
-            sort_texts(files)
-            return Fine(LegionSourceClosurePlan {
-                package_names: package_names,
-                package_dirs: package_dirs,
-                files: files
-            })
-        case Fail(error):
-            return Fail(error)
+        files)
+    let closure_failure: VonDiagnostic? = von_parse_take_fail(closure_result)
+    if closure_failure.is_some() {
+        return Fail(closure_failure.unwrap())
     }
+    sort_texts(package_names)
+    sort_texts(package_dirs)
+    sort_texts(files)
+    return Fine(LegionSourceClosurePlan {
+        package_names: package_names,
+        package_dirs: package_dirs,
+        files: files
+    })
 }
 
 micro build_compile_plan(context: LegionBuildContext, manifest: LegionProjectManifest) -> VonParseResult<LegionCompilePlan> {
-    match collect_source_closure(context, manifest) {
-        case Fine(source_closure):
-            if source_closure.files.length() == 0 {
-                return Fail(new_von_diagnostic("未找到可编译的 Valkyrie 源文件，请检查 source/、script/、test/ 目录以及依赖包。", 0, 0))
-            }
-
-            return Fine(LegionCompilePlan {
-                project_dir: context.project_dir,
-                manifest_path: context.manifest_path,
-                project_name: context.project_name,
-                canonical_target: context.canonical_target,
-                output_dir: context.output_dir,
-                dependency_names: context.dependency_names,
-                dependency_order: context.dependency_order,
-                arch_tag: context.arch_tag,
-                abi: context.abi,
-                backend_family: context.backend_family,
-                preferred_logical_entry: context.preferred_logical_entry,
-                include_test_sources: context.include_test_sources,
-                build_options: context.build_options,
-                source_closure: source_closure
-            })
-        case Fail(error):
-            return Fail(error)
+    let closure_result: VonParseResult<LegionSourceClosurePlan> = collect_source_closure(context, manifest)
+    let closure_failure: VonDiagnostic? = von_parse_take_fail(closure_result)
+    if closure_failure.is_some() {
+        return Fail(closure_failure.unwrap())
     }
+    let source_closure: LegionSourceClosurePlan = von_parse_take_fine(closure_result).unwrap()
+    if source_closure.files.length() == 0 {
+        return Fail(new_von_diagnostic("未找到可编译的 Valkyrie 源文件，请检查 source/、script/、test/ 目录以及依赖包。", 0, 0))
+    }
+
+    return Fine(LegionCompilePlan {
+        project_dir: context.project_dir,
+        manifest_path: context.manifest_path,
+        project_name: context.project_name,
+        canonical_target: context.canonical_target,
+        output_dir: context.output_dir,
+        dependency_names: context.dependency_names,
+        dependency_order: context.dependency_order,
+        arch_tag: context.arch_tag,
+        abi: context.abi,
+        backend_family: context.backend_family,
+        preferred_logical_entry: context.preferred_logical_entry,
+        include_test_sources: context.include_test_sources,
+        build_options: context.build_options,
+        source_closure: source_closure
+    })
 }
 
 micro compile_plan_snapshot_path(output_dir: utf8) -> utf8 {
@@ -401,7 +405,7 @@ micro build_backend_execution_request(plan: LegionCompilePlan, verbose: bool) ->
         build_options: plan.build_options,
         package_count: plan.source_closure.package_names.length(),
         file_count: plan.source_closure.files.length(),
-        executor_mode: "source_compiler",
+        executor_mode: "nyar_driver",
         verbose: verbose
     }
 }
@@ -441,34 +445,34 @@ micro write_backend_execution_result_snapshot(output_dir: utf8, result: LegionBa
 }
 
 micro execute_backend_request(request: LegionBackendExecutionRequest) -> LegionBackendExecutionResult {
-    if request.executor_mode == "source_compiler" {
-        <% match arch %>
-            <% case "clr" %>
-        let exit_code: i32 = clr_source_compile_project(request.project_dir, request.canonical_target, request.output_dir, request.verbose)
-        if exit_code != 0 {
-            return LegionBackendExecutionResult {
-                executor_kind: "clr_source_compiler",
-                success: false,
-                error: "源码编译执行失败，退出码 = " + format("{}", exit_code)
-            }
-        }
+    if request.executor_mode != "nyar_driver" {
         return LegionBackendExecutionResult {
-            executor_kind: "clr_source_compiler",
-            success: true,
-            error: ""
-        }
-            <% else %>
-        return LegionBackendExecutionResult {
-            executor_kind: "source_compiler",
+            executor_kind: "unsupported",
             success: false,
-            error: "当前目标尚未接入源码编译执行器：" + request.canonical_target
+            error: "未知的后端执行模式：" + request.executor_mode
         }
-        <% end match %>
     }
 
-    return LegionBackendExecutionResult {
-        executor_kind: "unsupported",
-        success: false,
-        error: "未知的后端执行模式：" + request.executor_mode
+    <% match arch %>
+        <% case "clr" %>
+    let exit_code: i32 = nyar_driver_compile_project(request.project_dir, request.canonical_target, request.output_dir, request.verbose)
+    if exit_code != 0 {
+        return LegionBackendExecutionResult {
+            executor_kind: "nyar_driver",
+            success: false,
+            error: "nyar driver 编译执行失败，退出码 = " + format("{}", exit_code)
+        }
     }
+    return LegionBackendExecutionResult {
+        executor_kind: "nyar_driver",
+        success: true,
+        error: ""
+    }
+        <% else %>
+    return LegionBackendExecutionResult {
+        executor_kind: "nyar_driver",
+        success: false,
+        error: "当前目标尚未接入源码编译执行器：" + request.canonical_target
+    }
+    <% end match %>
 }

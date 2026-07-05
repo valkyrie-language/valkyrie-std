@@ -1,6 +1,6 @@
 # 用户服务
 
-import "../shared/source/models"
+using shared.models
 
 micro get_users(): list {
     return [

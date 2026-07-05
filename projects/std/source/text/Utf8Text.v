@@ -15,7 +15,7 @@ imply Utf8Text {
         return Self { _repr: bytes }
     }
 
-    unsafe micro from_bytes_unchecked(bytes: [u8]) -> Self {
+    micro from_bytes_unchecked(bytes: [u8]) -> Self {
         return Self { _repr: bytes }
     }
 
@@ -53,6 +53,18 @@ imply Utf8Text {
 
     micro not_equals(self, other: utf8) -> bool {
         return !self.equals(other)
+    }
+
+    infix `==`(self, other: utf8): bool {
+        return self.equals(other)
+    }
+
+    infix `!=`(self, other: utf8): bool {
+        return self.not_equals(other)
+    }
+
+    infix `+`(self, other: utf8): utf8 {
+        return self.concat(other)
     }
 
     micro concat(self, other: utf8) -> utf8 {

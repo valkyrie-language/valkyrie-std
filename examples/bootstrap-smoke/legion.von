@@ -1,0 +1,16 @@
+{
+    name: "main",
+    version: "0.1.0",
+    description: "CLR bootstrap-smoke 最小夹具",
+    auto_link: {
+        core: false,
+        std: false
+    },
+    dependencies: {},
+    build: [
+        {
+            target: "clr",
+            msil: true
+        }
+    ]
+}

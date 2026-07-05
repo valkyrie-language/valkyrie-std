@@ -77,9 +77,9 @@ VCC 支持多种目标平台：
 ### 导入模块
 
 ```valkyrie
-import std.io
-import game::physics
-import package::module
+using std.io
+using game.physics
+using package.module
 ```
 
 ### 模块路径解析

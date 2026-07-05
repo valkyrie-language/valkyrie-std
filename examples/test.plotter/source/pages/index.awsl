@@ -1,0 +1,73 @@
+<widget>
+    <div class="plotter-page">
+        <header class="plotter-hero">
+            <h1>plotter + asgard.plotter</h1>
+            <p>交互柱图走 InteractiveColPlot（asgard glue）；折线/直方图仍为 plotter SVG</p>
+        </header>
+
+        <section class="plotter-grid">
+            <div class="plotter-island-card">
+                <InteractiveColPlot title="Test Status" series={status_series} />
+            </div>
+            <div class="plotter-island-card">
+                <InteractiveColPlot title="Bench Runtime (ms)" series={bench_series} />
+            </div>
+            <PlotCard
+                title="Coverage Trend"
+                subtitle="随时间变化"
+                footer="geom_line + geom_point"
+                svg_html={trend_svg}
+                variant="elevated"
+            />
+            <PlotCard
+                title="Latency Histogram"
+                subtitle="分布"
+                footer="geom_histogram(bins=5)"
+                svg_html={hist_svg}
+                variant="elevated"
+            />
+        </section>
+    </div>
+</widget>
+
+<script>
+    let status_series: list = status_chart_series()
+    let bench_series: list = bench_chart_series()
+    let trend_svg: string = trend_chart_svg()
+    let hist_svg: string = latency_histogram_svg()
+</script>
+
+<style>
+.plotter-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px 48px;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #1a1a2e;
+    background: #f5f5f5;
+    min-height: 100vh;
+}
+.plotter-hero {
+    margin-bottom: 24px;
+}
+.plotter-hero h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+.plotter-hero p {
+    margin: 0;
+    color: #666;
+}
+.plotter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 16px;
+}
+.plotter-island-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+</style>

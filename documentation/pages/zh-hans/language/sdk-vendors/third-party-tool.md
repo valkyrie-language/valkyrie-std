@@ -1,4 +1,4 @@
-# 第三方构建器
+﻿# 第三方构建器
 
 ## 设计定位
 
@@ -58,15 +58,15 @@
 
 这也是为什么 planner 应看“有效依赖闭包”，而不是只看 manifest 里的显式依赖。
 
-## 微信小程序工具
+## 微信小游戏交付
 
-微信小程序侧需要的是一个独立工具，推荐流程是：
+微信**小游戏**走 VOA 交付链，推荐流程：
 
 1. 读取项目 manifest 与 target / publish 信息
-2. 隐式注入 `tencent.wechat.sdk`
-3. 调用 `legion` 产出微信小游戏可消费的中间产物
-4. 自动生成微信侧胶水与工程配置
-5. 继续执行小游戏工程组织、预览、上传、发布
+2. 隐式注入 `tencent.wechat.sdk`（`publish: ["mini-game"]`）
+3. 调用 `legion build` 产出小游戏运行时字节码 + glue 中间产物
+4. 运行 `asgard pack --target mini-game` 生成 `game.js` / `game.json` / `project.config.json`
+5. 在微信开发者工具中预览、上传、发布
 
 应用项目可以非常轻：
 
@@ -85,7 +85,29 @@
 }
 ```
 
-这里不显式写 `tencent.wechat.sdk`，因为默认由腾讯自己的微信小程序工具注入。
+这里不显式写 `tencent.wechat.sdk`，因为默认由小游戏构建器 / planner 注入。
+
+## 微信小程序交付
+
+微信**小程序**与小游戏是不同宿主：
+
+| | 小游戏 | 小程序 |
+|:---|:---|:---|
+| publish | `mini-game` | `mini-program` |
+| SDK | `tencent.wechat.sdk`（`host: wechat`） | `tencent.wechat.miniprogram.sdk`（`host: wechat-miniprogram`） |
+| UI | 小游戏运行时 / Canvas（非 VOA DOM） | 声明式 WXML/WXSS + `setData` |
+| 交付 | `asgard pack --target mini-game` | `asgard pack --target mini-program` |
+| 编译入口 | `legion build` | `asgard build`（`platform: wechat-miniprogram`） |
+
+推荐流程：
+
+1. `voa.config.v` 设置 `platform: "wechat-miniprogram"`
+2. `legion.von` 中 `publish: ["mini-program"]`（隐式注入小程序 SDK）
+3. `asgard build` 产出 `app.json`、`pages/*`、**宿主字节码包**（目标：无 WASM；RenderIR 编入制品）
+4. `asgard pack --target mini-program` 补齐 `project.config.json` / `sitemap.json`
+5. 用微信开发者工具打开输出目录
+
+平台原生优先；自渲仅在小游戏等场景有限支持（见 [UI 渲染策略](../../guides/ui-rendering.md)）。微信侧：小程序走 **WXML 原生**；小游戏走 **Canvas 自渲**。
 
 ## Unity 插件
 

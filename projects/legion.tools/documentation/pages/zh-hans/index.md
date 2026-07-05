@@ -1,21 +1,20 @@
 # legion.tools 文档
 
-`legion.tools` 文档负责说明 `Valkyrie` 工具层的职责、工作流与工程边界。
+`legion.tools` 是用 Valkyrie 重写的 `legion` CLI 与编译器前端，也是 **L2 编译器自举** 的验收目标。
 
-## 目录
+## 核心契约
 
-- [工作流](./workflow.md)
-- [架构](./architecture.md)
+- [bootstrap-contract.md](./bootstrap-contract.md) — CLR / Node 双轨自举、假自举边界、npm/JSR 发布与 `legions/legion` 依赖约束
 
-## 范围
+## 验收命令
 
-- `legion.tools` 如何作为开发者与 `CI` 的统一入口
-- `legion.tools` 如何调用 `source/valkyrie` 与 `nyar`
-- `legion.tools` 负责哪些工程与交付流程
-- `legion.tools` 内部模块如何分层与分责
+```bash
+# CLR 轨（NuGet / CI 发布门）
+node scripts/bootstrap-clr.mjs
 
-## 不在这里展开的内容
+# Node 轨（npm / JSR 发布门）
+node scripts/bootstrap-node.mjs
 
-- `nyar` 的元优化核心定义
-- `nyar.language` 的多语言前端组织规则
-- 具体 target family 的 backend 实现细节
+# CLR smoke 切片（非完整 L2）
+node scripts/bootstrap-smoke-clr.mjs
+```

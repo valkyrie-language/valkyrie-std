@@ -18,11 +18,11 @@ imply c_str {
     }
 
     micro length(self) -> i32 {
-        return c_str_len(self)
+        return c_str_length(self)
     }
 
     micro is_empty(self) -> bool {
-        return c_str_len(self) == 0
+        return c_str_length(self) == 0
     }
 
     micro to_utf8(self) -> utf8 {

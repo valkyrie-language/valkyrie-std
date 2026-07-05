@@ -1,0 +1,27 @@
+{
+    name: "tencent.wechat.miniprogram.sdk",
+    description: "腾讯 WeChat 小程序 SDK -- 微信小程序宿主 API 绑定",
+    main: "source/net.v",
+    dependencies: {
+        "core": "workspace",
+        "std": "workspace"
+    },
+    sdk-vendor: {
+        organization: "tencent",
+        host: "wechat-miniprogram",
+        kind: "platform-sdk",
+        targets: ["wechat-miniprogram-host"],
+        publish: ["mini-program"]
+    },
+    build: [
+        {
+            target: "wechat-miniprogram-host",
+            source_map: true,
+            typescript: true,
+            wat: true
+        }
+    ],
+    engines: {
+        vcc: ">=0.1.0"
+    }
+}

@@ -1,5 +1,7 @@
 # 包发布
 
+> **主要 JavaScript 注册表**：**npm**（CLI / 通用包）与 **JSR**（模块化库）。详见 [npm 与 JSR 发布策略](./publishing-registries.md)。
+
 ## 发布流程
 
 ```mermaid
@@ -86,8 +88,9 @@ legion publish --dry-run
 ## 发布
 
 ```bash
-legion publish                          # 发布到默认注册表
-legion publish --registry npm           # 指定注册表
+legion publish                          # 发布到 publishConfig.registry（默认 npm）
+legion publish --registry npm           # npm
+legion publish --registry jsr           # JSR
 legion publish --tag beta               # 添加发布标签
 legion publish --access public          # 公开访问
 ```

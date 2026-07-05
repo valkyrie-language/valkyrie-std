@@ -1,0 +1,13 @@
+{
+    version: "1",
+    name: "legend-super-workspace",
+    members: [
+        "projects/legend.tools"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

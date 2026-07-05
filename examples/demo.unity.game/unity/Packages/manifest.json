@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "com.unity.multiplayer.center": "1.0.0",
+    "com.valkyrie.unity": "https://github.com/valkyrie-lang/valkyrie.unity.git#0.1.0",
+    "com.unity.modules.accessibility": "1.0.0"
+  },
+  "scopedRegistries": []
+}

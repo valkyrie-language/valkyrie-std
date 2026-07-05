@@ -4,11 +4,10 @@ namespace unity.engine.sdk.net;
 
 [host_provider(std::net::get)]
 micro get(url: utf8): utf8 {
-    return __unity_request_get(url)
+    return __valkyrie_unity_http_get(url)
 }
 
-# 直接绑定 Unity `UnityWebRequest.SendWebRequest`
-# 参数与返回的宿主胶水由编译器自动生成，这里不手写额外桥接层
+# 由 `valkyrie.unity` Runtime 分区 DLL 提供 HTTP 导出
 
-[clr("UnityEngine.Networking", "UnityEngine.Networking.UnityWebRequest", "SendWebRequest")]
-micro __unity_request_get(url: utf8): utf8
+[clr("valkyrie.unity.runtime", "valkyrie.unity.runtime.http", "get_text")]
+micro __valkyrie_unity_http_get(url: utf8): utf8

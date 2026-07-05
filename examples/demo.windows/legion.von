@@ -1,0 +1,7 @@
+{
+    name: "demo.windows",
+    version: "0.1.0",
+    dependencies: {
+        "asgard.ui": "0.1.0"
+    }
+}

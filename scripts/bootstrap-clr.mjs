@@ -19,6 +19,11 @@
  * 用法：
  *   node scripts/bootstrap-clr.mjs [--legion <path>] [--output <dir>] [--verbose]
  *
+ * seed 优先级：
+ *   1. --legion / LEGION_PATH
+ *   2. valkyrie.rs 构建的 legion.exe（target/release 或 target/debug）
+ *   3. NyarVM.cs 自动构建的上一代 legion
+ *
  * 当前状态：
  *   - 本脚本用于“诚实失败”的真实验收，不再把半完成状态记为成功
  *   - 只要任一门未通过、未执行或比对跳过，脚本都会返回非零退出码
@@ -28,20 +33,32 @@ import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 import crypto from 'crypto';
+import { fileURLToPath } from 'url';
 
-const SCRIPT_DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]):\//, '$1:/'));
-const ROOT_DIR = path.resolve(SCRIPT_DIR, '..');
+import {
+    BOOTSTRAP_PROJECT,
+    REMOVED_MICRO_COMPILER_PROJECT,
+    collectFiles,
+    computeDirHash,
+    computeFileHash,
+    createGate,
+    findLegion,
+    printGateSummary,
+    repoRootFrom,
+    resolveLegionLauncher,
+    shortenText,
+    validateModuleSystem,
+    writeReport,
+} from './bootstrap-lib.mjs';
+
+const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = repoRootFrom(SCRIPT_DIR);
+const VALKYRIE_RS_DIR = path.resolve(ROOT_DIR, '..', 'valkyrie.rs');
 const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
 const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
 const LEVEL2_SKIPPED_REASON = '由于上游门禁未通过，`v1.clr -> v2.clr` 未执行。';
 
-// ─────────────────────────────────────────────────────────────
-// 配置
-// ─────────────────────────────────────────────────────────────
-
-const BOOTSTRAP_PROJECT = 'projects/legion.tools';
 const BOOTSTRAP_PROJECT_DIR = path.join(ROOT_DIR, BOOTSTRAP_PROJECT);
-const REMOVED_MICRO_COMPILER_PROJECT = 'projects/micro_compiler';
 const TARGET_TRIPLE = 'clr-microsoft-unknown-managed';
 const MODULE_GUARD_SKIPPED_REASON = '由于模块系统前置门未通过，`seed -> v1.clr` 未执行。';
 
@@ -56,6 +73,7 @@ function runCommand(command, options = {}) {
             timeout: options.timeout || 300000,
             cwd: options.cwd,
             stdio: options.silent ? 'pipe' : 'inherit',
+            env: options.env ? { ...process.env, ...options.env } : process.env,
         });
         return { success: true, stdout: result || '' };
     } catch (error) {
@@ -85,31 +103,58 @@ function resolveLegionLauncher(baseDir) {
     return null;
 }
 
-function findLegion() {
-    const envPath = process.env.LEGION_PATH;
-    if (envPath && fs.existsSync(envPath)) {
-        return envPath;
+/** seed 当前把产物直接写到 `-o` 目录；旧布局为 `{out}/{targetTriple}/legion.exe`。 */
+function resolveClrArtifactDir(outputDir) {
+    const legacyDir = path.join(outputDir, TARGET_TRIPLE);
+    if (fs.existsSync(legacyDir)) {
+        return legacyDir;
     }
+    return outputDir;
+}
 
-    const candidates = [
-        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion')),
-        ...legionLauncherCandidates(path.join(ROOT_DIR, 'dist', 'legion-tool')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'publish')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', '.artifacts', 'bin', 'Release', 'net10.0')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', '.artifacts', 'bin', 'Debug', 'net10.0')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Release', 'net10.0')),
-        ...legionLauncherCandidates(path.join(NYARVM_DIR, 'tools', 'legion', 'bin', 'Debug', 'net10.0')),
-    ];
-    for (const c of candidates) {
-        if (fs.existsSync(c)) {
-            return c;
+/**
+ * 解析自举 CLI 入口：优先 `legion.exe`，其次多分区命名 `legion__main_legion.exe`。
+ */
+function resolveBuiltLegionCli(artifactDir) {
+    const preferred = ['legion.exe', 'legion__main_legion.exe', 'legion.dll', 'legion__main_legion.dll'];
+    for (const name of preferred) {
+        const candidate = path.join(artifactDir, name);
+        if (fs.existsSync(candidate)) {
+            return candidate;
         }
     }
-    return null;
+
+    if (!fs.existsSync(artifactDir)) {
+        return null;
+    }
+
+    const files = fs
+        .readdirSync(artifactDir)
+        .filter((name) => /^legion.+\.(exe|dll)$/i.test(name) && !/__(?:vcc|voa)/i.test(name))
+        .sort();
+    const mainEntry = files.find((name) => /main_legion/i.test(name));
+    if (mainEntry) {
+        return path.join(artifactDir, mainEntry);
+    }
+    return files[0] ? path.join(artifactDir, files[0]) : null;
+}
+
+function resolveBuiltLegionMsil(artifactDir, legionExe) {
+    if (!legionExe) {
+        return path.join(artifactDir, 'legion.msil');
+    }
+    const stem = path.basename(legionExe).replace(/\.(exe|dll)$/i, '');
+    const preferred = [path.join(artifactDir, `${stem}.msil`), path.join(artifactDir, 'legion.msil')];
+    for (const candidate of preferred) {
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+    return preferred[0];
 }
 
 function ensurePreviousLegion(outputRoot, verbose) {
-    const existing = findLegion();
+    const existing = findLegion(ROOT_DIR, VALKYRIE_RS_DIR, NYARVM_DIR);
     if (existing) {
         return existing;
     }
@@ -343,9 +388,9 @@ function compileV1(legionPath, outputDir, verbose) {
     console.log(`上一代编译器：${legionPath}`);
     console.log(`源码项目：${BOOTSTRAP_PROJECT_DIR}`);
     console.log(`输出目录：${outputDir}\n`);
-    const targetDir = path.join(outputDir, TARGET_TRIPLE);
-    const legionExe = path.join(targetDir, 'legion.exe');
-    const legionMsil = path.join(targetDir, 'legion.msil');
+    let targetDir = resolveClrArtifactDir(outputDir);
+    let legionExe = resolveBuiltLegionCli(targetDir);
+    let legionMsil = resolveBuiltLegionMsil(targetDir, legionExe);
 
     // 验证上一代编译器可用
     const versionCheck = runCommand(`"${legionPath}" --version`, { silent: true, timeout: 10000 });
@@ -357,8 +402,8 @@ function compileV1(legionPath, outputDir, verbose) {
             stage: 'previous_compiler_check',
             error: shortenText(versionCheck.stderr || versionCheck.stdout || '上一代编译器不可用'),
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            legionExe: legionExe || path.join(targetDir, 'legion.exe'),
+            legionMsil: legionMsil || path.join(targetDir, 'legion.msil'),
             artifacts: [],
             hash: null,
             runtime: {
@@ -381,6 +426,10 @@ function compileV1(legionPath, outputDir, verbose) {
         { cwd: ROOT_DIR, timeout: 300000 }
     );
 
+    targetDir = resolveClrArtifactDir(outputDir);
+    legionExe = resolveBuiltLegionCli(targetDir);
+    legionMsil = resolveBuiltLegionMsil(targetDir, legionExe);
+
     if (!buildResult.success) {
         console.error('错误：v1 编译失败');
         if (buildResult.stderr) {
@@ -391,8 +440,8 @@ function compileV1(legionPath, outputDir, verbose) {
             stage: 'source_to_v1',
             error: shortenText(buildResult.stderr || buildResult.stdout || 'v1 编译失败'),
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            legionExe: legionExe || path.join(targetDir, 'legion.exe'),
+            legionMsil: legionMsil || path.join(targetDir, 'legion.msil'),
             artifacts: [],
             hash: null,
             runtime: {
@@ -403,15 +452,15 @@ function compileV1(legionPath, outputDir, verbose) {
     }
 
     // 检查产物
-    if (!fs.existsSync(legionExe)) {
-        console.error(`错误：v1 产物不存在：${legionExe}`);
+    if (!legionExe || !fs.existsSync(legionExe)) {
+        console.error(`错误：v1 产物不存在：${path.join(targetDir, 'legion.exe')}（或 legion__main_legion.exe）`);
         return {
             success: false,
             stage: 'v1_artifact',
-            error: `v1 产物不存在：${legionExe}`,
+            error: `v1 产物不存在：${path.join(targetDir, 'legion.exe')}`,
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            legionExe: path.join(targetDir, 'legion.exe'),
+            legionMsil: legionMsil || path.join(targetDir, 'legion.msil'),
             artifacts: [],
             hash: null,
             runtime: {
@@ -478,12 +527,15 @@ function compileV2(v1Result, outputDir, verbose) {
 
     const buildResult = runCommand(
         `dotnet "${v1Result.legionExe}" build "${BOOTSTRAP_PROJECT_DIR}" --target clr -o "${outputDir}"`,
-        { cwd: ROOT_DIR, timeout: 300000 }
+        {
+            cwd: ROOT_DIR,
+            timeout: 300000,
+        }
     );
 
-    const targetDir = path.join(outputDir, TARGET_TRIPLE);
-    const legionExe = path.join(targetDir, 'legion.exe');
-    const legionMsil = path.join(targetDir, 'legion.msil');
+    const targetDir = resolveClrArtifactDir(outputDir);
+    const legionExe = resolveBuiltLegionCli(targetDir);
+    const legionMsil = resolveBuiltLegionMsil(targetDir, legionExe);
 
     if (!buildResult.success) {
         console.error('错误：v2 编译失败');
@@ -495,22 +547,22 @@ function compileV2(v1Result, outputDir, verbose) {
             stage: 'v1_to_v2',
             error: shortenText(buildResult.stderr || buildResult.stdout || 'v2 编译失败'),
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            legionExe: legionExe || path.join(targetDir, 'legion.exe'),
+            legionMsil: legionMsil || path.join(targetDir, 'legion.msil'),
             artifacts: [],
             hash: null,
         };
     }
 
-    if (!fs.existsSync(legionExe)) {
-        console.error(`错误：v2 产物不存在：${legionExe}`);
+    if (!legionExe || !fs.existsSync(legionExe)) {
+        console.error(`错误：v2 产物不存在：${path.join(targetDir, 'legion.exe')}（或 legion__main_legion.exe）`);
         return {
             success: false,
             stage: 'v2_artifact',
-            error: `v2 产物不存在：${legionExe}`,
+            error: `v2 产物不存在：${path.join(targetDir, 'legion.exe')}`,
             outputDir: targetDir,
-            legionExe,
-            legionMsil,
+            legionExe: path.join(targetDir, 'legion.exe'),
+            legionMsil: legionMsil || path.join(targetDir, 'legion.msil'),
             artifacts: [],
             hash: null,
         };

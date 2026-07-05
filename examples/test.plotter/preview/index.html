@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>plotter + asgard.plotter showcase</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #f5f5f5; color: #1a1a2e; }
+    .page { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+    .hero h1 { margin: 0 0 8px; }
+    .hero p { margin: 0 0 24px; color: #666; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,.06); overflow: hidden; }
+    .card header { padding: 12px 16px 0; }
+    .card h3 { margin: 0; font-size: 16px; }
+    .card .sub { margin: 4px 0 0; font-size: 13px; color: #666; }
+    .card .body { padding: 12px 16px 16px; }
+    .card footer { padding: 8px 16px 12px; font-size: 12px; color: #999; border-top: 1px solid #e5e7eb; }
+    svg { display: block; max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <h1>plotter + asgard.plotter</h1>
+      <p>静态对照预览（无交互）。交互柱图见 <code>InteractiveColPlot</code>，需 asgard 构建产生 auto glue。源码：<code>source/charts.v</code>、<code>source/pages/index.awsl</code>。</p>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <header>
+          <h3>Test Status</h3>
+          <p class="sub">geom_col + aes_fill(status)</p>
+        </header>
+        <div class="body">
+          <svg xmlns="http://www.w3.org/2000/svg" width="640" height="280" viewBox="0 0 640 280">
+            <rect width="100%" height="100%" fill="#ffffff"/>
+            <line x1="56" y1="84" x2="616" y2="84" stroke="#e5e7eb" stroke-width="1"/>
+            <line x1="56" y1="140" x2="616" y2="140" stroke="#e5e7eb" stroke-width="1"/>
+            <line x1="56" y1="196" x2="616" y2="196" stroke="#e5e7eb" stroke-width="1"/>
+            <line x1="56" y1="232" x2="616" y2="232" stroke="#333" stroke-width="1.5"/>
+            <line x1="56" y1="48" x2="56" y2="232" stroke="#333" stroke-width="1.5"/>
+            <text x="56" y="20" fill="#1a1a2e" font-family="system-ui,sans-serif" font-size="12">Test Status</text>
+            <rect x="96" y="68" width="110" height="164" fill="#22c55e"/>
+            <rect x="285" y="196" width="110" height="36" fill="#ef4444"/>
+            <rect x="474" y="178" width="110" height="54" fill="#f97316"/>
+            <text x="130" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">pass</text>
+            <text x="325" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">fail</text>
+            <text x="512" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">skip</text>
+          </svg>
+        </div>
+        <footer>asgard.plotter / PlotCard</footer>
+      </article>
+      <article class="card">
+        <header>
+          <h3>Bench Runtime</h3>
+          <p class="sub">geom_col + scale_y_continuous</p>
+        </header>
+        <div class="body">
+          <svg xmlns="http://www.w3.org/2000/svg" width="640" height="280" viewBox="0 0 640 280">
+            <rect width="100%" height="100%" fill="#ffffff"/>
+            <line x1="56" y1="232" x2="616" y2="232" stroke="#333" stroke-width="1.5"/>
+            <line x1="56" y1="48" x2="56" y2="232" stroke="#333" stroke-width="1.5"/>
+            <text x="56" y="20" fill="#1a1a2e" font-family="system-ui,sans-serif" font-size="12">Bench Runtime (ms)</text>
+            <rect x="90" y="190" width="90" height="42" fill="#3873ad"/>
+            <rect x="230" y="222" width="90" height="10" fill="#22c55e"/>
+            <rect x="370" y="60" width="90" height="172" fill="#ef4444"/>
+            <rect x="510" y="158" width="90" height="74" fill="#f97316"/>
+            <text x="118" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">nyar</text>
+            <text x="260" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">clr</text>
+            <text x="400" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">jvm</text>
+            <text x="536" y="250" fill="#555" font-family="system-ui,sans-serif" font-size="12">node</text>
+          </svg>
+        </div>
+        <footer>plotter / render_svg</footer>
+      </article>
+      <article class="card">
+        <header>
+          <h3>Coverage Trend</h3>
+          <p class="sub">geom_line + geom_point</p>
+        </header>
+        <div class="body">
+          <svg xmlns="http://www.w3.org/2000/svg" width="640" height="280" viewBox="0 0 640 280">
+            <rect width="100%" height="100%" fill="#ffffff"/>
+            <line x1="56" y1="232" x2="616" y2="232" stroke="#333" stroke-width="1.5"/>
+            <line x1="56" y1="48" x2="56" y2="232" stroke="#333" stroke-width="1.5"/>
+            <text x="56" y="20" fill="#1a1a2e" font-family="system-ui,sans-serif" font-size="12">Coverage Trend (%)</text>
+            <path d="M 100 170 L 220 140 L 340 155 L 460 90 L 580 100" fill="none" stroke="#3873ad" stroke-width="2"/>
+            <circle cx="100" cy="170" r="4" fill="#3873ad" stroke="#1a1a2e"/>
+            <circle cx="220" cy="140" r="4" fill="#3873ad" stroke="#1a1a2e"/>
+            <circle cx="340" cy="155" r="4" fill="#3873ad" stroke="#1a1a2e"/>
+            <circle cx="460" cy="90" r="4" fill="#3873ad" stroke="#1a1a2e"/>
+            <circle cx="580" cy="100" r="4" fill="#3873ad" stroke="#1a1a2e"/>
+          </svg>
+        </div>
+        <footer>ggplot2-style layering via |&gt;</footer>
+      </article>
+      <article class="card">
+        <header>
+          <h3>Latency Histogram</h3>
+          <p class="sub">geom_histogram(bins=5)</p>
+        </header>
+        <div class="body">
+          <svg xmlns="http://www.w3.org/2000/svg" width="640" height="280" viewBox="0 0 640 280">
+            <rect width="100%" height="100%" fill="#ffffff"/>
+            <line x1="56" y1="232" x2="616" y2="232" stroke="#333" stroke-width="1.5"/>
+            <line x1="56" y1="48" x2="56" y2="232" stroke="#333" stroke-width="1.5"/>
+            <text x="56" y="20" fill="#1a1a2e" font-family="system-ui,sans-serif" font-size="12">Latency Histogram</text>
+            <rect x="70" y="120" width="95" height="112" fill="#3873ad"/>
+            <rect x="180" y="180" width="95" height="52" fill="#3873ad"/>
+            <rect x="290" y="100" width="95" height="132" fill="#3873ad"/>
+            <rect x="400" y="150" width="95" height="82" fill="#3873ad"/>
+            <rect x="510" y="70" width="95" height="162" fill="#3873ad"/>
+          </svg>
+        </div>
+        <footer>PlotSpec JSON contract ready for legion</footer>
+      </article>
+    </div>
+  </div>
+</body>
+</html>

@@ -31,60 +31,33 @@ monorepo。每个子目录是一个可独立发布的 **分发**（distribution�
 ```
 valkyrie.v/
 │
-├── legions.von                   # 超 workspace — 平铺所有子 workspace 的全部包
-│                                   用于 CI 和全量集成构建
+├── legions.von                   # 超 workspace — 嵌套引用 *.v 分发入口
 │
-├── bootstrap.v/                  # 分发：Valkyrie 语言核心
-│   ├── legions.von               # 独立 workspace，声明对 std.v 的 vendor 依赖
-│   ├── projects/
-│   │   └── valkyrie/              # Valkyrie VM (自举运行时)
-│   ├── examples/                 # 28 个语法特性测试包 ← 语言级集成测试
-│   │   ├── test.hello_world/      source/ + test/ + legion.von
-│   │   ├── test.pattern_match/    source/ + test/ + legion.von
-│   │   └── ...
-│   └── documentation/            # 完整文档体系
+├── asgard.v/                     # 分发：前端框架 + 示例
+│   └── legions.von
+├── atlas.v/                      # 分发：后端 API 框架（嵌套 → projects/atlas）
+│   └── legions.von
+├── nyar.v/                       # 分发：Nyar 编译器与包管理
+│   └── legions.von
+├── std.v/                        # 分发：标准库 + adaptor + std-data
+│   └── legions.von
+├── tools.v/                      # 分发：legion / legend / asgard / atlas CLI
+│   └── legions.von
+├── examples.v/                   # 分发：跨框架集成示例
+│   └── legions.von
+├── sdk.v/                        # 分发：微信 / Unity 等第三方 SDK
+│   └── legions.von
 │
-├── std.v/                        # 分发：标准库
-│   ├── legions.von
-│   ├── projects/
-│   │   ├── core/                 # 基础类型 (primitive/text/traits)
-│   │   ├── std/                  # 标准库 (collection/io/math/net/...)
-│   │   ├── std.adaptor.dotnet/   # 平台适配层 — 各后端原生绑定
-│   │   ├── std.adaptor.jvm/
-│   │   ├── std.adaptor.linux/
-│   │   ├── std.adaptor.macos/
-│   │   ├── std.adaptor.nyar/
-│   │   ├── std.adaptor.wasi/
-│   │   ├── std.adaptor.wasm/
-│   │   └── std.adaptor.windows/
-│   └── (无 examples — 标准库的正确性由 bootstrap.v 的 examples 间接验证)
+├── bootstrap.v/                  # 分发：Valkyrie 语言核心（规划中）
+│   └── legions.von
+├── projects/                     # 实际包源码（由各 *.v/legions.von 引用）
+│   ├── atlas/                    # Atlas 子 workspace（projects/atlas/*）
+│   ├── asgard/                   # Asgard 核心
+│   ├── nyar/                     # Nyar 核心
+│   ├── std/                      # 标准库
+│   └── ...
 │
-├── asgard.v/                     # 分发：前端框架
-│   ├── legions.von
-│   ├── projects/
-│   │   ├── asgard/               # 核心组件库 (button/card/input/modal/...)
-│   │   ├── asgard.router/        # 路由
-│   │   └── voa.runtime/          # VOA 运行时 (JS/WASM)
-│   └── examples/                 # 前端集成示例 (blog/dashboard/admin/...)
-│
-├── atlas.v/                      # 分发：云平台适配器
-│   ├── legions.von
-│   ├── projects/
-│   │   ├── atlas/
-│   │   ├── atlas.adaptor.aliyun/
-│   │   ├── atlas.adaptor.azure/
-│   │   └── atlas.adaptor.tencent/
-│   └── (无 examples)
-│
-├── nyar.v/                       # 分发：Nyar 优化器核心
-│   ├── legions.von
-│   └── projects/
-│       └── nyar.core/            # Nyar 核心 (Valkyrie 实现)
-│
-├── yuanshen.v/                   # 分发：自举应用 — 原神 Git GUI
-│   ├── legions.von
-│   └── projects/
-│       └── yuanshen/             # 用 Valkyrie + Asgard 构建的 Git 客户端
+├── examples/                     # 示例工程（部分由 asgard.v / examples.v 引用）
 │
 ├── .cache/                       # 构建缓存（不提交）
 └── vendors/                      # 远程依赖的本地副本（由 legion install 管理）
@@ -147,24 +120,19 @@ legion test       # 只运行语言特性测试
 
 ### 超 workspace（全量集成）
 
-根 `legions.von` 将 **所有子 workspace 的全部包**平铺为一个超 workspace：
+根 `legions.von` 使用 **嵌套 legions** 引用各分发入口（`asgard.v`、`atlas.v`、`nyar.v`、`std.v` 等），由 Legion 递归展开成员包：
 
 ```von
 # valkyrie.v/legions.von
 name: "valkyrie-super-workspace"
 members: [
-    "bootstrap.v/examples/test.hello_world",
-    "bootstrap.v/examples/test.pattern_match",
-    # ... 全部 28 个 test.* 包
-    "bootstrap.v/projects/valkyrie",
-    "std.v/projects/core",
-    "std.v/projects/std",
-    "std.v/projects/std.adaptor.*",   # 全部 8 个 adaptor
-    "asgard.v/projects/*",            # 全部 3 个项目
-    "asgard.v/examples/*",            # 全部 7 个示例
-    "atlas.v/projects/*",
-    "nyar.v/projects/nyar.core",
-    "yuanshen.v/projects/yuanshen",
+    "asgard.v",
+    "atlas.v",
+    "nyar.v",
+    "std.v",
+    "tools.v",
+    "examples.v",
+    "sdk.v"
 ]
 ```
 
@@ -173,6 +141,15 @@ cd valkyrie.v
 legion build --all   # 全量构建 — 这就是集成测试
 legion test --all    # 全量测试 — 跨所有子分发的端到端验证
 legion bench --all   # 全量基准
+```
+
+### 分发 workspace（独立开发）
+
+```bash
+cd valkyrie.v/atlas.v && legion build    # 仅 Atlas
+cd valkyrie.v/asgard.v && legion build   # 仅 Asgard
+cd valkyrie.v/nyar.v && legion build     # 仅 Nyar 工具链
+cd valkyrie.v/std.v && legion build      # 仅标准库
 ```
 
 ---
@@ -260,21 +237,33 @@ legion test --target nyar             # Level 0 的 NyarVM 运行 Valhalla VM �
 
 ---
 
-#### Level 2：Valkyrie 自举编译器（远期）
+#### Level 2：编译器自举（CLR + Node 双轨，进行中）
 
-```mermaid
-flowchart LR
-    SRC[".v 源码"] --> VH["Level 1 Valhalla VM<br/>执行 Valkyrie 编译器"]
-    VH --> IR["生成 IKun IR"]
-    IR --> Opt["Nyar Optimizer + Assembler<br/>优化与代码生成"]
-    Opt --> Out["Valhalla VM 执行编译产物"]
-```
+当前双线验收以 `projects/legion.tools` 为唯一自举目标，分 **两条并行轨**：
 
-**自举验证**：Valkyrie 编译器能编译自身并产生行为一致的二进制。
+| 轨 | 目标 | 产物 | 主发布平台 | 验收 |
+|:---|:---|:---|:---|:---|
+| **CLR** | `clr` | `legion.exe` + `.msil` | NuGet | `bootstrap-clr.mjs` |
+| **Node** | `node` → `wasm32-node-unknown-wasm` | `legion.mjs` + `legion.wasm` | **npm**、**JSR** | `bootstrap-node.mjs` |
 
-**关键挑战**：Lexer/Parser 目前依赖 .NET 的 Oak.GGScript，需要用 Valkyrie 重新实现。
+- **Rust seed（CLR）**：`legion bootstrap --project projects/legion.tools`
+- **发行版 CLR 验收**：`node scripts/bootstrap-clr.mjs`
+- **发行版 Node 验收**：`node scripts/bootstrap-node.mjs`（npm / JSR 公开发布前置门）
+
+**自举阶段划分**（两轨相同）：
+
+- **seed 阶段**（合法）：Rust / NyarVM.cs / NuGet / **npm·JSR 已发包**（固定版本）编译 `legion.tools` → v1
+- **自举阶段**（v1→v2）：必须由 v1 进程内编译管线完成，禁止 bridge
+- **CLR smoke**：`bootstrap-smoke-clr.mjs` 验收 v1 编译 `examples/bootstrap-smoke`
+
+**完整 L2**：seed → v1 可 `build` 同项目 → v2 与 v1 在契约产物上一致（CLR：`.msil`；Node：`.wasm`）。
+
+契约详情：[`bootstrap-contract.md`](projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)  
+npm / JSR 发布：[`publishing-registries.md`](documentation/pages/zh-hans/guides/publishing-registries.md)
 
 ---
+
+#### Level 2（远期）：Valhalla VM 全栈编译器自举
 
 #### Level 3：全栈自举（远期）
 
@@ -312,49 +301,54 @@ flowchart TD
 | **L0 .NET 引擎**    | ✅ 已完成   | 完整的编译+优化+多后端+运行时                       | xUnit + 全量 `legion build --all`                      |
 | **L1 Nyar VM**      | 🚧 源码就绪 | Valkyrie 编写的 VM (Executor/Frame/GC)              | L0 编译 L1 VM → L0 NyarVM 运行此 VM → 执行 28 个测试包 |
 | **L1.5 std.v 自举** | 📋          | 标准库用 Valkyrie 编写，经过 L0 编译器 + L1 VM 运行 | `legion test --all` 在 L1 VM 上通过                    |
-| **L2 编译器自举**   | 📋          | Lexer/Parser/AST→IKun 用 Valkyrie 重写              | L1 VM + L2 编译器编译自身 → 输出一致                   |
+| **L2 CLR 编译器自举** | 🚧 进行中   | `legion.tools` seed→v1→v2（CLR）                    | `bootstrap-clr.mjs` + `legion bootstrap`               |
+| **L2 Node 编译器自举** | 🚧 进行中   | 同上，`--target node` → npm / JSR 分发              | `bootstrap-node.mjs`                                   |
+| **L2 VM 编译器自举**  | 📋          | Lexer/Parser/AST→IKun 用 Valkyrie 重写              | L1 VM + L2 编译器编译自身 → 输出一致                   |
 | **L3 全栈自举**     | 📋          | `legion` 工具自身用 Valkyrie 编写                   | `legion build --all` 零 .NET 依赖通过                  |
 
 ### CI 自举验证管线
 
-当前发布门只承认 `CLR / NuGet` 的源头自举链，不再把 `JVM`、`WASM`、对角交叉验证或实验性后端脚本当成主线完成条件。
+发布门分 **两条轨**，共享同一 `legion.tools` 源码与模块系统前置门，但阻断的发布物不同：
 
-当前唯一有效的发布门是：
-
-| 路径 | 上一代入口 | 验收链 |
+| 轨 | 验收脚本 | 通过后可发布 |
 |:---|:---|:---|
-| **CLR 源头自举** | `NuGet Tool` seed | `seed -> v1.clr -> v2.clr -> 比对` |
+| **CLR** | `bootstrap-clr.mjs` | NuGet / .NET 工具链 |
+| **Node** | `bootstrap-node.mjs` | **npm**、**JSR** |
+
+`JVM`、浏览器 `wasm`、实验性 `scripts/experimental/*` **不计入**上述发布门。
 
 ```mermaid
 flowchart TB
-    subgraph Setup["0. 准备阶段"]
-        Src["valkyrie.v 源码<br/>（Valkyrie 编写的编译器）"]
+    subgraph Setup["0. 准备"]
+        Src["legion.tools 源码"]
+        Seed["上一代 seed<br/>Rust / NyarVM / npm"]
     end
 
-    subgraph CLR["CLR 源头自举 — NuGet"]
-        NuGet["从 NuGet 获取<br/>上一代 seed 编译器"] --> C1["编译：源码 → v1.clr"]
-        C1 --> CRun["运行：v1 --version / --help"]
-        CRun --> C2["编译：v1.clr → v2.clr"]
-        C2 --> CC{"v1.clr ≟ v2.clr"}
-        CC -- "一致" --> CPass["CLR 源头自举 ✅"]
-        CC -- "不一致" --> CFail["CLR 源头自举 ❌"]
+    subgraph CLR["CLR 轨 — NuGet"]
+        C1["seed → v1.clr"] --> C2["v1 → v2.clr"]
+        C2 --> CC{".msil ≟"}
     end
 
-    subgraph Final["判定"]
-        CPass --> Publish["允许发布当前编译器"]
-        CFail --> Block["🚫 阻止发布<br/>继续修复真实阻断项"]
+    subgraph Node["Node 轨 — npm / JSR"]
+        N1["seed → v1.node"] --> N2["node v1 → v2.node"]
+        N2 --> NC{".wasm ≟"}
     end
 
     Src --> C1
+    Src --> N1
+    Seed --> C1
+    Seed --> N1
+    CC -- "一致" --> NuGet["NuGet 发布 ✅"]
+    NC -- "一致" --> NpmJsr["npm / JSR 发布 ✅"]
 ```
 
-#### 为什么当前只以 CLR 为主门？
+#### 平台与注册表分工
 
-因为当前短期目标是先把 `CLR / NuGet` 的源头自举链跑通，并建立真实可发布的 seed、`v1`、`v2`、运行验收与产物比对闭环。`JVM` 与 `WASM` 仍可继续排查，但不再作为当前发布门的一部分。
+- **npm**：CLI 全局命令、`@scope/pkg` 工具包（`legion publish --registry npm`）
+- **JSR**：模块化库、TypeScript 友好标准库切片（`legion publish --registry jsr`）
+- **NuGet**：CLR 轨 `legion` 工具（与 npm/JSR 不互相替代）
 
-#### 其它后端如何处理？
-
-`JVM`、`WASM` 与跨后端对角验证目前只保留为实验性排查或未来阶段目标，不计入本轮发布门，也不能拿来替代 `CLR` 源头自举的真实验收。
+详见 [npm 与 JSR 发布策略](documentation/pages/zh-hans/guides/publishing-registries.md)。
 
 ---
 
@@ -376,8 +370,9 @@ flowchart TB
     end
 
     subgraph Publish["legion publish 发布到各注册表"]
-        Npm["npm"]
-        Jsr["jsr"]
+        Npm["npm ⭐"]
+        Jsr["jsr ⭐"]
+        Nuget["nuget"]
         Conda["conda"]
         Valhalla["valhalla"]
     end

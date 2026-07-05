@@ -20,12 +20,12 @@
                 <Card variant="filled" style="flex:1">
                     <h3 style="margin:0 0 8px">⚡ 响应式 Effect</h3>
                     <ul style="margin:0; padding-left:20px; color:var(--voa-text-secondary); font-size:14px">
-                        <li>useState — 响应式状态</li>
-                        <li>useEffect — 副作用管理</li>
-                        <li>useMemo — 计算缓存</li>
-                        <li>useRef — 可变引用</li>
-                        <li>useCallback — 回调记忆</li>
-                        <li>createSignal — 细粒度响应</li>
+                        <li>let mut — 可变局部状态</li>
+                        <li>onMount — 挂载副作用</li>
+                        <li>派生表达式 — 模板内计算</li>
+                        <li>事件处理 — 用户交互</li>
+                        <li>micro 方法 — 组件逻辑</li>
+                        <li>响应式更新 — 状态变更重渲染</li>
                     </ul>
                 </Card>
             </div>

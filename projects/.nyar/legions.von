@@ -1,0 +1,16 @@
+{
+    version: "1",
+    name: "nyar-super-workspace",
+    members: [
+        "projects/nyar",
+        "projects/nyar.language",
+        "projects/nyar.package_manager",
+        "projects/nyar.package_registry"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

@@ -116,6 +116,60 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
+  # Node 轨：seed -> v1.node -> v2.node（npm / JSR 发布门）
+  # ─────────────────────────────────────────────────────────────
+  bootstrap-node-source:
+    name: Node 源头自举验证（npm / JSR）
+    runs-on: ubuntu-latest
+    needs: build-legion
+    steps:
+      - name: 检出 valkyrie.v
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
+
+      - name: 设置 .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
+
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
+
+      - name: 运行 Node 自举验证
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
+        run: |
+          node scripts/bootstrap-node.mjs --verbose
+
+      - name: 上传自举报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-node-report
+          path: valkyrie.v/dist/bootstrap-node/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
   # 汇总判定
   # ─────────────────────────────────────────────────────────────
   gate:
@@ -124,6 +178,7 @@ jobs:
     needs:
       - build-legion
       - bootstrap-clr-source
+      - bootstrap-node-source
     if: always()
 
     steps:
@@ -138,11 +193,17 @@ jobs:
             echo "|------|------|"
             echo "| 上一代 legion CLI | ${{ needs.build-legion.result }} |"
             echo ""
-            echo "### CLR 源头自举"
+            echo "### CLR 源头自举（NuGet）"
             echo ""
             echo "| 阶段 | 结果 |"
             echo "|------|------|"
             echo "| seed -> v1 -> v2 | ${{ needs.bootstrap-clr-source.result }} |"
+            echo ""
+            echo "### Node 源头自举（npm / JSR）"
+            echo ""
+            echo "| 阶段 | 结果 |"
+            echo "|------|------|"
+            echo "| seed -> v1.node -> v2.node | ${{ needs.bootstrap-node-source.result }} |"
           } >> $GITHUB_STEP_SUMMARY
 
       - name: 判定
@@ -152,7 +213,11 @@ jobs:
             exit 1
           fi
           if [ "${{ needs.bootstrap-clr-source.result }}" != "success" ]; then
-            echo "CLR 源头自举未通过"
+            echo "CLR 源头自举未通过（阻断 NuGet 发布）"
             exit 1
           fi
-          echo "seed 编译器与 CLR 源头自举链均已通过"
+          if [ "${{ needs.bootstrap-node-source.result }}" != "success" ]; then
+            echo "Node 源头自举未通过（阻断 npm / JSR 发布）"
+            exit 1
+          fi
+          echo "CLR 与 Node 双轨自举均已通过"

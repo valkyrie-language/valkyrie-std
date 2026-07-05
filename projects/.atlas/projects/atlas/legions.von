@@ -1,0 +1,22 @@
+{
+    version: "1",
+    name: "atlas-workspace",
+    members: [
+        "projects/atlas",
+        "projects/atlas.adaptor",
+        "projects/atlas.adaptor.azure",
+        "projects/atlas.cloud",
+        "projects/atlas.cloud.aliyun",
+        "projects/atlas.cloud.azure",
+        "projects/atlas.cloud.tencent",
+        "../atlas.tools",
+        "../core",
+        "../std"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

@@ -15,7 +15,7 @@ micro hmac_sha256(key: utf8, data: utf8): utf8 {
 }
 
 [host_contract]
-micro random_bytes(len: i32): utf8
+micro random_bytes(length: i32): utf8
 
 [host_contract]
 micro random_uuid(): utf8

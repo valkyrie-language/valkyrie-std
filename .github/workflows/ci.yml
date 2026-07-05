@@ -182,6 +182,8 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
 
       - name: 设置 .NET
         uses: actions/setup-dotnet@v4
@@ -198,11 +200,13 @@ jobs:
         run: chmod +x ./legion/legion
 
       - name: 运行基准测试
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
         run: |
-          echo "运行 Valkyrie 基准测试..."
-          echo "当前阶段：legion bench 功能待实现"
-          echo "已就绪 legion CLI，等待 legion bench 子命令实现后接入"
-          # 占位：legion bench --all
+          mkdir -p ./benchmark-results
+          ./legion/legion bench examples/feature-matrix --target nyar
+          cp -r examples/feature-matrix/dist/legion-benchmark ./benchmark-results/ 2>/dev/null || true
 
       - name: 上传基准结果
         uses: actions/upload-artifact@v4

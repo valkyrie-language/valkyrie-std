@@ -27,9 +27,7 @@ imply AsciiText: Text {
 
     micro to_utf8(self) -> utf8 {
         # 安全性： 任何合法的 ascii 文本都可以转换为 utf8 文本
-        unsafe {
-            Utf8Text::from_bytes(self._bytes)
-        }
+        return Utf8Text::from_bytes(self._bytes)
     }
 
     micro to_utf16(self) -> utf16 {

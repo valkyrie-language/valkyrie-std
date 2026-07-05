@@ -1,0 +1,18 @@
+{
+    name: "nyar.package_registry",
+    version: "workspace",
+    description: "Nyar 包注册表抽象层（npm / local / mock）",
+    type: "library",
+    auto_link: {
+        core: true,
+        std: true
+    },
+    dependencies: {
+        "std": { version: "workspace" },
+        "std.data.text.von": { version: "workspace" }
+    },
+    build: [
+        { target: "clr" },
+        { target: "nyar" }
+    ]
+}

@@ -81,7 +81,7 @@ Valkyrie 的 FFI 注解按**调用约定语义**精确分类，抵制模糊的 `
 | 注解 | 语义 | 适用平台 | 示例 |
 |:---|:---|:---|:---|
 | `[c("lib", "func")]` | C 调用约定（cdecl/stdcall），动态链接库函数 | Windows / Linux / macOS | `[c("libc", "write")]` |
-| `[com("Interface", "Method")]` | COM vtable 调用 | Windows | `[com("IUnknown", "Release")]` |
+| `[com("Interface", "Method")]` | COM vtable 调用（Windows FFI，非 Valkyrie witness table） | Windows | `[com("IUnknown", "Release")]` |
 | `[syscall(number)]` | 直接系统调用（绕过 libc/Win32） | Windows / Linux / macOS | `[syscall(1)]` |
 | `[clr("Type", "Method")]` | CLR 宿主静态方法/属性 | CLR | `[clr("System.Console", "WriteLine")]` |
 | `[dlr]` | DLR 动态调用（运行时解析成员） | CLR | `[dlr]` |
@@ -96,7 +96,7 @@ Valkyrie 的 FFI 注解按**调用约定语义**精确分类，抵制模糊的 `
 ```v
 # Linux/macOS libc
 [c("libc", "write")]
-micro posix_write(fd: i32, buf: c_str, len: i32): i32
+micro posix_write(fd: i32, buf: c_str, length: i32): i32
 
 # Windows DLL
 [c("user32", "MessageBoxW")]
@@ -129,6 +129,8 @@ micro com_invoke(this: i32, id: i32, riid: i32, lcid: i32, flags: i16, params: i
 
 COM 初始化/工厂函数仍使用 `[c]`（如 `CoCreateInstance`、`CoInitializeEx`），因为它们是普通 DLL 导出函数。
 
+> **术语区分**：此处的 **COM vtable** 是 Windows ABI 专有概念——COM 接口指针首槽为虚函数表，通过槽位偏移调用。它与 Valkyrie 语言内部的 **witness table**（`trait` / `imply` 动态派发）完全无关。文档与编译器讨论 Valkyrie 多态时默认指 witness table；仅在 `[com]` FFI 或 Windows 互操作章节使用 “COM vtable”。
+
 #### `[syscall(number)]` — 直接系统调用
 
 绕过 libc/Win32 子系统，直接发起内核系统调用。参数为系统调用号。
@@ -136,7 +138,7 @@ COM 初始化/工厂函数仍使用 `[c]`（如 `CoCreateInstance`、`CoInitiali
 ```v
 # Linux x86_64
 [syscall(1)]
-micro sys_write(fd: i32, buf: c_str, len: i32): i64
+micro sys_write(fd: i32, buf: c_str, length: i32): i64
 
 # Windows NT
 [syscall("NtClose")]
@@ -227,7 +229,7 @@ micro dom_get_by_id(id: string): i32
 
 ```v
 [wasi]
-micro wasi_fd_write(fd: i32, iovs: i32, iovs_len: i32, nwritten: i32): i32
+micro wasi_fd_write(fd: i32, iovs: i32, io_vectors_length: i32, nwritten: i32): i32
 
 [wasi]
 micro wasi_clock_time_get(clock_id: i32, precision: i64, time: i32): i32

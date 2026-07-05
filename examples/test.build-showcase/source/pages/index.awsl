@@ -3,7 +3,7 @@
         <Card variant="elevated" style="margin-bottom: 24px">
             <h2 style="margin:0 0 12px">构建优化三大引擎</h2>
             <p style="margin:0; color: var(--voa-text-secondary); line-height: 1.8">
-                VOA 构建管线在 <code>voa build</code> 时自动执行三项优化，目标 Lighthouse 性能 ≥ 90 分。
+                Asgard 构建管线在 <code>asgard build</code> 时自动执行三项优化，目标 Lighthouse 性能 ≥ 90 分。
             </p>
         </Card>
 

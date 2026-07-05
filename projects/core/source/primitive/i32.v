@@ -55,7 +55,7 @@ imply i32 {
     }
 
     prefix `-`(self): Self {
-        0 - self
+        __i32_neg(self)
     }
 
     bit_and(self, rhs: Self): Self {
@@ -89,6 +89,9 @@ private micro __i32_add(lhs: i32, rhs: i32): i32 { }
 
 [intrinsic("i32.sub")]
 private micro __i32_sub(lhs: i32, rhs: i32): i32 { }
+
+[intrinsic("i32.neg")]
+private micro __i32_neg(self: i32): i32 { }
 
 [intrinsic("i32.mul")]
 private micro __i32_mul(lhs: i32, rhs: i32): i32 { }

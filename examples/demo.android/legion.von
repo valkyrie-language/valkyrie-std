@@ -1,0 +1,20 @@
+{
+    name: "demo.android",
+    version: "0.1.0",
+    description: "Android 二进制 VOA 示例 -- native AOT .so，无用户逻辑 DEX，asgard pack --target apk",
+    auto_link: {
+        core: true,
+        std: false
+    },
+    dependencies: {
+        "std": { version: "workspace" },
+        "asgard.ui": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "aarch64-linux-android",
+            publish: ["apk"],
+            source_map: true
+        }
+    ]
+}

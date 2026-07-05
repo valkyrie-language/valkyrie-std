@@ -1,0 +1,24 @@
+{
+  "module": "legion-test",
+  "mode": "report",
+  "css": ["legion-test.css"],
+  "wasm": [
+    {
+      "name": "legion-test",
+      "url": "legion-test.wasm",
+      "glue": "legion-test.mjs"
+    }
+  ],
+  "render_ir": {
+    "encoding": "asgard-ui-v1",
+    "size": 0
+  },
+  "components": [
+    {
+      "name": "chart-status",
+      "js": "c/chart-status.js",
+      "strategy": "hydrate",
+      "island": "hydrated"
+    }
+  ]
+}

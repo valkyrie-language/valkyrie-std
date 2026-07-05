@@ -1,0 +1,19 @@
+{
+    name: "test.module_system",
+    version: "0.0.0.0",
+    description: "模块系统跨项目导入契约测试",
+    license: "MIT",
+    auto_link: {
+        core: true,
+        std: false
+    },
+    dependencies: {
+        "nyar": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ]
+}

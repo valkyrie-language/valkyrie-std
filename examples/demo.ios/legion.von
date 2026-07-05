@@ -1,0 +1,20 @@
+{
+    name: "demo.ios",
+    version: "0.1.0",
+    description: "iOS 二进制 VOA 示例 -- 无 WASM，无 Swift，asgard pack --target ipa",
+    auto_link: {
+        core: true,
+        std: false
+    },
+    dependencies: {
+        "std": { version: "workspace" },
+        "asgard.ui": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "aarch64-apple-ios-aapcs64",
+            publish: ["ipa"],
+            source_map: true
+        }
+    ]
+}

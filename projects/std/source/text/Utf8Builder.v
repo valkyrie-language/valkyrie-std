@@ -72,9 +72,7 @@ imply Utf8Builder {
             index = index + 1
         }
 
-        return unsafe {
-            Utf8Text::from_bytes_unchecked(bytes)
-        }
+        return Utf8Text::from_bytes_unchecked(bytes)
     }
 
     infix `+=`(mut self, c: char): unit {

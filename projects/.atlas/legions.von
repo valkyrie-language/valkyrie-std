@@ -1,0 +1,14 @@
+{
+    version: "1",
+    name: "atlas-super-workspace",
+    members: [
+        "projects/atlas",
+        "projects/atlas.tools"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

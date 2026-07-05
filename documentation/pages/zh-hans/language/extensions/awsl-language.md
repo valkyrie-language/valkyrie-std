@@ -1,6 +1,8 @@
 # AWSL 扩展
 
-AWSL（Asgard Web Specification Language）是 VOA 框架中的 UI 声明语言，基于 XML 语法的模板系统，扩展了 Valkyrie 以支持声明式 UI 构建。
+AWSL（Asgard Web Specification Language）是 VOA 框架中的 **Vue 风格** UI 声明语言（`.awsl`）：模板、指令、**单文件组件（SFC）** 的结构借鉴 Vue，但**响应式语义接近 Solid**——状态与更新图编译进 **WASM**，浏览器侧只有加载胶水，没有独立 JS 框架 runtime。
+
+SFC 只存在于 AWSL：顶层（或约定顺序的）`widget` / `template`、`script`、`style` 块写在 `.awsl` 里，不再有独立的 Valkyrie SFC / `.vx` 组件格式。
 
 ## 三种标签形式
 
@@ -9,6 +11,23 @@ AWSL（Asgard Web Specification Language）是 VOA 框架中的 UI 声明语言�
 | **扩展属性** | `<tag @name/>` | 编译器扩展 `@` 开头属性，编译后删除 |
 | **直接标签** | `<tag name/>` | 常规短写 `context.Tag(ContextFn, {})` |
 | **二分标签** | `<tag>content</tag>` | 带子内容 `context.Tag(ContextFn, {}, children)` |
+
+## Widget 标准词表（PascalCase）
+
+Asgard / Valkyrie **widget 布局与控件原语是 PascalCase**：`Column`、`Box`、`Row`、`Text`、`Button` 等。
+
+`div` / `span` 是 **HTML 宿主方言**。写了 Asgard 也会翻译（人性化），但那不是 widget 词表本身——Asgard 基于 widget，再叠一层对 HTML 习惯的优化。
+
+```awsl
+<template>
+  <Column>
+    <Text>{count}</Text>
+    <Button on:click=on_tap>+1</Button>
+  </Column>
+</template>
+```
+
+小写 `flex` / `text` 等旧写法仍可识别，视为 Asgard 别名。
 
 ## 扩展属性约定
 
@@ -24,7 +43,7 @@ AWSL（Asgard Web Specification Language）是 VOA 框架中的 UI 声明语言�
 
 ## 脚本与样式子块
 
-二分标签支持 `<script>` 和 `<style>` 子块：
+顶层并列 `<widget>`、`<script>`、`<style>` 三大块（`<template>` 是 `<widget>` 的兼容别名，仅用于顶层模板容器）：
 
 ```awsl
 <widget>
@@ -34,7 +53,7 @@ AWSL（Asgard Web Specification Language）是 VOA 框架中的 UI 声明语言�
   </flex>
 </widget>
 <script>
-  let count = 0
+  let mut count = 0
 
   micro increment() {
       count += 1
@@ -48,26 +67,46 @@ AWSL（Asgard Web Specification Language）是 VOA 框架中的 UI 声明语言�
 </style>
 ```
 
-## 响应式系统
+旧写法把 `<script>` / `<style>` / 内联 `<template>` 包在 `<widget>` 内仍可解析，但不应在新代码中使用。
 
-AWSL 内建响应式原语，编译为 `voa-runtime.js` 中的对应实现：
+## 响应式系统（Solid 语义）
 
-| 原语 | 用途 | 运行时对应 |
+AWSL **不写** `createSignal` / `createEffect` 等 API。响应式由 Valkyrie 的 `let mut` 直接表达，编译器在 WASM 内建立细粒度依赖图（类似 Solid，而非 Vue 的组件级重渲染）。
+
+| 写法 | 语义 | 编译去向 |
 |:---|:---|:---|
-| `Signal` | 可读写状态单元 | `createSignal(initialValue)` |
-| `Effect` | 自动追踪依赖的副作用 | `createEffect(fn)` |
-| `Memo` | 派生缓存值 | `createMemo(fn)` |
+| `let mut x = …` | **响应式**可变状态；模板中 `{x}` 订阅其变更 | WASM 信号 / 更新图 |
+| `let x = …` | **非响应式**绑定（一次性快照、派生常量） | 普通 `let` |
+| `micro foo() { … }` | 事件 / 逻辑处理 | WASM 函数 |
 
-### 自动解包
-
-`<script>` 块中定义的顶层 `let` 变量自动提升为 Signal：
+### 示例
 
 ```awsl
 <script>
-  let count = 0          // → createSignal(0)
-  let doubled = count * 2 // → createMemo(() => count() * 2)
+  let mut count = 0              // 响应式
+  let label = "点击次数"          // 非响应式常量
+
+  micro increment() {
+      count += 1                 // 仅更新依赖 count 的 DOM 片段
+  }
 </script>
+
+<widget>
+  <text>{label}：{count}</text>
+  <button @click="increment">+1</button>
+</widget>
 ```
+
+### 与 Vue / Solid 的对照
+
+| | Vue | Solid | AWSL |
+|:---|:---|:---|:---|
+| 模板语法 | SFC + 指令 | JSX | **Vue 风格** `.awsl` |
+| 状态 | `ref` / `reactive` | `createSignal` | **`let mut`** |
+| 更新粒度 | 组件级 diff | 细粒度信号 | **细粒度（WASM）** |
+| 运行时 | JS 框架 | JS 运行时 | **WASM + 最小 `boot.js`** |
+
+模板中的 `{expr}` 读取响应式变量时，编译器会插入订阅；`@click` 等事件处理调用 `<script>` 中的 `micro`，逻辑全部在 WASM 内执行。
 
 ### 事件绑定
 
@@ -82,7 +121,8 @@ AWSL 内建响应式原语，编译为 `voa-runtime.js` 中的对应实现：
 | 指令 | 说明 | 示例 |
 |:---|:---|:---|
 | `@if` | 条件渲染 | `<div @if={isVisible}>` |
-| `@for` | 列表渲染 | `<li @for={item in items}>` |
+| `@for` | 列表渲染（兼容，等价于 `<loop>`） | `<li @for={item in items}>` |
+| `<loop>` | **列表渲染（首选）** | `<loop item in todos()>` |
 | `@bind` | 双向绑定 | `<input @bind={name}/>` |
 | `@on` | 事件绑定简写 | `<div @on:click={handler}>` |
 | `@ref` | DOM 引用 | `<canvas @ref={myCanvas}/>` |

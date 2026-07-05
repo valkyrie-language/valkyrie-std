@@ -51,7 +51,7 @@ imply f64 {
     }
 
     prefix `-`(self): Self {
-        0.0 - self
+        __f64_neg(self)
     }
 }
 
@@ -60,6 +60,9 @@ private micro __f64_add(lhs: f64, rhs: f64): f64 { }
 
 [intrinsic("f64.sub")]
 private micro __f64_sub(lhs: f64, rhs: f64): f64 { }
+
+[intrinsic("f64.neg")]
+private micro __f64_neg(self: f64): f64 { }
 
 [intrinsic("f64.mul")]
 private micro __f64_mul(lhs: f64, rhs: f64): f64 { }

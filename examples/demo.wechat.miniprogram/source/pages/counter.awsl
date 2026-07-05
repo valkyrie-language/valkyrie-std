@@ -1,0 +1,12 @@
+<widget Counter>
+    <Column>
+        <Text>计数: {count}</Text>
+        <Button on:click=on_tap>+1</Button>
+    </Column>
+</widget>
+<script>
+    let mut count: i32 = 0
+    micro on_tap() {
+        count = count + 1
+    }
+</script>

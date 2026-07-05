@@ -69,9 +69,9 @@ imply BitSet {
 
     [host_contract]
     micro intersect(mut self, other: BitSet): unit {
-        let min_length: usize = if self.words.length() < other.words.length() { self.words.length() } else { other.words.length() }
+        let minimum_length: usize = if self.words.length() < other.words.length() { self.words.length() } else { other.words.length() }
         let mut i: usize = 0
-        while i < min_length {
+        while i < minimum_length {
             let a: u64 = self.words.get(i + 1).unwrap()
             let b: u64 = other.words.get(i + 1).unwrap()
             self.words.set(i + 1, a & b)
@@ -97,9 +97,9 @@ imply BitSet {
 
     [host_contract]
     micro difference(mut self, other: BitSet): unit {
-        let min_length: usize = if self.words.length() < other.words.length() { self.words.length() } else { other.words.length() }
+        let minimum_length: usize = if self.words.length() < other.words.length() { self.words.length() } else { other.words.length() }
         let mut i: usize = 0
-        while i < min_length {
+        while i < minimum_length {
             let a: u64 = self.words.get(i + 1).unwrap()
             let b: u64 = other.words.get(i + 1).unwrap()
             self.words.set(i + 1, a ^ (a & b))
@@ -110,9 +110,9 @@ imply BitSet {
     [host_contract]
     micro xor(mut self, other: BitSet): unit {
         self.ensure_capacity(other.words.length())
-        let min_length: usize = if self.words.length() < other.words.length() { self.words.length() } else { other.words.length() }
+        let minimum_length: usize = if self.words.length() < other.words.length() { self.words.length() } else { other.words.length() }
         let mut i: usize = 0
-        while i < min_length {
+        while i < minimum_length {
             let a: u64 = self.words.get(i + 1).unwrap()
             let b: u64 = other.words.get(i + 1).unwrap()
             self.words.set(i + 1, a ^ b)

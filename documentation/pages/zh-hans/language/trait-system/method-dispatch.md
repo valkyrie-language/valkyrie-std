@@ -237,6 +237,16 @@ class D(B, C) : A {
 
 ## witness table 概念
 
+> **术语区分**
+>
+> | 术语 | 所属层级 | 含义 |
+> |:---|:---|:---|
+> | **witness table** | Valkyrie `trait` / `imply` | 非侵入式胖指针 `(data, witness)`，记录“类型满足某 trait”的证据 |
+> | **COM vtable** | Windows FFI（`[com]`） | COM 接口对象首指针处的虚表，按槽位调用外部方法 |
+> | **传统 OOP vtable** | 对比参照（C++ 等） | 侵入式类虚表，**不是** Valkyrie 的实现模型 |
+>
+> 下文 “witness table” 均指 Valkyrie 语言机制；与 COM / 传统 vtable 的对比见文末表格。
+
 Witness Table 是编译器的核心数据结构，将"类型 `T` 满足 `trait X`"转化为可传递的编译期证据。
 
 ### 结构
@@ -272,6 +282,8 @@ class Vec<T> : IntoIterator {
 | `into_iter` 函数指针 | `&Vec::<i32>::into_iter` |
 
 ### 与 vtable 的对比
+
+以下对比的是 Valkyrie **witness table** 与**传统 OOP vtable**（C++ 式类虚表），不含 Windows `[com]` 的 COM vtable（后者属于 FFI，见 [特性标注 — `[com]`](../attributes.md)）。
 
 | 特性 | vtable（传统语言） | witness table（Valkyrie） |
 |:---|:---|:---|

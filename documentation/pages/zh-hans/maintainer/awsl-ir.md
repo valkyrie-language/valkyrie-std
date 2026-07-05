@@ -66,6 +66,24 @@ flowchart LR
 - 直接把它们写死成某个宿主框架私有对象模型
 - 直接把浏览器打包策略写成公共语义结构
 
+## 响应式（Solid 语义）
+
+AWSL 模板表面是 Vue 风格，但 `<script>` 中的 **`let mut` 表示响应式状态**（细粒度更新图），**`let` 表示普通绑定**。二者都进入标准语义主线，最终在 WASM family 中落地：
+
+- 模板插值 `{x}` 对 `let mut` 变量建立订阅
+- 事件处理调用同文件 `micro`，不生成 JS 框架 runtime
+- 不要求 `createSignal` / `ref` 等宿主 API
+
+```
+.awsl script: let mut count = 0
+        ↓
+RenderIR + V render micro（保留 let mut）
+        ↓
+HIR / MIR → WASM（信号 + dom_* 更新）
+        ↓
+boot.js + 胶水（仅加载与句柄绑定）
+```
+
 ## SSR 与客户端边界
 
 如果同一份模板需要服务端渲染与客户端激活，那么这件事也不能一概而论，而要看最终部署模型：

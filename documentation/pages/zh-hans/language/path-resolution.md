@@ -19,7 +19,7 @@ entity.position.x        # 成员访问：entity 的 position 的 x
 `package::` 前缀表示包限定路径，由执行环境在编译时注入：
 
 ```valkyrie
-import package::models::User
+using package.models.User
 ```
 
 ## 命名空间

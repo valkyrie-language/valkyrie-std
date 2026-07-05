@@ -8,6 +8,9 @@
     },
     dependencies: {
         "nyar": { version: "workspace" },
+        "nyar.language": { version: "workspace" },
+        "nyar.package_manager": { version: "workspace" },
+        "nyar.package_registry": { version: "workspace" },
         "std": { version: "workspace" },
         "std.data.text.von": { version: "workspace" }
     },
@@ -19,7 +22,7 @@
             target: "jvm"
         },
         {
-            target: "wasm"
+            target: "node"
         },
         {
             target: "nyar"
@@ -27,10 +30,16 @@
     ],
     publish: [
         {
-            target: "clr",
-            type: "nuget",
-            package_id: "LoL.Legion",
-            version: "2020.0.0.0"
-        }
+            target: "node",
+            type: "npm",
+            package_id: "@valkyrie-language/legion",
+            version: "2020.0.0"
+        },
+        {
+            target: "node",
+            type: "jsr",
+            package_id: "@valkyrie/legion",
+            version: "2020.0.0"
+        },
     ]
 }

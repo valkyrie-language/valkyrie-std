@@ -1,4 +1,4 @@
-# VOA 快速开始
+﻿# VOA 快速开始
 
 ## 概述
 
@@ -14,7 +14,7 @@ VOA（Valkyrie of Asgard）是 Valkyrie 生态的全栈开发框架，对标 Nex
 | WASM + WASI | 全栈编译到 WebAssembly |
 | PWA | Service Worker + Manifest + 离线回退 |
 | DevServer | 开发服务器 + WebSocket HMR + Error Overlay |
-| CLI | `voa` 命令全闭环 |
+| CLI | `asgard` 命令（`build` / `dev` / `pack`） |
 
 ## 安装
 
@@ -54,8 +54,8 @@ my-app/
 |:---|:---|
 | `voa new` | 创建新项目 |
 | `voa init` | 初始化项目 |
-| `voa dev` | 启动开发服务器 |
-| `voa build` | 生产构建 |
+| `asgard dev` | 启动开发服务器 |
+| `asgard build` | 生产构建 |
 | `voa start` | 启动生产服务器 |
 | `voa test` | 运行测试 |
 | `voa check` | 代码检查 |
@@ -103,9 +103,11 @@ my-app/
 
 ### 响应式状态
 
+使用 **`let mut`** 声明响应式变量（Solid 语义，编译进 WASM）。普通 `let` 为非响应式常量。
+
 ```awsl
 <script>
-    let count: i32 = 0
+    let mut count: i32 = 0
 </script>
 
 <button on:click={() => count = count + 1}>
@@ -153,7 +155,7 @@ pages/
 ## 部署
 
 ```bash
-voa build --ssr --pwa
+asgard build --ssr --pwa
 ```
 
 产物输出到 `dist/` 目录：
@@ -161,11 +163,12 @@ voa build --ssr --pwa
 ```
 dist/
 ├── index.html
-├── main.wasm
-├── main.js
-├── voa-runtime.js
+├── boot.js
+├── voa-blog.wasm
+├── voa-blog.mjs
+├── manifest.json
+├── c/*.js             # 组件胶水
 ├── sw.js              # --pwa
-├── manifest.json      # --pwa
 └── offline.html       # --pwa
 ```
 

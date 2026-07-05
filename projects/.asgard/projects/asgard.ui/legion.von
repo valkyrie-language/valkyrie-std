@@ -1,0 +1,20 @@
+{
+    name: "asgard.ui",
+    version: "workspace",
+    description: "Asgard UI wire decode and UiHost contract",
+    type: "library",
+    auto_link: {
+        core: true,
+        std: true
+    },
+    dependencies: {},
+    build: [
+        {
+            target: "nyar"
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ]
+}

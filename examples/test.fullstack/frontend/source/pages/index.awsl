@@ -17,7 +17,7 @@
     using backend.services.user_service
 
     let title: string = "Hello, Asgard!"
-    let users: list = []
+    let mut users: list = []
 
     micro load_users() {
         users = get_users()

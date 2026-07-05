@@ -1,0 +1,7 @@
+{
+    name: "demo.linux",
+    version: "0.1.0",
+    dependencies: {
+        "asgard.ui": "0.1.0"
+    }
+}

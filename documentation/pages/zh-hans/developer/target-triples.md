@@ -192,6 +192,8 @@ arch-impl-spec[-abi]
 | `clr-unity-windows-managed` | Unity Mono 托管执行 | 受 Unity 运行时约束 |
 | `clr-unity-windows-il2cpp` | Unity IL2CPP 转译 | 由 Unity IL2CPP 管线继续处理 |
 
+**首版 Mono 路径（当前工具链）**：在 `legion.von` 使用 `target: clr-microsoft-unknown-managed` + `publish: ["unity-player"]`，由 `legion build` 输出 MSIL 并由 `valkyrie.unity` Editor 包导入 Unity；`clr-unity-*` 三元组解析与 IL2CPP 钩子留待后续阶段。
+
 ### 6.4 WASM — 浏览器与 JS 宿主
 
 | CanonicalTarget | 含义 | 常用运行约定 |
@@ -298,6 +300,28 @@ arch-impl-spec[-abi]
 - `wasm` 精确指代 `.wasm` 二进制模块
 - 文本格式 WAT、JS glue、WASI 接口都由其他维度处理，不堆积在 ABI 一词上
 - `wasi` 作为统一 ABI 标识，直接表达 `WASI Component Model`
+
+---
+
+## 9.1 发布格式（PublishFormat）与多宿主
+
+CanonicalTarget 描述**执行模型**；`publish` 描述**交付包装**。二者正交。
+
+对 `wasm32-*-browser-wasm` 常见 publish：
+
+Asgard **平台原生优先**；自渲仅小游戏等有限场景。详见 [UI 渲染策略](../guides/ui-rendering.md)、[统一编译架构](../guides/asgard-gui-compilation.md)。
+
+| publish | 含义 | 逻辑字节码 | 典型工具链 |
+|:---|:---|:---|:---|
+| `wasm-module` | 裸 WASM 模块 | **WASM** | 库 / 嵌入 |
+| `web-app` | Web 应用 | **WASM**（仅 Web） | VOA `platform: browser` |
+| `extension` | 浏览器扩展 | WASM | 后续 |
+| `mini-game` | 微信小游戏 | 小游戏运行时 | `asgard pack --target mini-game`（自渲，非 VOA GUI） |
+| `mini-program` | 微信小程序 | **宿主字节码** | `asgard build` + `asgard pack --target mini-program` |
+| `apk` | Android | **DEX** | `asgard build` + `asgard pack --target apk` |
+| `ipa` | iOS | **Mach-O** | `asgard build` + `asgard pack --target ipa` |
+
+RenderIR **编入** 各平台二进制制品；**仅 debug** 额外写出侧车。完整 V→DEX / V→Mach-O 后端持续演进。
 
 ---
 

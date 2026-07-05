@@ -1,0 +1,20 @@
+{
+    version: "1",
+    name: "std-adaptors-super-workspace",
+    members: [
+        "std.adaptor.clr",
+        "std.adaptor.jvm",
+        "std.adaptor.linux",
+        "std.adaptor.macos",
+        "std.adaptor.nyar",
+        "std.adaptor.wasi",
+        "std.adaptor.wasm",
+        "std.adaptor.windows"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

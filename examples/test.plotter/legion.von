@@ -1,0 +1,19 @@
+{
+    name: "test.plotter",
+    version: "0.1.0",
+    description: "plotter + asgard.plotter showcase (InteractiveColPlot hydrate via asgard auto glue)",
+    type: "application",
+    target: "wasm32-unknown-browser-wasm",
+    dependencies: {
+        "plotter": { version: "workspace" },
+        "asgard.plotter": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm"
+        },
+        {
+            target: "nyar"
+        }
+    ]
+}

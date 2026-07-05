@@ -1,0 +1,19 @@
+{
+    name: "legion.report",
+    version: "workspace",
+    description: "Legion 报告图表：series 数据 helpers + chart 路由薄包装（UI 来自 asgard.plotter）",
+    type: "library",
+    auto_link: {
+        core: true,
+        std: true
+    },
+    dependencies: {
+        "asgard.plotter": { version: "workspace" },
+        "plotter": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "nyar"
+        }
+    ]
+}
