@@ -206,10 +206,10 @@ let parsed: Result<Vec<Config>, ConfigError> =
 
 ### 内置变体类型
 
-| 类型 | 变体 | 说明 |
+| 类型 | 声明 | 构造 / 匹配 |
 |:---|:---|:---|
-| `Fine \| Fail` | `Fine(T)` / `Fail(E)` | 成功或失败 |
-| `Some \| None` | `Some(T)` / `None` | 有值或无值 |
+| `Fine \| Fail` | `Fine { value: T }` / `Fail { error: E }` | `Fine(x)` / `case Fine(x)` |
+| `Some \| None` | `Some { value: T }` / `None` | `Some(x)` / `case Some(x)` |
 
 ### catch 语法
 

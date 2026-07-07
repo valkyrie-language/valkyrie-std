@@ -1,0 +1,148 @@
+<widget Tabs>
+<Box @class="ui-tabs ui-tabs-{variant} ui-tabs-{orientation} ui-tabs-{size}">
+    <Box @class="ui-tabs-nav">
+        <loop item="item" :each="{items}">
+            <button :disabled="item.disabled" type="button" @class="ui-tabs-tab {activeKey == item.key ? 'ui-tabs-tab-active' : ''} {item.disabled ? 'ui-tabs-tab-disabled' : ''}" @click="handleSelect(item)">
+                <if :condition="item.icon != &quot;&quot;">
+                    <svg @class="ui-tabs-tab-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path :d="item.icon" />
+                    </svg>
+                    <else />
+                </if>
+                <Text @class="ui-tabs-tab-label">{item.label}</Text>
+            </button>
+        </loop>
+    </Box>
+    <Box @class="ui-tabs-content">
+        <slot :name="activeKey" />
+    </Box>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+let value: utf8 = ""
+let variant: utf8 = "line"
+let size: utf8 = "md"
+let orientation: utf8 = "horizontal"
+let mut activeKey: utf8 = ""
+
+micro handleSelect(item) {
+    if item.disabled { return }
+    activeKey = item.key
+    emit("change", {key: item.key})
+}
+
+micro onMount() {
+    activeKey = value
+    if activeKey == "" && items.length > 0 {
+        activeKey = items[0].key
+    }
+}
+</script>
+<style>
+.ui-tabs {
+    display: flex;
+    font-family: var(--ui-font-sans);
+}
+.ui-tabs-horizontal {
+    flex-direction: column;
+}
+.ui-tabs-vertical {
+    flex-direction: row;
+}
+.ui-tabs-nav {
+    display: flex;
+    gap: var(--ui-space-1);
+}
+.ui-tabs-horizontal .ui-tabs-nav {
+    flex-direction: row;
+    border-bottom: 1px solid var(--sys-outline);
+}
+.ui-tabs-vertical .ui-tabs-nav {
+    flex-direction: column;
+    border-right: 1px solid var(--sys-outline);
+    min-width: 160px;
+}
+.ui-tabs-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    white-space: nowrap;
+    outline: none;
+}
+.ui-tabs-sm .ui-tabs-tab { height: var(--ui-control-h-sm); padding: 0 var(--ui-space-3); font-size: var(--ui-fs-sm); }
+.ui-tabs-md .ui-tabs-tab { height: var(--ui-control-h-md); padding: 0 var(--ui-space-4); font-size: var(--ui-fs-base); }
+.ui-tabs-lg .ui-tabs-tab { height: var(--ui-control-h-lg); padding: 0 var(--ui-space-5); font-size: var(--ui-fs-lg); }
+.ui-tabs-tab:hover:not(.ui-tabs-tab-disabled) {
+    color: var(--sys-on-bg);
+}
+.ui-tabs-tab-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-tabs-tab-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+.ui-tabs-content {
+    flex: 1;
+    padding: var(--ui-space-4);
+    color: var(--sys-on-bg);
+}
+.ui-tabs-line .ui-tabs-horizontal .ui-tabs-tab-active {
+    color: var(--sys-primary);
+    position: relative;
+}
+.ui-tabs-line .ui-tabs-horizontal .ui-tabs-tab-active::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: var(--sys-primary);
+}
+.ui-tabs-line .ui-tabs-vertical .ui-tabs-tab-active {
+    color: var(--sys-primary);
+    background: var(--sys-primary-container);
+    border-radius: var(--sys-radius-md);
+}
+.ui-tabs-enclosed .ui-tabs-horizontal .ui-tabs-tab {
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: var(--sys-radius-md) var(--sys-radius-md) 0 0;
+}
+.ui-tabs-enclosed .ui-tabs-horizontal .ui-tabs-tab-active {
+    background: var(--sys-surface);
+    border-color: var(--sys-outline);
+    color: var(--sys-on-bg);
+    position: relative;
+    top: 1px;
+}
+.ui-tabs-enclosed .ui-tabs-vertical .ui-tabs-tab-active {
+    background: var(--sys-surface-hover);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+}
+.ui-tabs-pills .ui-tabs-tab {
+    border-radius: var(--sys-radius-full);
+}
+.ui-tabs-pills .ui-tabs-tab-active {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+}
+.ui-tabs-pills .ui-tabs-tab-active:hover {
+    background: var(--sys-primary);
+    color: var(--sys-on-primary);
+}
+</style>

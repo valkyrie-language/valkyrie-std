@@ -1,0 +1,299 @@
+<widget Cascader>
+<Box @class="ui-cascader-wrapper" @click="toggleOpen">
+    <Box @class="ui-cascader-trigger ui-cascader-{size} {disabled ? 'ui-cascader-disabled' : ''} {isOpen ? 'ui-cascader-trigger-open' : ''}">
+        <Text @class="ui-cascader-value {selectedPath.length == 0 ? 'ui-cascader-placeholder' : ''}">
+            <if :condition="selectedPath.length == 0">
+                {placeholder}
+                <else />
+                {displayPath}
+            </if>
+        </Text>
+        <Text @class="ui-cascader-arrow {isOpen ? 'ui-cascader-arrow-open' : ''}">
+            <svg @class="ui-cascader-arrow-svg" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m6 9 6 6 6-6" />
+            </svg>
+        </Text>
+    </Box>
+    <if :condition="isOpen && !disabled">
+        <Box @class="ui-cascader-dropdown" @click="stopPropagation">
+            <Box @class="ui-cascader-columns">
+                <loop item="col" :each="{columnOptions}">
+                    <Box @class="ui-cascader-column">
+                        <loop item="opt" :each="{col}">
+                            <Box @class="ui-cascader-option {isOptionActive(opt, col) ? 'ui-cascader-option-active' : ''} {opt.disabled ? 'ui-cascader-option-disabled' : ''}" @click="selectOption(opt, col)" @mouseenter="hoverOption(opt, col)">
+                                <Text @class="ui-cascader-option-label">{opt.label}</Text>
+                                <if :condition="hasChildren(opt)">
+                                    <Text @class="ui-cascader-option-arrow">
+                                        <svg @class="ui-cascader-option-arrow-svg" viewBox="0 0 24 24" width="14" height="14">
+                                            <path d="m9 18 6-6-6-6" />
+                                        </svg>
+                                    </Text>
+                                    <else />
+                                </if>
+                            </Box>
+                        </loop>
+                    </Box>
+                </loop>
+            </Box>
+        </Box>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let options: list = []
+let value: list = []
+let placeholder: utf8 = "Select..."
+let size: utf8 = "md"
+let disabled: bool = false
+let changeOnSelect: bool = false
+
+let mut isOpen: bool = false
+let mut selectedPath: list = []
+
+micro toggleOpen() {
+    if disabled {
+        return
+    }
+isOpen = !isOpen
+}
+
+micro stopPropagation(e) {
+    e.stopPropagation()
+}
+
+micro hasChildren(opt) {
+    return opt.children && opt.children.length > 0
+}
+
+micro columnOptions() {
+    let cols: list = [options]
+    let current: list = options
+    let i: i32 = 0
+    while i < selectedPath.length {
+        let key: utf8 = selectedPath[i]
+        let found: bool = false
+        let j: i32 = 0
+        while j < current.length {
+            if current[j].value == key {
+                if current[j].children && current[j].children.length > 0 {
+                    current = current[j].children
+                    cols = push(cols, current)
+                } else {
+                i = selectedPath.length
+            }
+        found = true
+        j = current.length
+    }
+j = j + 1
+}
+i = i + 1
+}
+return cols
+}
+
+micro isOptionActive(opt, col) {
+    let idx: i32 = indexOf(columnOptions(), col)
+    if idx < 0 || idx >= selectedPath.length {
+        return false
+    }
+return selectedPath[idx] == opt.value
+}
+
+micro selectOption(opt, col) {
+    if opt.disabled {
+        return
+    }
+let cols: list = columnOptions()
+let colIdx: i32 = indexOf(cols, col)
+selectedPath = slice(selectedPath, 0, colIdx)
+selectedPath = push(selectedPath, opt.value)
+if changeOnSelect {
+    emit("change", { value: selectedPath })
+}
+if !hasChildren(opt) {
+    isOpen = false
+    if !changeOnSelect {
+        emit("change", { value: selectedPath })
+    }
+}
+}
+
+micro hoverOption(opt, col) {
+    if !hasChildren(opt) {
+        return
+    }
+let cols: list = columnOptions()
+let colIdx: i32 = indexOf(cols, col)
+if colIdx >= 0 && colIdx < selectedPath.length && selectedPath[colIdx] != opt.value {
+    selectedPath = slice(selectedPath, 0, colIdx)
+    selectedPath = push(selectedPath, opt.value)
+}
+}
+
+micro displayPath() {
+    let labels: list = []
+    let current: list = options
+    let i: i32 = 0
+    while i < selectedPath.length {
+        let key: utf8 = selectedPath[i]
+        let j: i32 = 0
+        let found: bool = false
+        while j < current.length {
+            if current[j].value == key {
+                labels = push(labels, current[j].label)
+                current = current[j].children
+                found = true
+                j = current.length
+            }
+        j = j + 1
+    }
+i = i + 1
+}
+return join(labels, " / ")
+}
+
+micro onMount() {
+    selectedPath = value
+}
+</script>
+<style>
+.ui-cascader-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    font-family: var(--ui-font-sans);
+}
+.ui-cascader-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    padding: 0 var(--ui-space-3);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-cascader-trigger:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-cascader-trigger-open {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-cascader-xs {
+    height: var(--ui-control-h-xs);
+    font-size: var(--ui-fs-xs);
+}
+.ui-cascader-sm {
+    height: var(--ui-control-h-sm);
+    font-size: var(--ui-fs-sm);
+}
+.ui-cascader-md {
+    height: var(--ui-control-h-md);
+    font-size: var(--ui-fs-base);
+}
+.ui-cascader-lg {
+    height: var(--ui-control-h-lg);
+    font-size: var(--ui-fs-lg);
+}
+.ui-cascader-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-cascader-value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--sys-on-bg);
+}
+.ui-cascader-placeholder {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-cascader-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--sys-on-bg-tertiary);
+    transition: transform var(--ui-duration-1) var(--ui-easing);
+}
+.ui-cascader-arrow-open {
+    transform: rotate(180deg);
+}
+.ui-cascader-arrow-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-cascader-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: var(--ui-z-dropdown);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-1);
+    overflow: hidden;
+}
+.ui-cascader-columns {
+    display: flex;
+    gap: var(--ui-space-1);
+    max-height: 280px;
+    overflow: hidden;
+}
+.ui-cascader-column {
+    min-width: 160px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: var(--ui-space-1);
+}
+.ui-cascader-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+    padding: var(--ui-space-2) var(--ui-space-3);
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    color: var(--sys-on-bg);
+    font-size: var(--ui-fs-sm);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-cascader-option:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-cascader-option-active {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+}
+.ui-cascader-option-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.ui-cascader-option-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ui-cascader-option-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--sys-on-bg-tertiary);
+    flex-shrink: 0;
+}
+.ui-cascader-option-arrow-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+</style>

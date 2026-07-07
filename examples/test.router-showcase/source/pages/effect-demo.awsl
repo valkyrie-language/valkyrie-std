@@ -1,54 +1,54 @@
-<widget>
-    <div class="effect-demo-page">
-        <h2 class="demo-title">⚡ Effect 演示</h2>
+<widget effect_demo>
+<div class="effect-demo-page">
+    <h2 class="demo-title">⚡ Effect 演示</h2>
 
-        <Card variant="bordered" style="margin-bottom: 24px">
-            <h3 style="margin:0 0 12px">let mut — 响应式计数器</h3>
-            <p style="margin:0 0 12px; font-size: 24px; font-weight:700; color: var(--voa-accent)">{count_state}</p>
-            <div class="demo-row">
-                <Button variant="primary" label="+1" on:click={() => count_state = count_state + 1} />
-                <Button variant="danger" label="-1" on:click={() => count_state = count_state - 1} />
-                <Button variant="ghost" label="归零" on:click={() => count_state = 0} />
-            </div>
-        </Card>
+    <Card variant="bordered" style="margin-bottom: 24px">
+        <h3 style="margin:0 0 12px">let mut — 响应式计数器</h3>
+        <p style="margin:0 0 12px; font-size: 24px; font-weight:700; color: var(--voa-accent)">{count_state}</p>
+        <div class="demo-row">
+            <Button variant="primary" label="+1" @click="() => count_state = count_state + 1" />
+            <Button variant="danger" label="-1" @click="() => count_state = count_state - 1" />
+            <Button variant="ghost" label="归零" @click="() => count_state = 0" />
+        </div>
+    </Card>
 
-        <Card variant="bordered" style="margin-bottom: 24px">
-            <h3 style="margin:0 0 12px">派生值 — 计算缓存</h3>
-            <p style="margin:0; color: var(--voa-text-secondary); font-size: 14px">
-                当前值：{count_state} → 平方：<strong style="color: var(--voa-accent)">{count_state * count_state}</strong> → 双倍：<strong style="color: var(--voa-accent)">{count_state * 2}</strong>
-            </p>
-            <p style="margin:4px 0 0; color: var(--voa-text-tertiary); font-size: 12px">
-                仅在 count 变化时重新计算
-            </p>
-        </Card>
+    <Card variant="bordered" style="margin-bottom: 24px">
+        <h3 style="margin:0 0 12px">派生值 — 计算缓存</h3>
+        <p style="margin:0; color: var(--voa-text-secondary); font-size: 14px">
+            当前值：{count_state} → 平方：<strong style="color: var(--voa-accent)">{count_state * count_state}</strong> → 双倍：<strong style="color: var(--voa-accent)">{count_state * 2}</strong>
+        </p>
+        <p style="margin:4px 0 0; color: var(--voa-text-tertiary); font-size: 12px">
+            仅在 count 变化时重新计算
+        </p>
+    </Card>
 
-        <Card variant="bordered" style="margin-bottom: 24px">
-            <h3 style="margin:0 0 12px">挂载时间 — 副作用</h3>
-            <p style="margin:0; color: var(--voa-text-secondary); font-size: 14px">
-                组件挂载时间：<strong style="color: var(--voa-accent)">{mount_time}</strong>
-            </p>
-            <p style="margin:4px 0 0; color: var(--voa-text-tertiary); font-size: 12px">
-                onMount 中写入，普通变量不会单独触发重渲染
-            </p>
-        </Card>
-    </div>
+    <Card variant="bordered" style="margin-bottom: 24px">
+        <h3 style="margin:0 0 12px">挂载时间 — 副作用</h3>
+        <p style="margin:0; color: var(--voa-text-secondary); font-size: 14px">
+            组件挂载时间：<strong style="color: var(--voa-accent)">{mount_time}</strong>
+        </p>
+        <p style="margin:4px 0 0; color: var(--voa-text-tertiary); font-size: 12px">
+            onMount 中写入，普通变量不会单独触发重渲染
+        </p>
+    </Card>
+</div>
 </widget>
 
 <script>
-    let mut count_state: i32 = 0
-    let mut mount_time: string = ""
+let mut count_state: i32 = 0
+let mut mount_time: utf8 = ""
 
-    micro onMount() {
-        mount_time = format_time(now())
-    }
+micro onMount() {
+    mount_time = format_time(now())
+}
 
-    micro now(): i64 {
-        return 0
-    }
+micro now(): i64 {
+    return 0
+}
 
-    micro format_time(ts: i64): string {
-        return "2026-10-01 10:00:00"
-    }
+micro format_time(ts: i64): utf8 {
+    return "2026-10-01 10:00:00"
+}
 </script>
 
 <style>

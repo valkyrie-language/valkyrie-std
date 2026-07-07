@@ -1,0 +1,55 @@
+<widget counter>
+<Column>
+    <Text>== TUI Counter Demo ==</Text>
+    <Text>Count: {count}</Text>
+    <Row>
+        <Button @click="on_dec">-1</Button>
+        <Button @click="on_inc">+1</Button>
+        <Button @click="on_reset">reset</Button>
+    </Row>
+    <Text>step: {step}</Text>
+    <Text>--- select step (up/down + Enter) ---</Text>
+    <List>
+        <Item @click="on_step_1">step = 1</Item>
+        <Item @click="on_step_5">step = 5</Item>
+        <Item @click="on_step_10">step = 10</Item>
+    </List>
+    <Text>--- options (Space to toggle) ---</Text>
+    <Checkbox :binding="sound">sound effect</Checkbox>
+    <Checkbox :binding="autosave">auto save</Checkbox>
+    <Text>--- difficulty (Enter to select) ---</Text>
+    <Radio :binding="difficulty" :option="easy">easy</Radio>
+    <Radio :binding="difficulty" :option="normal">normal</Radio>
+    <Radio :binding="difficulty" :option="hard">hard</Radio>
+    <Box>
+        <Text>q/Esc: quit | arrows/hjkl: move</Text>
+        <Text>Enter/Space: activate | Tab: next</Text>
+        <Text>1-9: quick select | Home/End: first/last</Text>
+    </Box>
+</Column>
+</widget>
+<script>
+let mut count: i32 = 0
+let mut step: i32 = 1
+let mut sound: bool = false
+let mut autosave: bool = true
+let mut difficulty: utf8 = "normal"
+micro on_inc() {
+    count = count + step
+}
+micro on_dec() {
+    count = count - step
+}
+micro on_reset() {
+    count = 0
+}
+micro on_step_1() {
+    step = 1
+}
+micro on_step_5() {
+    step = 5
+}
+micro on_step_10() {
+    step = 10
+}
+</script>

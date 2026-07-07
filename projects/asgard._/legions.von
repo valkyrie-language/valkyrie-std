@@ -1,0 +1,31 @@
+{
+    version: "1",
+    name: "asgard-super-workspace",
+    members: [
+        "projects/asgard",
+        "projects/asgard.bifrost",
+        "projects/asgard.plotter",
+        "projects/asgard.router",
+        "projects/asgard.ui",
+        "projects/asgard.ui.core",
+        "projects/asgard.ui.icon",
+        "projects/asgard.theme.aether",
+        "projects/asgard.theme.zen",
+        "projects/asgard.theme.apex",
+        "projects/asgard.theme.fate",
+        "projects/asgard.theme.matrix",
+        "projects/asgard.theme.kumo",
+        "projects/asgard.demo.portal",
+        "projects/asgard.demo.qa",
+        "projects/asgard.demo.blog",
+        "projects/asgard.demo.forum",
+        "projects/tencent.wechat.miniprogram.sdk",
+        "projects/tencent.wechat.sdk"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    name: "bootstrap-smoke-node",
+    version: "0.1.0",
+    auto_link: {
+        core: true,
+        std: true
+    },
+    build: [
+        {
+            target: "node"
+        }
+    ]
+}

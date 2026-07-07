@@ -1,0 +1,68 @@
+<widget header>
+<Box class="blog-header">
+    <Box class="blog-header-inner">
+        <Text class="blog-header-title">Aether Log</Text>
+        <Box class="blog-header-nav">
+            <Box class="blog-header-nav-list">
+                <Text class="blog-header-nav-label">文章</Text>
+                <Text class="blog-header-nav-label">标签</Text>
+                <Text class="blog-header-nav-label">关于</Text>
+            </Box>
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<style>
+.blog-header {
+    border-bottom: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+}
+.blog-header-inner {
+    max-width: var(--ui-container-max, 1120px);
+    margin: 0 auto;
+    padding: var(--ui-space-xl, 32px) var(--ui-space-lg, 24px);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-lg, 24px);
+}
+.blog-header-title {
+    font-family: var(--ui-font-serif);
+    font-size: var(--ui-font-size-xl, 24px);
+    font-weight: var(--ui-font-weight-semibold, 600);
+    color: var(--sys-text-primary);
+    letter-spacing: var(--ui-letter-spacing-tight, -0.01em);
+    line-height: 1;
+    white-space: nowrap;
+}
+.blog-header-nav {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+}
+.blog-header-nav-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--ui-space-lg, 24px);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.blog-header-nav-label {
+    font-size: var(--ui-font-size-sm, 14px);
+    color: var(--sys-text-secondary);
+    cursor: pointer;
+    transition: color var(--ui-motion-fast, 120ms) ease;
+}
+.blog-header-nav-label:hover {
+    color: var(--sys-text-primary);
+}
+@media (max-width: 720px) {
+    .blog-header-nav {
+        display: none;
+    }
+}
+</style>

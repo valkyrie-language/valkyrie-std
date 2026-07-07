@@ -1,0 +1,475 @@
+<widget DataTable>
+<Box @class="ui-data-table ui-data-table-{size} {bordered ? 'ui-data-table-bordered' : ''} {loading ? 'ui-data-table-loading' : ''}">
+    <Box @class="ui-data-table-container">
+        <table @class="ui-data-table-table">
+            <thead @class="ui-data-table-head">
+                <tr @class="ui-data-table-row">
+                    <if selectable>
+                        <th @class="ui-data-table-th ui-data-table-th-select">
+                            <input type="checkbox" @class="ui-data-table-checkbox" @change="toggleSelectAll" :checked="allSelected" />
+                        </th>
+                        <else/>
+                    </if>
+                    <loop col in {columns}>
+                        <th
+                            @class="ui-data-table-th {col.sortable ? 'ui-data-table-th-sortable' : ''} {sortKey == col.key ? 'ui-data-table-th-sorted' : ''}"
+                            :style="f\"text-align: {col.align}\"
+                            @click="col.sortable ? handleSort(col.key) : null"
+                        >
+                            <Text @class="ui-data-table-th-text">{col.title}</Text>
+                            <if hasFilterOptions(col)>
+                                <select
+                                    @class="ui-data-table-filter"
+                                    :data-key="col.key"
+                                    :value="getFilterValue(col.key)"
+                                    @click="stopPropagation"
+                                    @change="handleFilterChange"
+                                >
+                                    <option value="">All</option>
+                                    <loop option in {col.filters}>
+                                        <option :value="option.value">{option.label}</option>
+                                    </loop>
+                                </select>
+                                <else/>
+                            </if>
+                            <if col.sortable>
+                                <Text @class="ui-data-table-sort-icon">
+                                    <svg @class="ui-data-table-sort-svg" viewBox="0 0 24 24" width="14" height="14">
+                                        <path @class="ui-data-table-sort-path" d="m11 5 4 4M11 5 7 9M11 5v14M17.5 19l4-4M21.5 19l-4-4M21.5 19v-14" />
+                                    </svg>
+                                </Text>
+                                <else/>
+                            </if>
+                        </th>
+                    </loop>
+                </tr>
+            </thead>
+            <tbody @class="ui-data-table-body">
+                <if loading>
+                    <tr @class="ui-data-table-row ui-data-table-row-loading">
+                        <td @class="ui-data-table-td ui-data-table-td-loading" colspan="99">
+                            <Text @class="ui-data-table-loading-text">Loading...</Text>
+                        </td>
+                    </tr>
+                    <else/>
+                </if>
+                <if !loading && pagedData.length == 0>
+                    <tr @class="ui-data-table-row">
+                        <td @class="ui-data-table-td ui-data-table-td-empty" colspan="99">
+                            <Text @class="ui-data-table-empty-text">No data</Text>
+                        </td>
+                    </tr>
+                    <else/>
+                </if>
+                <loop row in {pagedData}>
+                    <tr
+                        @class="ui-data-table-row ui-data-table-row-data"
+                        @click="handleRowClick(row)"
+                    >
+                        <if selectable>
+                            <td @class="ui-data-table-td ui-data-table-td-select" @click="stopPropagation">
+                                <input
+                                    type="checkbox"
+                                    @class="ui-data-table-checkbox"
+                                    :checked="isRowSelected(row)"
+                                    @change="toggleRowSelect(row)"
+                                />
+                            </td>
+                            <else/>
+                        </if>
+                        <loop col in {columns}>
+                            <td @class="ui-data-table-td" :style="f\"text-align: {col.align}\">
+                                <Text @class="ui-data-table-cell">{row[col.key]}</Text>
+                            </td>
+                        </loop>
+                    </tr>
+                </loop>
+            </tbody>
+        </table>
+    </Box>
+    <if pagination>
+        <Box @class="ui-data-table-pagination">
+            <Text @class="ui-data-table-page-info">
+                {currentPage} / {totalPages}
+            </Text>
+            <Box @class="ui-data-table-page-buttons">
+                <button
+                    @class="ui-data-table-page-btn"
+                    @click="goPage(1)"
+                    :disabled="currentPage <= 1"
+                    type="button"
+                >First</button>
+                <button
+                    @class="ui-data-table-page-btn"
+                    @click="goPage(currentPage - 1)"
+                    :disabled="currentPage <= 1"
+                    type="button"
+                >Prev</button>
+                <button
+                    @class="ui-data-table-page-btn"
+                    @click="goPage(currentPage + 1)"
+                    :disabled="currentPage >= totalPages"
+                    type="button"
+                >Next</button>
+                <button
+                    @class="ui-data-table-page-btn"
+                    @click="goPage(totalPages)"
+                    :disabled="currentPage >= totalPages"
+                    type="button"
+                >Last</button>
+            </Box>
+        </Box>
+        <else/>
+    </if>
+</Box>
+</widget>
+
+<script>
+let columns: list = []
+let dataSource: list = []
+let rowKey: utf8 = "id"
+let loading: bool = false
+let bordered: bool = true
+let size: utf8 = "md"
+let pagination: bool = true
+let pageSize: utf8 = "10"
+let selectable: bool = false
+
+let mut currentPage: i32 = 1
+let mut sortKey: utf8 = ""
+let mut sortDir: utf8 = "asc"
+let mut selectedKeys: list = []
+let mut activeFilters: list = []
+
+micro handleSort(key: utf8) {
+    if sortKey == key {
+        if sortDir == "asc" {
+            sortDir = "desc"
+        } else {
+        sortDir = "asc"
+    }
+} else {
+sortKey = key
+sortDir = "asc"
+}
+emit("sort", { key: key, dir: sortDir })
+}
+
+micro hasFilterOptions(col) {
+    return col.filters && col.filters.length > 0
+}
+
+micro getFilterValue(key: utf8) {
+    let i: i32 = 0
+    while i < activeFilters.length {
+        if activeFilters[i].key == key {
+            return activeFilters[i].value
+        }
+    i = i + 1
+}
+return ""
+}
+
+micro handleFilterChange(e) {
+    let key: utf8 = e.target.dataset.key
+    let value: utf8 = e.target.value
+    let next: list = []
+    let i: i32 = 0
+    while i < activeFilters.length {
+        if activeFilters[i].key != key {
+            next = push(next, activeFilters[i])
+        }
+    i = i + 1
+}
+if value != "" {
+    next = push(next, { key: key, value: value })
+}
+activeFilters = next
+currentPage = 1
+emit("filter", { key: key, value: value, filters: activeFilters })
+}
+
+micro filteredData() {
+    let data: list = dataSource
+    let i: i32 = 0
+    while i < activeFilters.length {
+        let key: utf8 = activeFilters[i].key
+        let value: utf8 = activeFilters[i].value
+        let next: list = []
+        let j: i32 = 0
+        while j < data.length {
+            if data[j][key] == value {
+                next = push(next, data[j])
+            }
+        j = j + 1
+    }
+    data = next
+    i = i + 1
+}
+return data
+}
+
+micro sortedData() {
+    let data: list = filteredData()
+    if sortKey != "" {
+        data = sortBy(data, sortKey, sortDir)
+    }
+return data
+}
+
+micro pagedData() {
+    let data: list = sortedData()
+    if pagination {
+        let start: i32 = (currentPage - 1) * toI32(pageSize)
+        let end: i32 = start + toI32(pageSize)
+        data = slice(data, start, end)
+    }
+return data
+}
+
+micro totalPages() {
+    let total: i32 = sortedData().length
+    let ps: i32 = toI32(pageSize)
+    let pages: i32 = (total + ps - 1) / ps
+    if pages < 1 {
+        pages = 1
+    }
+return pages
+}
+
+micro goPage(page: i32) {
+    if page < 1 || page > totalPages() {
+        return
+    }
+currentPage = page
+emit("pageChange", { page: currentPage })
+}
+
+micro handleRowClick(row) {
+    emit("rowClick", { row: row })
+}
+
+micro stopPropagation(e) {
+    e.stopPropagation()
+}
+
+micro isRowSelected(row) {
+    let key: utf8 = row[rowKey]
+    return indexOf(selectedKeys, key) >= 0
+}
+
+micro toggleRowSelect(row) {
+    let key: utf8 = row[rowKey]
+    let idx: i32 = indexOf(selectedKeys, key)
+    if idx >= 0 {
+        selectedKeys = splice(selectedKeys, idx, 1)
+    } else {
+    selectedKeys = push(selectedKeys, key)
+}
+emit("select", { keys: selectedKeys })
+}
+
+micro allSelected() {
+    if pagedData().length == 0 {
+        return false
+    }
+let all: bool = true
+let rows: list = pagedData()
+let i: i32 = 0
+while i < rows.length {
+    if !isRowSelected(rows[i]) {
+        all = false
+    }
+i = i + 1
+}
+return all
+}
+
+micro toggleSelectAll() {
+    let rows: list = pagedData()
+    if allSelected() {
+        let i: i32 = 0
+        while i < rows.length {
+            let key: utf8 = rows[i][rowKey]
+            let idx: i32 = indexOf(selectedKeys, key)
+            if idx >= 0 {
+                selectedKeys = splice(selectedKeys, idx, 1)
+            }
+        i = i + 1
+    }
+} else {
+let i: i32 = 0
+while i < rows.length {
+    let key: utf8 = rows[i][rowKey]
+    if indexOf(selectedKeys, key) < 0 {
+        selectedKeys = push(selectedKeys, key)
+    }
+i = i + 1
+}
+}
+emit("select", { keys: selectedKeys })
+}
+
+micro onMount() {
+    currentPage = 1
+}
+</script>
+
+<style>
+.ui-data-table {
+    width: 100%;
+    font-family: var(--ui-font-sans);
+    color: var(--sys-on-bg);
+}
+.ui-data-table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--sys-radius-md);
+}
+.ui-data-table-bordered .ui-data-table-container {
+    border: 1px solid var(--sys-outline);
+}
+.ui-data-table-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--sys-surface);
+}
+.ui-data-table-head {
+    background: var(--sys-surface-hover);
+}
+.ui-data-table-row {
+    border-bottom: 1px solid var(--sys-outline);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-data-table-row-data:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-data-table-th {
+    padding: var(--ui-space-3) var(--ui-space-4);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    text-align: left;
+    color: var(--sys-on-bg-secondary);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+.ui-data-table-th-sortable {
+    cursor: pointer;
+    user-select: none;
+}
+.ui-data-table-th-sortable:hover {
+    color: var(--sys-on-bg);
+}
+.ui-data-table-th-text {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+}
+.ui-data-table-sort-icon {
+    display: inline-flex;
+    align-items: center;
+}
+.ui-data-table-filter {
+    margin-left: var(--ui-space-2);
+    height: var(--ui-control-h-xs);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    font-size: var(--ui-fs-xs);
+    padding: 0 var(--ui-space-2);
+}
+.ui-data-table-sort-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.4;
+    transition: opacity var(--ui-duration-1) var(--ui-easing);
+}
+.ui-data-table-th-sortable:hover .ui-data-table-sort-svg {
+    opacity: 0.7;
+}
+.ui-data-table-th-sorted .ui-data-table-sort-svg {
+    opacity: 1;
+    color: var(--sys-primary);
+}
+.ui-data-table-td {
+    padding: var(--ui-space-3) var(--ui-space-4);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    vertical-align: middle;
+}
+.ui-data-table-sm .ui-data-table-th,
+.ui-data-table-sm .ui-data-table-td {
+    padding: var(--ui-space-2) var(--ui-space-3);
+    font-size: var(--ui-fs-xs);
+}
+.ui-data-table-lg .ui-data-table-th,
+.ui-data-table-lg .ui-data-table-td {
+    padding: var(--ui-space-4) var(--ui-space-5);
+    font-size: var(--ui-fs-base);
+}
+.ui-data-table-cell {
+    display: inline-block;
+}
+.ui-data-table-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--sys-primary);
+}
+.ui-data-table-th-select,
+.ui-data-table-td-select {
+    width: 48px;
+    text-align: center;
+}
+.ui-data-table-row-loading,
+.ui-data-table-td-empty {
+    text-align: center;
+}
+.ui-data-table-loading-text,
+.ui-data-table-empty-text {
+    color: var(--sys-on-bg-tertiary);
+    font-size: var(--ui-fs-sm);
+}
+.ui-data-table-loading {
+    opacity: 0.7;
+}
+.ui-data-table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ui-space-3) var(--ui-space-4);
+    gap: var(--ui-space-3);
+    border-top: 1px solid var(--sys-outline);
+}
+.ui-data-table-page-info {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+}
+.ui-data-table-page-buttons {
+    display: flex;
+    gap: var(--ui-space-1);
+}
+.ui-data-table-page-btn {
+    height: var(--ui-control-h-xs);
+    padding: 0 var(--ui-space-3);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    font-size: var(--ui-fs-xs);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-data-table-page-btn:hover:not(:disabled) {
+    border-color: var(--sys-outline-focus);
+    background: var(--sys-surface-hover);
+}
+.ui-data-table-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+</style>

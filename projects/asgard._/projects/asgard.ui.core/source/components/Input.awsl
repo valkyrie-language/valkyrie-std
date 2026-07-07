@@ -1,0 +1,150 @@
+<widget Input>
+<Box class="ui-input-wrapper">
+    <if :condition="label">
+        <label class="ui-input-label">{label}</label>
+        <else />
+    </if>
+    <Box @class="ui-input-box ui-input-{size} {error ? 'ui-input-error' : ''} {disabled ? 'ui-input-disabled' : ''}">
+        <if :condition="prefix">
+            <Text class="ui-input-prefix">{prefix}</Text>
+            <else />
+        </if>
+        <input class="ui-input-field" :type="type" :placeholder="placeholder" :value="value" :disabled="disabled" :maxlength="maxLength" @input="handleInput" @focus="handleFocus" @blur="handleBlur" />
+        <if :condition="suffix">
+            <Text class="ui-input-suffix">{suffix}</Text>
+            <else />
+        </if>
+    </Box>
+    <if :condition="error">
+        <Text class="ui-input-error-text">{error}</Text>
+        <else />
+    </if>
+    <if :condition="description">
+        <Text class="ui-input-desc">{description}</Text>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let label: utf8 = ""
+let `type`: utf8 = "text"
+let placeholder: utf8 = ""
+let mut value: utf8 = ""
+let size: utf8 = "md"
+let disabled: bool = false
+let error: utf8 = ""
+let description: utf8 = ""
+let prefix: utf8 = ""
+let suffix: utf8 = ""
+let maxLength: utf8 = ""
+
+micro handleInput(e: InputEvent) {
+    value = e.target.value
+    emit("input", { value: value })
+}
+
+micro handleFocus() {
+    emit("focus", {})
+}
+
+micro handleBlur() {
+    emit("blur", {})
+}
+</script>
+<style>
+.ui-input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.ui-input-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-weight: 500;
+}
+.ui-input-box {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-input-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-input-box:focus-within {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-input-xs {
+    height: var(--ui-control-h-xs);
+    padding: 0 var(--ui-space-2);
+}
+.ui-input-xs .ui-input-field {
+    font-size: var(--ui-fs-xs);
+}
+.ui-input-sm {
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-3);
+}
+.ui-input-sm .ui-input-field {
+    font-size: var(--ui-fs-sm);
+}
+.ui-input-md {
+    height: var(--ui-control-h-md);
+    padding: 0 var(--ui-space-4);
+}
+.ui-input-md .ui-input-field {
+    font-size: var(--ui-fs-base);
+}
+.ui-input-lg {
+    height: var(--ui-control-h-lg);
+    padding: 0 var(--ui-space-5);
+}
+.ui-input-lg .ui-input-field {
+    font-size: var(--ui-fs-lg);
+}
+.ui-input-field {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    min-width: 0;
+}
+.ui-input-field::placeholder {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-input-prefix, .ui-input-suffix {
+    display: flex;
+    align-items: center;
+    color: var(--sys-on-bg-secondary);
+    flex-shrink: 0;
+}
+.ui-input-error .ui-input-box {
+    border-color: var(--sys-error);
+}
+.ui-input-error .ui-input-box:focus-within {
+    box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.1);
+}
+.ui-input-error-text {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-error);
+}
+.ui-input-desc {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-input-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-input-disabled .ui-input-field {
+    cursor: not-allowed;
+}
+
+</style>

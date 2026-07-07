@@ -1,0 +1,25 @@
+{
+    name: "atlas",
+    version: "workspace",
+    description: "Atlas 后端框架核心 — Domain Adapter Pattern（DAP）的 Valkyrie 实现",
+    type: "library",
+    auto_link: {
+        core: true,
+        std: true
+    },
+    dependencies: {},
+    build: [
+        {
+            target: "nyar"
+        },
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ],
+    targets: {
+        "atlas-serve": {
+            description: "启动 Atlas 监听（见 atlas.tools serve）"
+        }
+    }
+}

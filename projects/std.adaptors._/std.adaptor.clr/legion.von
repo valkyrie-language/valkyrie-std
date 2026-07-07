@@ -1,0 +1,29 @@
+{
+    name: "std.adaptor.clr",
+    description: "Valkyrie CLR 适配器 -- .NET CLR 运行时 API 绑定（System.* 链接）",
+    main: "source/console/_.v",
+    dependencies: {
+        "core": "workspace"
+    },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "clr",
+        kind: "platform-sdk",
+        targets: ["clr-microsoft-unknown-managed"]
+    },
+    engines: {
+        vcc: "0.1.*"
+    },
+    os: {
+        target: "windows"
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ],
+    cpu: {
+        arch: "clr"
+    }
+}

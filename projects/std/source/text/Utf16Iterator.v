@@ -1,6 +1,6 @@
 namespace std.text;
 
-structure Utf16Iterator {
+class Utf16Iterator {
     _text: &Utf16Text,
     _offset: usize,
 }
@@ -25,7 +25,7 @@ imply Utf16Iterator: std::iterator::Iterator {
 
     micro next(mut self) -> Option<char> {
         if !self.has_next() {
-            return None
+            return option_none::<char>()
         }
 
         let first: u16 = self.code_unit_at(self._offset)

@@ -1,0 +1,24 @@
+{
+  name: "portable",
+  description: "Fullstack 金样例 portable 拓扑（单宿主）；实现后置",
+  status: "planned",
+  topology: {
+    static: "single-host",
+    server: "single-host"
+  },
+  artifacts: [
+    {
+      pipeline: "asgard",
+      platform: "browser",
+      role: "static-web",
+      output: "dist/portable/web",
+      status: "planned"
+    },
+    {
+      pipeline: "atlas",
+      role: "embedded-server",
+      output: "dist/portable/host",
+      status: "planned"
+    }
+  ]
+}

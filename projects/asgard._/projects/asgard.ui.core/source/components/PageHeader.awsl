@@ -1,0 +1,151 @@
+<widget PageHeader>
+<Box @class="ui-page-header">
+    <if :condition="breadcrumb.length">
+        0>
+        <Box @class="ui-page-header-breadcrumb">
+            <loop item="item" :each="{breadcrumb}">
+                <Text @class="ui-page-header-crumb">
+                    <svg @class="ui-page-header-crumb-sep" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                    <Text>{item.label}</Text>
+                </Text>
+            </loop>
+        </Box>
+        <else />
+    </if>
+    <Box @class="ui-page-header-main">
+        <Box @class="ui-page-header-row">
+            <if :condition="backIcon">
+                <button @class="ui-page-header-back" type="button" aria-label="Back" @click="handleBack">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <else />
+            </if>
+            <Box @class="ui-page-header-titles">
+                <Text @class="ui-page-header-title">{title}</Text>
+                <if :condition="subtitle != &quot;&quot;">
+                    <Text @class="ui-page-header-subtitle">{subtitle}</Text>
+                    <else />
+                </if>
+            </Box>
+            <Box @class="ui-page-header-extra">
+                <slot name="extra" />
+            </Box>
+        </Box>
+        <Box @class="ui-page-header-content">
+            <slot />
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let title: utf8 = ""
+let subtitle: utf8 = ""
+let backIcon: bool = false
+let breadcrumb: list = []
+
+micro handleBack() {
+    emit("back", {})
+}
+</script>
+<style>
+.ui-page-header {
+    font-family: var(--ui-font-sans);
+}
+.ui-page-header-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-space-1);
+    font-size: var(--ui-fs-sm);
+    margin-bottom: var(--ui-space-2);
+}
+.ui-page-header-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    color: var(--sys-on-bg-secondary);
+}
+.ui-page-header-crumb:first-child .ui-page-header-crumb-sep {
+    display: none;
+}
+.ui-page-header-crumb-sep {
+    fill: none;
+    stroke: var(--sys-on-bg-tertiary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-page-header-main {
+    display: flex;
+    flex-direction: column;
+}
+.ui-page-header-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-3);
+}
+.ui-page-header-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-md);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-page-header-back:hover {
+    background: var(--sys-surface-hover);
+    color: var(--sys-on-bg);
+}
+.ui-page-header-back svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-page-header-titles {
+    flex: 1;
+    min-width: 0;
+}
+.ui-page-header-title {
+    margin: 0;
+    font-size: var(--ui-fs-h2);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    line-height: 1.3;
+}
+.ui-page-header-subtitle {
+    display: block;
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    margin-top: var(--ui-space-1);
+}
+.ui-page-header-extra {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    flex-shrink: 0;
+}
+.ui-page-header-extra:empty {
+    display: none;
+}
+.ui-page-header-content {
+    margin-top: var(--ui-space-3);
+    color: var(--sys-on-bg-secondary);
+    font-size: var(--ui-fs-sm);
+}
+.ui-page-header-content:empty {
+    display: none;
+}
+</style>

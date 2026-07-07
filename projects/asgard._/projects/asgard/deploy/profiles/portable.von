@@ -1,0 +1,25 @@
+{
+  name: "portable",
+  description: "单一宿主同时提供静态资源与 Atlas（或内嵌 server 岛）。契约已定，打包编排后置。",
+  status: "planned",
+  topology: {
+    static: "single-host",
+    server: "single-host",
+    notes: "实现可后置；勿与一个二进制跑全平台混淆——仍按 platform 出制品后再组装。"
+  },
+  artifacts: [
+    {
+      pipeline: "asgard",
+      platform: "browser",
+      role: "static-web",
+      output: "dist/portable/web",
+      status: "planned"
+    },
+    {
+      pipeline: "atlas",
+      role: "embedded-server",
+      output: "dist/portable/host",
+      status: "planned"
+    }
+  ]
+}

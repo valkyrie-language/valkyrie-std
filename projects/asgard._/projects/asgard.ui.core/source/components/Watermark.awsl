@@ -1,0 +1,74 @@
+<widget Watermark>
+<Box @class="ui-watermark-wrapper">
+    <Box @class="ui-watermark-content">
+        <slot />
+    </Box>
+    <Box @class="ui-watermark-overlay" :style="overlayStyle">
+        <svg @class="ui-watermark-svg" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <pattern :id="patternId" x="0" y="0" :width="totalWidth" :height="totalWidth" patternUnits="userSpaceOnUse">
+                    <text x="0" y="0" :font-size="font || '16'" :fill="watermarkColor" :transform="f\&quot;rotate({rotate})\&quot;">{content}</text>
+                </pattern>
+            </defs>
+            <rect x="0" y="0" width="100%" height="100%" :fill="patternUrl" />
+        </svg>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let content: utf8 = "Watermark"
+let gap: utf8 = "100"
+let offset: utf8 = "0"
+let rotate: utf8 = "-22"
+let font: utf8 = ""
+let opacity: utf8 = "0.1"
+
+micro patternId() {
+    return "ui-watermark-pattern"
+}
+
+micro watermarkColor() {
+    return "var(--sys-on-bg)"
+}
+
+micro totalWidth() {
+    let g: i32 = toI32(gap)
+    return toString(g)
+}
+
+micro patternUrl() {
+    return f"url(#{patternId})"
+}
+
+micro overlayStyle() {
+    return f"opacity: {opacity}"
+}
+</script>
+<style>
+.ui-watermark-wrapper {
+    position: relative;
+    display: inline-block;
+    font-family: var(--ui-font-sans);
+}
+.ui-watermark-content {
+    position: relative;
+    z-index: 0;
+}
+.ui-watermark-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.ui-watermark-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+</style>

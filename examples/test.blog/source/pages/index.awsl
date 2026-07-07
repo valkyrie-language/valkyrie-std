@@ -1,45 +1,45 @@
-<widget>
-    <div class="blog-home">
-        <section class="blog-hero">
-            <h1 class="blog-hero-title">VOA Blog</h1>
-            <p class="blog-hero-subtitle">使用纯 GGScript + AWSL 构建的全栈博客</p>
-        </section>
+<widget index>
+<div class="blog-home">
+    <section class="blog-hero">
+        <h1 class="blog-hero-title">VOA Blog</h1>
+        <p class="blog-hero-subtitle">使用纯 GGScript + AWSL 构建的全栈博客</p>
+    </section>
 
-        <section class="blog-recent">
-            <h2 class="blog-section-title">最新文章</h2>
-            <for each={posts}>
-                <article class="blog-card">
-                    <div class="blog-card-meta">
-                        <span class="blog-card-date">{post.date}</span>
-                        <span class="blog-card-time">{post.reading_time} 分钟阅读</span>
-                    </div>
-                    <h3 class="blog-card-title">
-                        <Link href={"/posts/" + post.slug}>{post.title}</Link>
-                    </h3>
-                    <p class="blog-card-excerpt">{post.excerpt}</p>
-                    <div class="blog-card-tags">
-                        <for each={post.tags}>
-                            <Badge variant="primary" size="small">{tag}</Badge>
-                        </for>
-                    </div>
-                </article>
-            </for>
-        </section>
+    <section class="blog-recent">
+        <h2 class="blog-section-title">最新文章</h2>
+        <loop post in posts>
+            <article class="blog-card">
+                <div class="blog-card-meta">
+                    <span class="blog-card-date">{post.date}</span>
+                    <span class="blog-card-time">{post.reading_time} 分钟阅读</span>
+                </div>
+                <h3 class="blog-card-title">
+                    <Link :href='"/posts/" + post.slug'>{post.title}</Link>
+                </h3>
+                <p class="blog-card-excerpt">{post.excerpt}</p>
+                <div class="blog-card-tags">
+                    <loop tag in post.tags>
+                        <Badge variant="primary" size="small">{tag}</Badge>
+                    </loop>
+                </div>
+            </article>
+        </loop>
+    </section>
 
-        <section class="blog-tags-section">
-            <h2 class="blog-section-title">标签</h2>
-            <div class="blog-tags-list">
-                <for each={allTags}>
-                    <Badge variant="default" size="large">{tag}</Badge>
-                </for>
-            </div>
-        </section>
-    </div>
+    <section class="blog-tags-section">
+        <h2 class="blog-section-title">标签</h2>
+        <div class="blog-tags-list">
+            <loop tag in allTags>
+                <Badge variant="default" size="large">{tag}</Badge>
+            </loop>
+        </div>
+    </section>
+</div>
 </widget>
 
 <script>
-    let posts = get_all_posts()
-    let allTags = get_all_tags()
+let posts = get_all_posts()
+let allTags = get_all_tags()
 </script>
 
 <style>

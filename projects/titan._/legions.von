@@ -1,0 +1,15 @@
+{
+    version: "1",
+    name: "titan-super-workspace",
+    members: [
+        "projects/titan",
+        "projects/titan.device",
+        "projects/titan.compute"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

@@ -1,0 +1,219 @@
+<widget Select>
+<Box class="ui-select-wrapper">
+    <if label>
+        <label class="ui-select-label">{label}</label>
+        <else/>
+    </if>
+    <Box @class="ui-select-box ui-select-{size} {error ? 'ui-select-error' : ''} {disabled ? 'ui-select-disabled' : ''} {isOpen ? 'ui-select-open' : ''}" @click="toggleDropdown">
+        <Text @class="ui-select-value {value == '' ? 'ui-select-placeholder' : ''}">
+            <if value == "">
+                {placeholder}
+                <else/>
+                {selectedLabel}
+            </if>
+        </Text>
+        <svg class="ui-select-arrow" viewBox="0 0 24 24" width="16" height="16">
+            <path class="ui-select-arrow-path" d="m6 9 6 6 6-6" />
+        </svg>
+    </Box>
+    <if isOpen>
+        <Box class="ui-select-dropdown">
+            <loop item in {options}>
+                <Box
+                    @class="ui-select-option {item.disabled ? 'ui-select-option-disabled' : ''} {value == item.value ? 'ui-select-option-selected' : ''}"
+                    @click="() => selectOption(item)"
+                >
+                    <Text class="ui-select-option-label">{item.label}</Text>
+                </Box>
+            </loop>
+        </Box>
+        <else/>
+    </if>
+    <if error>
+        <Text class="ui-select-error-text">{error}</Text>
+        <else/>
+    </if>
+</Box>
+</widget>
+
+<script>
+let options: list = []
+let mut value: utf8 = ""
+let placeholder: utf8 = "Select..."
+let size: utf8 = "md"
+let disabled: bool = false
+let error: utf8 = ""
+let label: utf8 = ""
+let searchable: bool = false
+let mut isOpen: bool = false
+let mut selectedLabel: utf8 = ""
+
+micro toggleDropdown() {
+    if disabled { return }
+    isOpen = !isOpen
+}
+
+micro selectOption(item: any) {
+    if item.disabled { return }
+    value = item.value
+    selectedLabel = item.label
+    isOpen = false
+    emit("change", { value: value, label: item.label })
+}
+
+micro onMount() {
+    loop item in {options} {
+        if item.value == value {
+            selectedLabel = item.label
+        }
+}
+}
+</script>
+
+<style>
+.ui-select-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+    position: relative;
+}
+.ui-select-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-weight: 500;
+}
+.ui-select-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    cursor: pointer;
+    user-select: none;
+}
+.ui-select-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-select-box.ui-select-open {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-select-xs {
+    height: var(--ui-control-h-xs);
+    padding: 0 var(--ui-space-2);
+}
+.ui-select-xs .ui-select-value {
+    font-size: var(--ui-fs-xs);
+}
+.ui-select-sm {
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-3);
+}
+.ui-select-sm .ui-select-value {
+    font-size: var(--ui-fs-sm);
+}
+.ui-select-md {
+    height: var(--ui-control-h-md);
+    padding: 0 var(--ui-space-4);
+}
+.ui-select-md .ui-select-value {
+    font-size: var(--ui-fs-base);
+}
+.ui-select-lg {
+    height: var(--ui-control-h-lg);
+    padding: 0 var(--ui-space-5);
+}
+.ui-select-lg .ui-select-value {
+    font-size: var(--ui-fs-lg);
+}
+.ui-select-value {
+    flex: 1;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    line-height: var(--ui-lh-tight);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ui-select-placeholder {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-select-arrow {
+    flex-shrink: 0;
+    transition: transform var(--ui-duration-1) var(--ui-easing);
+}
+.ui-select-open .ui-select-arrow {
+    transform: rotate(180deg);
+}
+.ui-select-arrow-path {
+    fill: none;
+    stroke: var(--sys-on-bg-secondary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-select-dropdown {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + var(--ui-space-1));
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    z-index: var(--ui-z-dropdown);
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--ui-space-1);
+}
+.ui-select-option {
+    display: flex;
+    align-items: center;
+    padding: var(--ui-space-2) var(--ui-space-3);
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-select-option:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-select-option-selected {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+}
+.ui-select-option-selected:hover {
+    background: var(--sys-primary-container);
+}
+.ui-select-option-label {
+    font-size: var(--ui-fs-sm);
+    font-family: var(--ui-font-sans);
+    color: var(--sys-on-bg);
+}
+.ui-select-option-selected .ui-select-option-label {
+    color: var(--sys-primary);
+}
+.ui-select-option-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-select-option-disabled:hover {
+    background: transparent;
+}
+.ui-select-error .ui-select-box {
+    border-color: var(--sys-error);
+}
+.ui-select-error-text {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-error);
+}
+.ui-select-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-select-disabled .ui-select-box {
+    cursor: not-allowed;
+}
+</style>

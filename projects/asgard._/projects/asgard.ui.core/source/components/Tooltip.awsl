@@ -1,0 +1,74 @@
+<widget Tooltip>
+<Text @class="ui-tooltip-wrapper" @mouseenter="handleShow" @mouseleave="handleHide">
+    <slot />
+    <if :condition="visible">
+        <Text role="tooltip" @class="ui-tooltip ui-tooltip-{placement}">{label}</Text>
+        <else />
+    </if>
+</Text>
+</widget>
+
+<script>
+let label: utf8 = ""
+let placement: utf8 = "top"
+let delay: utf8 = "100"
+let mut visible: bool = false
+let mut showTimer: i32 = 0
+
+micro handleShow() {
+    let d: i32 = parseInt(delay)
+    showTimer = setTimeout(function() { visible = true }, d)
+}
+
+micro handleHide() {
+    clearTimeout(showTimer)
+    visible = false
+}
+</script>
+<style>
+.ui-tooltip-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+.ui-tooltip {
+    position: absolute;
+    z-index: var(--ui-z-overlay);
+    background: var(--sys-on-bg);
+    color: var(--sys-bg);
+    padding: var(--ui-space-1) var(--ui-space-2);
+    border-radius: var(--sys-radius-sm);
+    font-size: var(--ui-fs-xs);
+    font-family: var(--ui-font-sans);
+    white-space: nowrap;
+    pointer-events: none;
+    animation: ui-tooltip-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tooltip-top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: var(--ui-space-2);
+}
+.ui-tooltip-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: var(--ui-space-2);
+}
+.ui-tooltip-left {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: var(--ui-space-2);
+}
+.ui-tooltip-right {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: var(--ui-space-2);
+}
+@keyframes ui-tooltip-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>

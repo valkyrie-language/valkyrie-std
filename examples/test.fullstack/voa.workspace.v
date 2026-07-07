@@ -1,4 +1,4 @@
 {
     name: "fullstack-demo",
-    projects: ["frontend", "backend", "shared"],
+    projects: ["apps/shell", "apps/atlas", "packages/domain"],
 }

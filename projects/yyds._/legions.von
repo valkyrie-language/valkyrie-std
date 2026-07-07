@@ -1,0 +1,11 @@
+{
+    version: "1",
+    name: "yyds-super-workspace",
+    members: [],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

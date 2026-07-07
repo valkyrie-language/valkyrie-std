@@ -1,0 +1,334 @@
+<widget Upload>
+<Box @class="ui-upload ui-upload-{listType} {disabled ? 'ui-upload-disabled' : ''}">
+    <Box
+        @class="ui-upload-dropzone {dragging ? 'ui-upload-dropzone-active' : ''}"
+        @click="triggerSelect"
+        @dragover="handleDragOver"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop"
+    >
+        <Text @class="ui-upload-dropzone-icon">
+            <svg @class="ui-upload-icon-svg" viewBox="0 0 24 24" width="32" height="32">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+            </svg>
+        </Text>
+        <Text @class="ui-upload-dropzone-text">Click or drag files to upload</Text>
+        <if maxSize != "">
+            <Text @class="ui-upload-dropzone-hint">Max size: {maxSize}KB per file</Text>
+            <else/>
+        </if>
+        <input
+            @class="ui-upload-input"
+            type="file"
+            :accept="accept"
+            :multiple="multiple"
+            @change="handleInputChange"
+        />
+    </Box>
+    <if fileList.length > 0>
+        <List @class="ui-upload-list">
+            <loop file in {fileList}>
+                <Item @class="ui-upload-item ui-upload-item-{file.status}">
+                    <Text @class="ui-upload-item-icon">
+                        <svg @class="ui-upload-file-svg" viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8" />
+                        </svg>
+                    </Text>
+                    <Box @class="ui-upload-item-info">
+                        <Text @class="ui-upload-item-name">{file.name}</Text>
+                        <Text @class="ui-upload-item-size">{formatSize(file.size)}</Text>
+                        <if file.status == "uploading">
+                            <Box @class="ui-upload-progress">
+                                <Box @class="ui-upload-progress-bar" :style="f\"width: {file.progress}%\"></Box>
+                            </Box>
+                            <else/>
+                        </if>
+                    </Box>
+                    <button @class="ui-upload-item-remove" @click="removeFile(file)" type="button">
+                        <svg @class="ui-upload-remove-svg" viewBox="0 0 24 24" width="14" height="14">
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </Item>
+            </loop>
+        </List>
+        <else/>
+    </if>
+</Box>
+</widget>
+
+<script>
+let accept: utf8 = ""
+let multiple: bool = false
+let maxSize: utf8 = ""
+let action: utf8 = ""
+let disabled: bool = false
+let listType: utf8 = "text"
+
+let mut fileList: list = []
+let mut dragging: bool = false
+
+micro triggerSelect(e) {
+    if disabled {
+        return
+    }
+    if e && e.currentTarget {
+        let input = e.currentTarget.querySelector(".ui-upload-input")
+        if input {
+            input.click()
+        }
+    }
+}
+
+micro handleDragOver(e) {
+    if disabled {
+        return
+    }
+    e.preventDefault()
+    dragging = true
+}
+
+micro handleDragLeave(e) {
+    e.preventDefault()
+    dragging = false
+}
+
+micro handleDrop(e) {
+    e.preventDefault()
+    dragging = false
+    if disabled {
+        return
+    }
+    let files = e.dataTransfer.files
+    addFiles(files)
+}
+
+micro handleInputChange(e) {
+    let files = e.target.files
+    addFiles(files)
+    e.target.value = ""
+}
+
+micro addFiles(files) {
+    let i: i32 = 0
+    while i < files.length {
+        let file = files[i]
+        if !multiple && fileList.length >= 1 {
+            fileList = []
+        }
+        let status: utf8 = "uploading"
+        let tooLarge: bool = false
+        if maxSize != "" {
+            let limit: i32 = toI32(maxSize)
+            if file.size / 1024 > limit {
+                status = "error"
+                tooLarge = true
+            }
+        }
+        fileList = push(fileList, {
+            name: file.name,
+            size: file.size,
+            status: status,
+            url: "",
+            progress: 0
+        })
+        emit("change", { file: file, fileList: fileList })
+        if tooLarge {
+            emit("error", { file: file, reason: "File too large" })
+        } else {
+            uploadFile(file, fileList.length - 1)
+        }
+        i = i + 1
+    }
+}
+
+micro uploadFile(file, index) {
+    if action == "" {
+        fileList[index].status = "done"
+        emit("success", { file: file, response: {} })
+        return
+    }
+    let progress: i32 = 0
+    while progress < 100 {
+        progress = progress + 10
+        fileList[index].progress = progress
+    }
+    fileList[index].status = "done"
+    fileList[index].url = action
+    emit("success", { file: file, response: { url: action } })
+}
+
+micro removeFile(file) {
+    let i: i32 = 0
+    while i < fileList.length {
+        if fileList[i].name == file.name {
+            fileList = splice(fileList, i, 1)
+            emit("remove", { file: file, fileList: fileList })
+            return
+        }
+        i = i + 1
+    }
+}
+
+micro formatSize(size) {
+    if size < 1024 {
+        return size + " B"
+    }
+    if size < 1048576 {
+        return (size / 1024) + " KB"
+    }
+    return (size / 1048576) + " MB"
+}
+</script>
+
+<style>
+.ui-upload {
+    width: 100%;
+    font-family: var(--ui-font-sans);
+}
+.ui-upload-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+.ui-upload-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-space-2);
+    border: 2px dashed var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    padding: var(--ui-space-6) var(--ui-space-4);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-upload-dropzone:hover {
+    border-color: var(--sys-outline-focus);
+    background: var(--sys-surface-hover);
+}
+.ui-upload-dropzone-active {
+    border-color: var(--sys-primary);
+    background: var(--sys-primary-container);
+}
+.ui-upload-dropzone-icon {
+    display: flex;
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-upload-dropzone-active .ui-upload-icon-svg {
+    color: var(--sys-primary);
+}
+.ui-upload-icon-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-upload-dropzone-text {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+}
+.ui-upload-dropzone-hint {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-upload-input {
+    display: none;
+}
+.ui-upload-list {
+    list-style: none;
+    margin: var(--ui-space-2) 0 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.ui-upload-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding: var(--ui-space-2) var(--ui-space-3);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-upload-item:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-upload-item-error {
+    border-color: var(--sys-error);
+}
+.ui-upload-item-icon {
+    display: flex;
+    color: var(--sys-on-bg-secondary);
+    flex-shrink: 0;
+}
+.ui-upload-file-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-upload-item-error .ui-upload-file-svg {
+    color: var(--sys-error);
+}
+.ui-upload-item-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+    min-width: 0;
+}
+.ui-upload-item-name {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ui-upload-item-size {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-upload-progress {
+    height: 4px;
+    background: var(--sys-outline);
+    border-radius: var(--sys-radius-full);
+    overflow: hidden;
+}
+.ui-upload-progress-bar {
+    height: 100%;
+    background: var(--sys-primary);
+    border-radius: var(--sys-radius-full);
+    transition: width var(--ui-duration-1) var(--ui-easing);
+}
+.ui-upload-item-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-tertiary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-sm);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-upload-item-remove:hover {
+    color: var(--sys-error);
+    background: var(--sys-surface-hover);
+}
+.ui-upload-remove-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+</style>

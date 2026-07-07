@@ -1,0 +1,48 @@
+<widget namespace="shell.pages" name="index">
+<vbox class="container">
+    <text class="title">{title}</text>
+    <text class="subtitle">VOA Fullstack Demo (SSG default)</text>
+    <button @click="load_users" style="bg-blue-500 text-white px-4 py-2 rounded">加载用户</button>
+    <loop user in users>
+        <vbox class="card">
+            <text class="name">{user.name}</text>
+            <text class="email">{user.email}</text>
+        </vbox>
+    </loop>
+</vbox>
+</widget>
+
+<script namespace="shell.pages">
+using domain.models
+
+let title: utf8 = "Hello, Asgard!"
+let mut users: list = []
+
+# 金样例：经 HTTP/fetch 调 Atlas API（勿直接 using 后端包进 WASM）
+micro load_users() {
+    # placeholder — 运行时对接 apps/atlas；此处保持可 SSG 的壳
+    users = []
+}
+</script>
+
+<style>
+.container {
+    padding: 32px;
+}
+.title {
+    font-size: 24px;
+    font-weight: bold;
+}
+.card {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+.name {
+    font-size: 18px;
+    font-weight: bold;
+}
+.email {
+    color: var(--text);
+}
+</style>

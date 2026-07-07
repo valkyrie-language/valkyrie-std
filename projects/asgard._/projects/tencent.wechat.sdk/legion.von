@@ -1,0 +1,27 @@
+{
+    name: "tencent.wechat.sdk",
+    description: "腾讯 WeChat 小游戏 SDK -- 微信小游戏宿主 API 绑定",
+    main: "source/net.v",
+    dependencies: {
+        "core": "workspace",
+        "std": "workspace"
+    },
+    sdk-vendor: {
+        organization: "tencent",
+        host: "wechat",
+        kind: "platform-sdk",
+        targets: ["wasm32-unknown-browser-wasm"],
+        publish: ["mini-game"]
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true
+        }
+    ],
+    engines: {
+        vcc: "0.1.*"
+    }
+}

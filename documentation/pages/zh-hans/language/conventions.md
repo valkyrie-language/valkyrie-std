@@ -129,22 +129,40 @@ Valkyrie 使用以下关键字进行类型抽象：
 
 ### 标识符
 
+以下命名规则为 **MUST**（风格要求），由 **LSP / IDE lint** 报告（`E0301` / `E0302`，Warning 级别），**不**在语法层拒绝解析；formatter 与 lexer 也不做校验。
+
 | 类别 | 风格 | 示例 |
 |:---|:---|:---|
 | 类型名（class、structure、enums） | PascalCase | `PlayerState`、`NetworkConfig` |
-| 函数名（micro） | snake_case | `calculate_damage`、`process_input` |
-| 变量名 | snake_case | `player_health`、`item_count` |
+| 函数名（micro / function） | **snake_case** | `calculate_damage`、`process_input` |
+| 普通 method 声明 | **snake_case** | `process_input`、`on_click` |
+| 变量名（let 绑定） | **snake_case** | `player_health`、`item_count` |
+| 函数 / 方法参数 | **snake_case** | `item_count`、`next_theme` |
 | 常量名 | SCREAMING_SNAKE_CASE | `MAX_HEALTH`、`DEFAULT_PORT` |
 | 组件名 | PascalCase | `Position`、`Velocity` |
 | 系统名 | PascalCase | `MovementSystem`、`RenderSystem` |
 | 枚举变体 | PascalCase | `Active`、`Suspended` |
 | 命名空间 | snake_case | `game::physics`、`app::models` |
 
+AWSL widget 名与模板 ABI 绑定（`:prop` / `@event`）同样必须 `snake_case`；详见 [AWSL 语言](extensions/awsl-language.md) 与 LSP diagnostic code `E0302`。
+
+### 跨工具回归矩阵
+
+| 工具 | `.v` | `.vx` | `.awsl<script>` | rename | batch rename |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| LSP / CLI lint | ✓ `E0301` W | ✓ `E0301` W | ✓ `E0301` W | ✓ | — |
+| IntelliJ Valkyrie | ✓ inspection | ✓ inspection | ✓ inspection | ✓ | ✓ |
+| VSCode | ✓ LSP | ✓ LSP | ✓ LSP | ✓ | — |
+
+标准反例：`fooBar`、`onClick`、`defaultActive`、`themeChange`。
+
 ### 文件扩展名
+
+**语言名 = Valkyrie，源码后缀 = `.v`（同一门语言）。** 不存在独立的 “v 语言”；包名只用 **`std.data.text.valkyrie`**，**不要**再维护 `std.data.text.v`。
 
 | 扩展名 | 用途 |
 |:---|:---|
-| `.v` | Valkyrie 源码 |
+| `.v` | Valkyrie 源码（唯一正式后缀；不用 `.vk` / `.valkyrie` 作平行后缀） |
 | `.script` | Gnosis Script 源码 |
 | `.shader` | Gnosis Shader 源码 |
 | `.awsl` | AWSL 源码（Vue 式 SFC，VOA） |

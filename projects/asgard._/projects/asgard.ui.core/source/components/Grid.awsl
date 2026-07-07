@@ -1,0 +1,53 @@
+<widget Grid>
+<Box @class="ui-grid ui-grid-cols-{cols} ui-grid-gap-{gap} {responsive ? 'ui-grid-responsive' : ''}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let cols: utf8 = "1"
+let gap: utf8 = "4"
+let responsive: bool = false
+</script>
+<style>
+.ui-grid {
+    display: grid;
+    box-sizing: border-box;
+}
+.ui-grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+.ui-grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.ui-grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.ui-grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.ui-grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
+.ui-grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
+.ui-grid-cols-7 { grid-template-columns: repeat(7, 1fr); }
+.ui-grid-cols-8 { grid-template-columns: repeat(8, 1fr); }
+.ui-grid-cols-9 { grid-template-columns: repeat(9, 1fr); }
+.ui-grid-cols-10 { grid-template-columns: repeat(10, 1fr); }
+.ui-grid-cols-11 { grid-template-columns: repeat(11, 1fr); }
+.ui-grid-cols-12 { grid-template-columns: repeat(12, 1fr); }
+.ui-grid-gap-1 { gap: var(--ui-space-1); }
+.ui-grid-gap-2 { gap: var(--ui-space-2); }
+.ui-grid-gap-3 { gap: var(--ui-space-3); }
+.ui-grid-gap-4 { gap: var(--ui-space-4); }
+.ui-grid-gap-5 { gap: var(--ui-space-5); }
+.ui-grid-gap-6 { gap: var(--ui-space-6); }
+.ui-grid-gap-8 { gap: var(--ui-space-8); }
+.ui-grid-gap-10 { gap: var(--ui-space-10); }
+.ui-grid-gap-12 { gap: var(--ui-space-12); }
+.ui-grid-responsive {
+    grid-template-columns: repeat(1, 1fr);
+}
+@media (min-width: 640px) {
+    .ui-grid-responsive {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (min-width: 1024px) {
+    .ui-grid-responsive.ui-grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .ui-grid-responsive.ui-grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+    .ui-grid-responsive.ui-grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
+    .ui-grid-responsive.ui-grid-cols-12 { grid-template-columns: repeat(12, 1fr); }
+}
+
+</style>

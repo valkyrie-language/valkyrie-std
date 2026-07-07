@@ -5,8 +5,8 @@
     "type": "application",
     "target": "static",
     "dependencies": {
-        "voa-core": ">=0.2.0",
-        "voa-router": ">=0.2.0",
-        "voa-effect": ">=0.2.0"
+        "voa-core": "0.2.*",
+        "voa-router": "0.2.*",
+        "voa-effect": "0.2.*"
     }
 }

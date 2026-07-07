@@ -1,0 +1,157 @@
+<widget Drawer>
+<Box @class="ui-drawer-overlay {open ? 'ui-drawer-overlay-open' : ''}" @click="handleOverlayClick">
+    <Box :style="f\&quot;--drawer-size: {size}\&quot;" role="dialog" aria-modal="true" @class="ui-drawer ui-drawer-{side} {open ? 'ui-drawer-open' : ''}">
+        <Box @class="ui-drawer-header">
+            <if :condition="title != &quot;&quot;">
+                <Text @class="ui-drawer-title">{title}</Text>
+                <else />
+            </if>
+            <button @class="ui-drawer-close" type="button" aria-label="Close" @click="handleClose">
+                <svg @class="ui-drawer-close-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </Box>
+        <Box @class="ui-drawer-body">
+            <slot />
+        </Box>
+        <Box @class="ui-drawer-footer">
+            <slot name="footer" />
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let open: bool = false
+let side: utf8 = "right"
+let size: utf8 = "378px"
+let title: utf8 = ""
+let closeOnOverlay: bool = true
+
+micro handleOverlayClick(e: MouseEvent) {
+    if e.target == e.currentTarget && closeOnOverlay {
+        emit("close", {})
+    }
+}
+
+micro handleClose() {
+    emit("close", {})
+}
+</script>
+<style>
+.ui-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: var(--ui-z-modal);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--ui-duration-2) var(--ui-easing);
+}
+.ui-drawer-overlay-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+.ui-drawer {
+    position: fixed;
+    z-index: var(--ui-z-modal);
+    background: var(--sys-surface);
+    box-shadow: var(--sys-shadow-lg);
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--ui-duration-2) var(--ui-easing);
+}
+.ui-drawer-right {
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: var(--drawer-size, 378px);
+    transform: translateX(100%);
+}
+.ui-drawer-right.ui-drawer-open { transform: translateX(0); }
+.ui-drawer-left {
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: var(--drawer-size, 378px);
+    transform: translateX(-100%);
+}
+.ui-drawer-left.ui-drawer-open { transform: translateX(0); }
+.ui-drawer-top {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--drawer-size, 378px);
+    transform: translateY(-100%);
+}
+.ui-drawer-top.ui-drawer-open { transform: translateY(0); }
+.ui-drawer-bottom {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--drawer-size, 378px);
+    transform: translateY(100%);
+}
+.ui-drawer-bottom.ui-drawer-open { transform: translateY(0); }
+.ui-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-4);
+    padding: var(--ui-space-5) var(--ui-space-6);
+    border-bottom: 1px solid var(--sys-outline);
+    flex-shrink: 0;
+}
+.ui-drawer-title {
+    margin: 0;
+    font-size: var(--ui-fs-h3);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+}
+.ui-drawer-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-md);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-drawer-close:hover {
+    background: var(--sys-surface-hover);
+    color: var(--sys-on-bg);
+}
+.ui-drawer-close-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-drawer-body {
+    padding: var(--ui-space-6);
+    overflow-y: auto;
+    flex: 1;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-base);
+}
+.ui-drawer-footer {
+    padding: var(--ui-space-4) var(--ui-space-6);
+    border-top: 1px solid var(--sys-outline);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ui-space-3);
+    flex-shrink: 0;
+}
+.ui-drawer-footer:empty {
+    display: none;
+}
+</style>

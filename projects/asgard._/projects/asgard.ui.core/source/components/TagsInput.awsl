@@ -1,0 +1,184 @@
+<widget TagsInput>
+<Box @class="ui-tags-input ui-tags-input-{size} {disabled ? 'ui-tags-input-disabled' : ''}">
+    <loop item="tag" :each="{currentTags}">
+        <Text class="ui-tags-input-tag">
+            <Text class="ui-tags-input-tag-text">{tag}</Text>
+            <button class="ui-tags-input-tag-remove" type="button" tabindex="-1" @click="() => removeTag(tag)">
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                    <path class="ui-tags-input-icon" d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </Text>
+    </loop>
+    <input class="ui-tags-input-field" :placeholder="placeholder" :value="inputValue" @input="handleInput" @keydown="handleKeyDown" />
+</Box>
+</widget>
+
+<script>
+let tags: list = []
+let placeholder: utf8 = "Add tag..."
+let size: utf8 = "md"
+let max: utf8 = ""
+let mut currentTags: list = []
+let mut inputValue: utf8 = ""
+
+micro handleInput(e: InputEvent) {
+    inputValue = e.target.value
+}
+
+micro handleKeyDown(e: InputEvent) {
+    let key: utf8 = e.key
+    if key == "Enter" {
+        e.preventDefault()
+        addTag(inputValue)
+    } else if (key == "Backspace") {
+    if inputValue == "" && currentTags.length > 0 {
+        e.preventDefault()
+        let lastIndex: i32 = currentTags.length - 1
+        let lastTag: utf8 = currentTags[lastIndex]
+        removeTag(lastTag)
+    }
+}
+}
+
+micro addTag(tag: utf8) {
+    if tag == "" { return }
+    if max != "" {
+        let maxNum: i32 = parseInt(max)
+        if currentTags.length >= maxNum { return }
+    }
+let i: i32 = 0
+loop existing in {currentTags} {
+    if existing == tag {
+        inputValue = ""
+        return
+    }
+}
+currentTags.push(tag)
+inputValue = ""
+emit("add", { tag: tag })
+emit("change", { tags: currentTags })
+}
+
+micro removeTag(tag: utf8) {
+    let newList: list = []
+    let i: i32 = 0
+    loop existing in {currentTags} {
+        if existing != tag {
+            newList.push(existing)
+        }
+}
+currentTags = newList
+emit("remove", { tag: tag })
+emit("change", { tags: currentTags })
+}
+
+micro onMount() {
+    currentTags = tags
+}
+</script>
+<style>
+.ui-tags-input {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-space-1);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    padding: var(--ui-space-1) var(--ui-space-2);
+    font-family: var(--ui-font-sans);
+}
+.ui-tags-input:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-tags-input:focus-within {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-tags-input-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+    border-radius: var(--sys-radius-sm);
+    padding: 0 var(--ui-space-2);
+    height: var(--ui-control-h-xs);
+    font-size: var(--ui-fs-xs);
+}
+.ui-tags-input-tag-text {
+    line-height: var(--ui-lh-tight);
+}
+.ui-tags-input-tag-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.7;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tags-input-tag-remove:hover {
+    opacity: 1;
+}
+.ui-tags-input-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-tags-input-field {
+    flex: 1;
+    min-width: 80px;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    padding: var(--ui-space-1) 0;
+}
+.ui-tags-input-field::placeholder {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-tags-input-xs {
+    min-height: var(--ui-control-h-xs);
+}
+.ui-tags-input-xs .ui-tags-input-field {
+    font-size: var(--ui-fs-xs);
+}
+.ui-tags-input-sm {
+    min-height: var(--ui-control-h-sm);
+}
+.ui-tags-input-sm .ui-tags-input-field {
+    font-size: var(--ui-fs-sm);
+}
+.ui-tags-input-md {
+    min-height: var(--ui-control-h-md);
+}
+.ui-tags-input-md .ui-tags-input-field {
+    font-size: var(--ui-fs-base);
+}
+.ui-tags-input-lg {
+    min-height: var(--ui-control-h-lg);
+}
+.ui-tags-input-lg .ui-tags-input-field {
+    font-size: var(--ui-fs-lg);
+}
+.ui-tags-input-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-tags-input-disabled .ui-tags-input-field {
+    cursor: not-allowed;
+}
+.ui-tags-input-disabled .ui-tags-input-tag-remove {
+    cursor: not-allowed;
+}
+
+</style>

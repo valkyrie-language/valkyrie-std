@@ -1,0 +1,107 @@
+<widget Header>
+<Box class="portal-header">
+    <Box class="portal-header-inner">
+        <Box class="portal-brand">
+            <svg class="portal-brand-mark" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+            </svg>
+            <Text class="portal-brand-name">{{ title }}</Text>
+        </Box>
+        <Box class="portal-nav">
+            <for :each="item in navItems">
+                <a class="portal-nav-link" href="#">{{ item.label }}</a>
+            </for>
+        </Box>
+        <Box class="portal-header-actions">
+            <button class="portal-btn portal-btn-ghost">登录</button>
+            <button class="portal-btn portal-btn-primary">注册</button>
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let title: utf8 = ""
+let navItems: list = []
+</script>
+<style>
+.portal-header {
+    width: 100%;
+    background: var(--sys-surface);
+    border-bottom: 1px solid var(--sys-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+.portal-header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ui-spacing-md) var(--ui-spacing-lg);
+    gap: var(--ui-spacing-lg);
+}
+.portal-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-spacing-sm);
+    color: var(--sys-primary);
+}
+.portal-brand-mark {
+    flex-shrink: 0;
+    stroke-width: var(--ui-icon-stroke, 2);
+}
+.portal-brand-name {
+    font-size: var(--ui-font-size-lg);
+    font-weight: var(--ui-font-weight-bold);
+    color: var(--sys-text);
+}
+.portal-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-spacing-lg);
+}
+.portal-nav-link {
+    color: var(--sys-text-secondary);
+    text-decoration: none;
+    font-size: var(--ui-font-size-md);
+    transition: color 0.2s ease;
+}
+.portal-nav-link:hover {
+    color: var(--sys-primary);
+}
+.portal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-spacing-sm);
+}
+.portal-btn {
+    font-size: var(--ui-font-size-md);
+    padding: var(--ui-spacing-sm) var(--ui-spacing-md);
+    border-radius: var(--ui-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-family: inherit;
+}
+.portal-btn-ghost {
+    background: transparent;
+    color: var(--sys-text);
+    border-color: var(--sys-border);
+}
+.portal-btn-ghost:hover {
+    border-color: var(--sys-primary);
+    color: var(--sys-primary);
+}
+.portal-btn-primary {
+    background: var(--sys-primary);
+    color: var(--sys-primary-fg);
+    border-color: var(--sys-primary);
+}
+.portal-btn-primary:hover {
+    background: var(--sys-primary-hover);
+}
+</style>

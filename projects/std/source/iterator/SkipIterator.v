@@ -27,7 +27,7 @@ imply SkipIterator<T, I>: Iterator {
     micro next(mut self): Option<T> {
         while self._skipped < self._count {
             if !self._iter.has_next() {
-                return None
+                return option_none::<Item>()
             }
 
             self._iter.next()

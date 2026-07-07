@@ -1,0 +1,76 @@
+<widget ThemeZen>
+<Box @class="theme-zen-{mode}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let mode: utf8 = "light"
+
+micro setMode(m: utf8) {
+    mode = m
+    emit("modeChange", { mode: mode })
+}
+</script>
+<style>
+.theme-zen-light {
+    --sys-bg: #faf7f2;
+    --sys-surface: #f5f0e8;
+    --sys-surface-hover: #efe8db;
+    --sys-on-bg: #3d3530;
+    --sys-on-surface: #3d3530;
+    --sys-on-bg-secondary: #8a7e72;
+    --sys-on-bg-tertiary: #b0a499;
+    --sys-primary: #b8553a;
+    --sys-primary-hover: #9e4630;
+    --sys-primary-container: #f0e0d5;
+    --sys-on-primary: #ffffff;
+    --sys-outline: #e0d8cc;
+    --sys-outline-focus: #b8553a;
+    --sys-shadow: 0 1px 3px rgba(120,90,60,0.06);
+    --sys-shadow-lg: 0 4px 16px rgba(120,90,60,0.10);
+    --sys-success: #5a8c3e;
+    --sys-error: #c0452e;
+    --sys-warning: #d49229;
+    --sys-info: #4a7a9e;
+    --sys-radius-sm: 8px;
+    --sys-radius-md: 12px;
+    --sys-radius-lg: 16px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', -apple-system, sans-serif;
+    --ui-font-serif: 'Literata', Georgia, serif;
+    --ui-font-mono: 'SF Mono', monospace;
+    --ui-easing: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+    --ui-icon-stroke: 1.5;
+}
+.theme-zen-night {
+    --sys-bg: #1a1714;
+    --sys-surface: #25211c;
+    --sys-surface-hover: #302a24;
+    --sys-on-bg: #e8dfd3;
+    --sys-on-surface: #e8dfd3;
+    --sys-on-bg-secondary: #a89a8a;
+    --sys-on-bg-tertiary: #7d7062;
+    --sys-primary: #d49570;
+    --sys-primary-hover: #e0a585;
+    --sys-primary-container: #3a2e24;
+    --sys-on-primary: #1a1714;
+    --sys-outline: #3a342d;
+    --sys-outline-focus: #d49570;
+    --sys-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --sys-shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
+    --sys-success: #7eb055;
+    --sys-error: #e07060;
+    --sys-warning: #e8b04a;
+    --sys-info: #6a9ec0;
+    --sys-radius-sm: 8px;
+    --sys-radius-md: 12px;
+    --sys-radius-lg: 16px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', sans-serif;
+    --ui-font-serif: 'Literata', Georgia, serif;
+    --ui-font-mono: 'SF Mono', monospace;
+    --ui-easing: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+    --ui-icon-stroke: 1.5;
+}
+</style>

@@ -1,0 +1,16 @@
+{
+    name: "main",
+    version: "0.1.0",
+    description: "length+receiver -> ldlen smoke",
+    auto_link: {
+        core: false,
+        std: false
+    },
+    dependencies: {},
+    build: [
+        {
+            target: "clr",
+            msil: true
+        }
+    ]
+}

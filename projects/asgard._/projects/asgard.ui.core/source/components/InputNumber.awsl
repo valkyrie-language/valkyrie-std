@@ -1,0 +1,181 @@
+<widget InputNumber>
+<Box class="ui-input-number-wrapper">
+    <if :condition="label">
+        <label class="ui-input-number-label">{label}</label>
+        <else />
+    </if>
+    <Box @class="ui-input-number-box ui-input-number-{size} {error ? 'ui-input-number-error' : ''} {disabled ? 'ui-input-number-disabled' : ''}">
+        <button class="ui-input-number-btn" type="button" :disabled="disabled" tabindex="-1" @click="decrement">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path class="ui-input-number-icon" d="m6 9 6 6 6-6" />
+            </svg>
+        </button>
+        <input class="ui-input-number-field" type="number" :value="value" :min="min" :max="max" :step="step" :disabled="disabled" @input="handleInput" @change="handleChange" />
+        <button class="ui-input-number-btn" type="button" :disabled="disabled" tabindex="-1" @click="increment">
+            <svg viewBox="0 0 24 24" width="16" height="16">
+                <path class="ui-input-number-icon" d="m18 15-6-6-6 6" />
+            </svg>
+        </button>
+    </Box>
+    <if :condition="error">
+        <Text class="ui-input-number-error-text">{error}</Text>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let mut value: utf8 = "0"
+let min: utf8 = ""
+let max: utf8 = ""
+let step: utf8 = "1"
+let size: utf8 = "md"
+let disabled: bool = false
+let label: utf8 = ""
+let error: utf8 = ""
+
+micro handleInput(e: InputEvent) {
+    value = e.target.value
+    emit("input", { value: value })
+}
+
+micro handleChange(e: InputEvent) {
+    value = e.target.value
+    emit("change", { value: value })
+}
+
+micro increment() {
+    if disabled { return }
+    let currentNum: i32 = parseInt(value)
+    let stepNum: i32 = parseInt(step)
+    let nextNum: i32 = currentNum + stepNum
+    if max != "" {
+        let maxNum: i32 = parseInt(max)
+        if nextNum > maxNum { nextNum = maxNum }
+    }
+value = toString(nextNum)
+emit("change", { value: value })
+}
+
+micro decrement() {
+    if disabled { return }
+    let currentNum: i32 = parseInt(value)
+    let stepNum: i32 = parseInt(step)
+    let nextNum: i32 = currentNum - stepNum
+    if min != "" {
+        let minNum: i32 = parseInt(min)
+        if nextNum < minNum { nextNum = minNum }
+    }
+value = toString(nextNum)
+emit("change", { value: value })
+}
+</script>
+<style>
+.ui-input-number-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.ui-input-number-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-weight: 500;
+}
+.ui-input-number-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    overflow: hidden;
+}
+.ui-input-number-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-input-number-box:focus-within {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-input-number-xs {
+    height: var(--ui-control-h-xs);
+}
+.ui-input-number-xs .ui-input-number-field {
+    font-size: var(--ui-fs-xs);
+}
+.ui-input-number-sm {
+    height: var(--ui-control-h-sm);
+}
+.ui-input-number-sm .ui-input-number-field {
+    font-size: var(--ui-fs-sm);
+}
+.ui-input-number-md {
+    height: var(--ui-control-h-md);
+}
+.ui-input-number-md .ui-input-number-field {
+    font-size: var(--ui-fs-base);
+}
+.ui-input-number-lg {
+    height: var(--ui-control-h-lg);
+}
+.ui-input-number-lg .ui-input-number-field {
+    font-size: var(--ui-fs-lg);
+}
+.ui-input-number-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    padding: 0 var(--ui-space-3);
+    align-self: stretch;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-input-number-btn:hover {
+    background: var(--sys-surface-hover);
+    color: var(--sys-on-bg);
+}
+.ui-input-number-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-input-number-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-input-number-field {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    text-align: center;
+    min-width: 0;
+}
+.ui-input-number-field::-webkit-inner-spin-button,
+.ui-input-number-field::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.ui-input-number-error .ui-input-number-box {
+    border-color: var(--sys-error);
+}
+.ui-input-number-error-text {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-error);
+}
+.ui-input-number-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-input-number-disabled .ui-input-number-field {
+    cursor: not-allowed;
+}
+
+</style>

@@ -1,21 +1,23 @@
-namespace feature_matrix::test;
-
-enums Color {
-    Red
-    Green
-    Blue
-}
+namespace feature_matrix.test;
 
 unite Option<T> {
-    Some(T)
-    None
+    Some {
+        value: T,
+    },
+    None,
 }
 
+enums Color {
+    RED   = 2,
+    GREEN = 4,
+    BLUE  = 6,
+}
+
+
 flags FilePerm {
-    Read = 1
-    Write = 2
+    READ  = 1,
+    WRITE = 2,
 }
 
 [test]
-micro enums_flags_parse() -> unit {
-}
+micro enums_flags_parse() -> unit {}

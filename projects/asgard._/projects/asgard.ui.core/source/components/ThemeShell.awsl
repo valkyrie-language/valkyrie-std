@@ -1,0 +1,69 @@
+<widget ThemeShell>
+<Box @class="theme-shell theme-{resolvedTheme}-{resolvedMode}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let theme: utf8 = "aether"
+let mode: utf8 = "light"
+let themes: list = []
+let modes: list = []
+let mut resolvedTheme: utf8 = "aether"
+let mut resolvedMode: utf8 = "light"
+
+micro setTheme(value: utf8) {
+    theme = value
+    syncThemeShell()
+}
+
+micro setMode(value: utf8) {
+    mode = value
+    syncThemeShell()
+}
+
+micro setThemes(value: list) {
+    themes = value
+    syncThemeShell()
+}
+
+micro setModes(value: list) {
+    modes = value
+    syncThemeShell()
+}
+
+micro onMount() {
+    syncThemeShell()
+}
+
+micro syncThemeShell() {
+    resolvedTheme = resolveRegisteredId(theme, themes, "aether")
+    resolvedMode = resolveRegisteredId(mode, modes, "light")
+}
+
+micro resolveRegisteredId(current: utf8, registry: list, fallback: utf8): utf8 {
+    if registry.length == 0 {
+        if current == "" {
+            return fallback
+        }
+        return current
+    }
+    let mut first: utf8 = fallback
+    let mut i: i32 = 0
+    while i < registry.length {
+        if i == 0 {
+            first = registry[i].id
+        }
+        if registry[i].id == current {
+            return current
+        }
+        i = i + 1
+    }
+    return first
+}
+</script>
+<style>
+.theme-shell {
+    min-height: 100%;
+}
+</style>

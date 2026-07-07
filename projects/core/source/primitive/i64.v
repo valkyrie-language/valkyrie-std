@@ -76,7 +76,7 @@ imply i64 {
 }
 
 [intrinsic("i64.add")]
-private micro __i64_add(lhs: i64, rhs: i64): i64 { }
+private micro __i64_add(lhs: i64, rhs: i64): i64;
 
 [intrinsic("i64.sub")]
 private micro __i64_sub(lhs: i64, rhs: i64): i64 { }

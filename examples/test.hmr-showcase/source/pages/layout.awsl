@@ -1,32 +1,32 @@
-<widget>
-    <div class="showcase-layout">
-        <header class="showcase-header">
-            <h1 class="showcase-title">⚡ VOA HMR + DevTools</h1>
-            <span class="showcase-subtitle">热模块替换 · 错误覆盖层 · DevTools 面板</span>
-            <div class="showcase-hmr">
-                <HmrIndicator />
-            </div>
-        </header>
+<widget layout>
+<div class="showcase-layout">
+    <header class="showcase-header">
+        <h1 class="showcase-title">⚡ VOA HMR + DevTools</h1>
+        <span class="showcase-subtitle">热模块替换 · 错误覆盖层 · DevTools 面板</span>
+        <div class="showcase-hmr">
+            <HmrIndicator />
+        </div>
+    </header>
 
-        <main class="showcase-main">
-            <slot />
-        </main>
+    <main class="showcase-main">
+        <slot />
+    </main>
 
-        <footer class="showcase-footer">
-            <span>Ctrl+Shift+D 打开 DevTools · Esc 关闭错误覆盖层</span>
-        </footer>
+    <footer class="showcase-footer">
+        <span>Ctrl+Shift+D 打开 DevTools · Esc 关闭错误覆盖层</span>
+    </footer>
 
-        <ErrorOverlay />
-        <DevToolsPanel />
-    </div>
+    <ErrorOverlay />
+    <DevToolsPanel />
+</div>
 </widget>
 
 <script>
-    micro onMount() {
-        init_hmr({ server_url: "ws://localhost:3000/__voa_hmr__" })
-        init_error_overlay({ capture_runtime: true })
-        init_devtools({ enabled: true })
-    }
+micro onMount() {
+    init_hmr({ server_url: "ws://localhost:3000/__voa_hmr__" })
+    init_error_overlay({ capture_runtime: true })
+    init_devtools({ enabled: true })
+}
 </script>
 
 <style>

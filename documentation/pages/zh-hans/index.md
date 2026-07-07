@@ -112,8 +112,29 @@ flowchart TD
 - 不让单一 target 的需求污染全部公共结构
 - 不让工具层反向承担编译器内部语义职责
 
+## 生态子 workspace
+
+当前 `valkyrie.v` 除编译器、标准库与工具链主线外，还为多套生态预留了独立子 workspace：
+
+- [Unity 游戏生态](../../../projects/unity._/documentation/pages/zh-hans/index.md)
+- [Godot 游戏生态](../../../projects/godot._/documentation/pages/zh-hans/index.md)
+- [Gnosis 自研游戏引擎](../../../projects/gnosis._/documentation/pages/zh-hans/index.md)
+- [Titan 深度学习框架](../../../projects/titan._/documentation/pages/zh-hans/index.md)
+- [YY 数据库生态](../../../projects/yyds._/documentation/pages/zh-hans/index.md)
+
+其中数据库生态的长期边界为：
+
+- `yykv`：共享底层存储内核
+- `yydb`：单机数据库，定位接近 `sqlite + redis`
+- `yyds`：分布式数据库，协议兼容 `mysql / pgsql / redis`
+- `yydb` 可作为 `yyds` 的 sidecar 高速缓存，但二者不是同一个产品
+- **与 Atlas 无关**：yyds 是独立数据库生态，不是 Atlas 数据绑定 / ORM 平面；Atlas 的 Hermes（schema 真源 + 默认 query；SQL 亦可）→ RegenBindings / 一次性升级见 [atlas 数据访问](../../../projects/atlas._/projects/atlas/projects/atlas/readme.md#数据访问)
+
 ## 相关主题
 
 - [语言参考](language/index.md)
-- [工具链](toolchain/legion.md)
+- [工具链 · 架构边界](toolchain/architecture-boundaries.md)
+- [工具链 · Legion](toolchain/legion.md)
+- [工具链 · Noodle（Node）](toolchain/noodle.md)
+- [工具链 · Panda（Python）](toolchain/panda.md)
 - [开发指南](guides/getting-started.md)

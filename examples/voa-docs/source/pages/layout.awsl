@@ -1,47 +1,47 @@
-<widget>
-    <div class="docs-layout">
-        <header class="docs-header">
-            <a class="docs-logo" href="/">VOA Docs</a>
-            <nav class="docs-header-nav">
-                <Link href="/docs/getting-started">文档</Link>
-                <Link href="/components">组件</Link>
-                <Link href="/tutorial">教程</Link>
-                <Link href="/api">API</Link>
-            </nav>
-        </header>
+<widget layout>
+<div class="docs-layout">
+    <header class="docs-header">
+        <a class="docs-logo" href="/">VOA Docs</a>
+        <nav class="docs-header-nav">
+            <Link href="/docs/getting-started">文档</Link>
+            <Link href="/components">组件</Link>
+            <Link href="/tutorial">教程</Link>
+            <Link href="/api">API</Link>
+        </nav>
+    </header>
 
-        <div class="docs-body">
-            <aside class="docs-sidebar">
-                <for each={sections}>
-                    <div class="docs-sidebar-group">
-                        <div class="docs-sidebar-title">{section.icon} {section.title}</div>
-                        <for each={section.pages}>
-                            <Link href={"/docs/" + section.id + "/" + page.id}
-                                class="docs-sidebar-link {isActive('/docs/' + section.id + '/' + page.id) ? 'active' : ''}">
-                                {page.title}
-                            </Link>
-                        </for>
-                    </div>
-                </for>
-            </aside>
+    <div class="docs-body">
+        <aside class="docs-sidebar">
+            <loop section in sections>
+                <div class="docs-sidebar-group">
+                    <div class="docs-sidebar-title">{section.icon} {section.title}</div>
+                    <loop page in section.pages>
+                        <Link :href=""/docs/" + section.id + "/" + page.id"
+                        @class="docs-sidebar-link {isActive('/docs/' + section.id + '/' + page.id) ? 'active' : ''}">
+                        {page.title}
+                    </Link>
+                </loop>
+            </div>
+        </loop>
+    </aside>
 
-            <main class="docs-content">
-                <slot />
-            </main>
-        </div>
+    <main class="docs-content">
+        <slot />
+    </main>
+</div>
 
-        <footer class="docs-footer">
-            <p>© 2027 Asgard VOA — 使用 VOA 自身构建 🐶</p>
-        </footer>
-    </div>
+<footer class="docs-footer">
+    <p>© 2027 Asgard VOA — 使用 VOA 自身构建 🐶</p>
+</footer>
+</div>
 </widget>
 
 <script>
-    let sections = get_doc_sections()
+let sections = get_doc_sections()
 
-    micro isActive(path: string): bool {
-        return __voa_get_current_path__() == path
-    }
+micro isActive(path: utf8): bool {
+    return __voa_get_current_path__() == path
+}
 </script>
 
 <style>

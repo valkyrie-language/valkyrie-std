@@ -5,7 +5,7 @@
     "type": "application",
     "target": "static",
     "dependencies": {
-        "voa-core": ">=0.2.0",
-        "voa-build": ">=0.1.0"
+        "voa-core": "0.2.*",
+        "voa-build": "0.1.*"
     }
 }

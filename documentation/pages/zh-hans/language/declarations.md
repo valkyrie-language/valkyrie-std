@@ -200,17 +200,17 @@ trait IntoIterator {
 
 ## union 声明 — `union`
 
-`union` 声明代数数据类型（tagged union），每个变体可携带数据。模式匹配使用 `match` / `case`。
+`union` 声明代数数据类型（tagged union），每个变体使用 record-style 字段定义。模式匹配使用 `match` / `case`；构造与匹配还可使用紧凑语法 `Some(x)` / `case Some(x)`。
 
 ```valkyrie
 union Option<T> {
-    Some(T)
+    Some { value: T }
     None
 }
 
 union Result<T, E> {
-    Ok(T)
-    Err(E)
+    Ok { value: T }
+    Err { error: E }
 }
 ```
 

@@ -163,7 +163,7 @@ flowchart LR
 
 这一层负责：
 
-- 二进制格式数据模型
+- 二进制格式数据模型（包名按格式：`class` / `jar` 等，不用 family 名如 `jvm`）
 - 编码
 - 解码
 - 结构校验
@@ -214,15 +214,33 @@ flowchart LR
 
 只放目标格式数据模型与编解码契约，不反向承担语言语义。
 
-### `projects/nyar.vm.*`
+包名按**真实文件格式**命名，不按 target family。例如 JVM 车道对应的是 `std.data.binary.class`（ClassFile）与按需的 `std.data.binary.jar`，**不要**写成 `std.data.binary.jvm`——没有名为 `jvm` 的格式。
 
-只放执行引擎、运行模型或目标家族运行约定。
+### `projects/std.data.text.*`
 
-### `projects/legion.tools`
+只放各文本格式的数据模型。**语言名 = Valkyrie，源码后缀 = `.v`（同一门语言）**：Valkyrie AST/CST/span 归属 **`std.data.text.valkyrie`**。**不要**维护平行的 `std.data.text.v`——`.v` 只是后缀，不是第二门语言或独立共享原语包。
 
-只放工程工具链能力，不反向长成编译器核心。
+### `projects/nyar._/projects/nyar.language`
 
-### `projects/asgard` 与 `projects/atlas`
+只放各语言前端（Valkyrie 消费 `std.data.text.valkyrie` 的 AST，并做 HIR / MIR 与适配）。**不**把 analyzer / optimizer / emitter 旁路进 language，也**不**把 `body_source→MSIL` 或 type-name 特判写成正式自举路径。
+
+### `projects/nyar._/projects/nyar.analyzer` / `nyar.optimizer` / `nyar.emitter`
+
+同构中层与发射：`language` → `analyzer` → `optimizer` → `emitter`。各 lane（CLR / JVM / WASM / WASI）消费中性 **`ExecutableModule`**（以及 `ExecutableFunction` / `ExecutableBlock` / `ExecutableInstruction`），禁止写成 `ExecModule` / `Exec` 等简写类名。
+
+### `projects/nyar._/projects/nyar.vm.*`
+
+只放执行引擎、运行模型或目标家族运行约定；**只消费** emitter 产物，**不得**依赖 `nyar.language` 或 AST。
+
+### `projects/legion._/projects/legion.tools`
+
+只放工程工具链能力，不反向长成编译器核心。报告皮肤在同级 `legion.report`。
+
+### `projects/unity._/projects/unity.engine.sdk` 与 `valkyrie.unity`
+
+Unity 宿主 SDK 与 DLL-only 插件源码；均在 `unity._` 子 workspace 下，不再位于顶层 `projects/`。
+
+### `projects/asgard._/projects/asgard` 与 `projects/atlas._/projects/atlas`
 
 属于上层框架，不参与定义底层编译边界。
 
@@ -292,24 +310,30 @@ flowchart TD
 
 未来所有 target 都应以这组结果作为交付统一面，而不是各自拼目录。
 
+**部署拓扑**：一次发布可包含多个 target / pipeline 的制品（Asgard 按 `platform` 矩阵 + Atlas 服务制品）。[`deploy.profile`](../../../../projects/asgard._/projects/asgard/documentation/pages/zh-hans/architecture/deploy-profiles.md) 选择挂载哪些制品（如 `cdn+serverless`、`portable`），**不等于**把所有 platform 编成单一二进制。
+
 ## 永久禁止事项
 
 - 禁止重新发明“所有 target 共用的唯一低层 `IR`”
 - 禁止在后端里补做语言级 resolve
 - 禁止让 `std` 本体长出 `windows / wasi / jvm / browser` 特判
 - 禁止让 `legion.tools` 反向依赖编译器内部细节
+- 禁止把 `clr_body_lowering` / `body_source→MSIL` / type-name 特判写成正自举或正式架构
+- 禁止 `nyar.vm.*` 依赖 `nyar.language`
 - 禁止把 `std.data.binary.*` 反向提升成语言语义层
 - 禁止用 emit 层兜底修补上游遗漏的语义事实
 - 禁止为了支持一个新 target 污染所有公共数据结构
+- 禁止用 `Exec` / `ExecModule` 等简写指代 `ExecutableModule` 等类型全称
 
 ## 一句话架构
 
 `valkyrie.v` 的长期路线不是“做一个比 `MLIR` 更大的统一系统”，而是：
 
-语义在前端闭合，target 在分区后分流，lane 产出各家 backend input，后端先 `validate` 再 `compile`，标准库语义与宿主绑定分离，最终统一交付为 `ArtifactSet`。
+语义在前端闭合，经 `analyzer` / `optimizer` 后以 `ExecutableModule` 进入 `emitter` 各 lane；target 在分区后分流，后端先 `validate` 再 `compile`；`nyar.vm.*` 只消费产物；标准库语义与宿主绑定分离，最终统一交付为 `ArtifactSet`。
 
 ## 相关文档
 
+- [公共图形栈](graphics-stack.md)
 - [编译管线逐阶段详解](../maintainer/compilation.md)
 - [目标家族契约](../maintainer/target-family-contract.md)
 - [Canonical Target 规范](target-triples.md)

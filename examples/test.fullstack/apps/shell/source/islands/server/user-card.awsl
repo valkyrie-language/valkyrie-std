@@ -1,0 +1,10 @@
+<!--
+  Server 岛占位（IslandKind::Server）。
+  路径约定：islands/server/* → 请求时由 Atlas 返回 HTML 片段。
+  当前：Asgard/VOA 客户端构建会跳过此类文件；渲染管线 planned。
+-->
+<widget namespace="atlas.islands.server" name="user_card">
+<vbox class="server-island">
+    <text class="label">User Card (server island, planned)</text>
+</vbox>
+</widget>

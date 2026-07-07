@@ -1,0 +1,95 @@
+<widget FloatButton>
+<button type="button" :title="tooltip" :aria-label="tooltip" @class="ui-float-btn ui-float-btn-{variant} ui-float-btn-{shape} ui-float-btn-{size}" @click="handleClick">
+    <svg @class="ui-float-btn-icon" viewBox="0 0 24 24" :width="iconSize" :height="iconSize" aria-hidden="true">
+        <path :d="iconPath" />
+    </svg>
+</button>
+</widget>
+
+<script>
+let icon: utf8 = ""
+let tooltip: utf8 = ""
+let variant: utf8 = "primary"
+let shape: utf8 = "circle"
+let size: utf8 = "md"
+let mut iconPath: utf8 = "M12 5v14M5 12h14"
+let mut iconSize: utf8 = "22"
+
+micro handleClick() {
+    emit("click", {})
+}
+
+micro onMount() {
+    if icon != "" {
+        iconPath = icon
+    } else {
+    iconPath = "M12 5v14M5 12h14"
+}
+if size == "sm" {
+    iconSize = "18"
+} else if (size == "lg") {
+iconSize = "26"
+} else {
+iconSize = "22"
+}
+}
+</script>
+<style>
+.ui-float-btn {
+    position: fixed;
+    bottom: var(--ui-space-8);
+    right: var(--ui-space-8);
+    z-index: var(--ui-z-sticky);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--sys-shadow-lg);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    font-family: var(--ui-font-sans);
+}
+.ui-float-btn-sm {
+    width: 40px;
+    height: 40px;
+}
+.ui-float-btn-md {
+    width: 48px;
+    height: 48px;
+}
+.ui-float-btn-lg {
+    width: 56px;
+    height: 56px;
+}
+.ui-float-btn-circle {
+    border-radius: var(--sys-radius-full);
+}
+.ui-float-btn-square {
+    border-radius: var(--sys-radius-md);
+}
+.ui-float-btn-primary {
+    background: var(--sys-primary);
+    color: var(--sys-on-primary);
+}
+.ui-float-btn-primary:hover {
+    background: var(--sys-primary-hover);
+    transform: translateY(-2px);
+}
+.ui-float-btn-default {
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border: 1px solid var(--sys-outline);
+}
+.ui-float-btn-default:hover {
+    background: var(--sys-surface-hover);
+    border-color: var(--sys-outline-focus);
+    transform: translateY(-2px);
+}
+.ui-float-btn-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+</style>

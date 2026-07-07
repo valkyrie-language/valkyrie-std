@@ -1,0 +1,70 @@
+<widget Empty>
+<Box class="ui-empty">
+    <Box class="ui-empty-icon">
+        <slot name="icon" />
+        <svg class="ui-empty-default-icon" viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">
+            <path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.3 7 12 12l8.7-5 M12 22V12" />
+        </svg>
+    </Box>
+    <Box class="ui-empty-title">{title}</Box>
+    <if :condition="description">
+        <Box class="ui-empty-desc">{description}</Box>
+        <else />
+    </if>
+    <Box class="ui-empty-action">
+        <slot />
+    </Box>
+</Box>
+</widget>
+
+<script>
+let title: utf8 = "No data"
+let description: utf8 = ""
+</script>
+<style>
+.ui-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--ui-space-8) var(--ui-space-4);
+    gap: var(--ui-space-3);
+    font-family: var(--ui-font-sans);
+}
+.ui-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sys-on-bg-tertiary);
+    margin-bottom: var(--ui-space-2);
+}
+.ui-empty-default-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-empty-icon > :not(svg) + .ui-empty-default-icon {
+    display: none;
+}
+.ui-empty-title {
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    line-height: var(--ui-lh-tight);
+}
+.ui-empty-desc {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-normal);
+    max-width: 320px;
+}
+.ui-empty-action {
+    margin-top: var(--ui-space-2);
+}
+.ui-empty-action:empty {
+    display: none;
+}
+</style>

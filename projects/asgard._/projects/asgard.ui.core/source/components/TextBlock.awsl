@@ -1,0 +1,48 @@
+<widget TextBlock>
+<Text @class="ui-text ui-text-size-{size} ui-text-weight-{weight} ui-text-color-{color} ui-text-align-{align} {truncate ? 'ui-text-truncate' : ''}">
+    <slot />
+</Text>
+</widget>
+
+<script>
+let size: utf8 = "base"
+let weight: utf8 = "normal"
+let color: utf8 = "default"
+let align: utf8 = "left"
+let truncate: bool = false
+let as: utf8 = "span"
+</script>
+<style>
+.ui-text {
+    font-family: var(--ui-font-sans);
+    box-sizing: border-box;
+}
+.ui-text-size-xs { font-size: var(--ui-fs-xs); }
+.ui-text-size-sm { font-size: var(--ui-fs-sm); }
+.ui-text-size-base { font-size: var(--ui-fs-base); }
+.ui-text-size-lg { font-size: var(--ui-fs-lg); }
+.ui-text-size-h3 { font-size: var(--ui-fs-h3); }
+.ui-text-size-h2 { font-size: var(--ui-fs-h2); }
+.ui-text-size-h1 { font-size: var(--ui-fs-h1); }
+.ui-text-weight-normal { font-weight: 400; }
+.ui-text-weight-medium { font-weight: 500; }
+.ui-text-weight-semibold { font-weight: 600; }
+.ui-text-weight-bold { font-weight: 700; }
+.ui-text-color-default { color: var(--sys-on-bg); }
+.ui-text-color-secondary { color: var(--sys-on-bg-secondary); }
+.ui-text-color-tertiary { color: var(--sys-on-bg-tertiary); }
+.ui-text-color-primary { color: var(--sys-primary); }
+.ui-text-color-error { color: var(--sys-error); }
+.ui-text-color-success { color: var(--sys-success); }
+.ui-text-color-warning { color: var(--sys-warning); }
+.ui-text-align-left { text-align: left; }
+.ui-text-align-center { text-align: center; }
+.ui-text-align-right { text-align: right; }
+.ui-text-align-justify { text-align: justify; }
+.ui-text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+</style>

@@ -1,0 +1,23 @@
+<widget plot>
+<div class="asgard-plot" :style="f\"width: {width}\"">
+    {svg_html}
+</div>
+</widget>
+
+<script>
+let svg_html: utf8 = ""
+let width: utf8 = "100%"
+</script>
+
+<style>
+.asgard-plot {
+    display: block;
+    line-height: 0;
+    overflow: auto;
+}
+.asgard-plot svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+</style>

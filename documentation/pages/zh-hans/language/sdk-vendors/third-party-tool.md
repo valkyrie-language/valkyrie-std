@@ -1,4 +1,4 @@
-﻿# 第三方构建器
+# 第三方构建器
 
 ## 设计定位
 
@@ -101,7 +101,7 @@
 
 推荐流程：
 
-1. `voa.config.v` 设置 `platform: "wechat-miniprogram"`
+1. `asgard.config.v` 设置 `platform: "wechat-miniprogram"`
 2. `legion.von` 中 `publish: ["mini-program"]`（隐式注入小程序 SDK）
 3. `asgard build` 产出 `app.json`、`pages/*`、**宿主字节码包**（目标：无 WASM；RenderIR 编入制品）
 4. `asgard pack --target mini-program` 补齐 `project.config.json` / `sitemap.json`
@@ -114,7 +114,7 @@
 Unity 侧更适合表现为插件型接管，推荐流程也类似，只是后半段不同：
 
 1. 读取项目 manifest 与 target / publish 信息
-2. 隐式注入 `unity.engine.sdk`
+2. 隐式注入 `unity.engine.sdk`（物理路径：`projects/unity._/projects/unity.engine.sdk`）
 3. 调用 `legion` 产出 `MSIL` 或其他 Unity 可消费的中间产物
 4. 自动把产物写入 Unity 工程目录
 5. 触发 Unity Editor 或批处理继续完成最终构建

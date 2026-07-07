@@ -1,0 +1,12 @@
+{
+    name: "asgard_theme_matrix",
+    version: "0.1.0.0",
+    description: "Asgard UI 主题 — Matrix",
+    license: "MIT",
+    type: "library",
+    target: "lib",
+    dependencies: {
+        "voa-core": "0.1.*"
+    },
+    devDependencies: {}
+}

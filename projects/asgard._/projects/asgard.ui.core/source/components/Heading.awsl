@@ -1,0 +1,90 @@
+<widget Heading>
+<if order == "1">
+    <Text @class="ui-heading ui-heading-1 ui-heading-size-{finalSize} ui-heading-weight-{weight} ui-heading-align-{align}">
+        <slot />
+    </Text>
+    <else/>
+</if>
+<if order == "2">
+    <Text @class="ui-heading ui-heading-2 ui-heading-size-{finalSize} ui-heading-weight-{weight} ui-heading-align-{align}">
+        <slot />
+    </Text>
+    <else/>
+</if>
+<if order == "3">
+    <Text @class="ui-heading ui-heading-3 ui-heading-size-{finalSize} ui-heading-weight-{weight} ui-heading-align-{align}">
+        <slot />
+    </Text>
+    <else/>
+</if>
+<if order == "4">
+    <Text @class="ui-heading ui-heading-4 ui-heading-size-{finalSize} ui-heading-weight-{weight} ui-heading-align-{align}">
+        <slot />
+    </Text>
+    <else/>
+</if>
+<if order == "5">
+    <Text @class="ui-heading ui-heading-5 ui-heading-size-{finalSize} ui-heading-weight-{weight} ui-heading-align-{align}">
+        <slot />
+    </Text>
+    <else/>
+</if>
+<if order == "6">
+    <Text @class="ui-heading ui-heading-6 ui-heading-size-{finalSize} ui-heading-weight-{weight} ui-heading-align-{align}">
+        <slot />
+    </Text>
+    <else/>
+</if>
+</widget>
+
+<script>
+let order: utf8 = "1"
+let size: utf8 = ""
+let weight: utf8 = "bold"
+let align: utf8 = "left"
+let mut finalSize: utf8 = "h1"
+
+micro onMount() {
+    if size != "" {
+        finalSize = size
+    } else if order == "1" {
+    finalSize = "h1"
+} else if order == "2" {
+finalSize = "h2"
+} else if order == "3" {
+finalSize = "h3"
+} else if order == "4" {
+finalSize = "lg"
+} else if order == "5" {
+finalSize = "base"
+} else if order == "6" {
+finalSize = "sm"
+} else {
+finalSize = "h2"
+}
+}
+</script>
+
+<style>
+.ui-heading {
+    font-family: var(--ui-font-sans);
+    box-sizing: border-box;
+    margin: 0;
+    line-height: var(--ui-lh-tight);
+}
+.ui-heading-size-xs { font-size: var(--ui-fs-xs); }
+.ui-heading-size-sm { font-size: var(--ui-fs-sm); }
+.ui-heading-size-base { font-size: var(--ui-fs-base); }
+.ui-heading-size-lg { font-size: var(--ui-fs-lg); }
+.ui-heading-size-h3 { font-size: var(--ui-fs-h3); }
+.ui-heading-size-h2 { font-size: var(--ui-fs-h2); }
+.ui-heading-size-h1 { font-size: var(--ui-fs-h1); }
+.ui-heading-weight-normal { font-weight: 400; }
+.ui-heading-weight-medium { font-weight: 500; }
+.ui-heading-weight-semibold { font-weight: 600; }
+.ui-heading-weight-bold { font-weight: 700; }
+.ui-heading-align-left { text-align: left; }
+.ui-heading-align-center { text-align: center; }
+.ui-heading-align-right { text-align: right; }
+.ui-heading-align-justify { text-align: justify; }
+</style>

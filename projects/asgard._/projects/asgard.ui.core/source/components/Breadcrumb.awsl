@@ -1,0 +1,62 @@
+<widget Breadcrumb>
+<Box @class="ui-breadcrumb" aria-label="Breadcrumb">
+    <loop item="item" :each="{items}">
+        <Text @class="ui-breadcrumb-item">
+            <svg @class="ui-breadcrumb-separator" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="m9 18 6-6-6-6" />
+            </svg>
+            <if :condition="item.href != &quot;&quot;">
+                <Text @class="ui-breadcrumb-link" role="link" @click="handleNavigate(item)">{item.label}</Text>
+                <else />
+                <Text @class="ui-breadcrumb-current">{item.label}</Text>
+            </if>
+        </Text>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+
+micro handleNavigate(item) {
+    emit("navigate", {href: item.href, label: item.label})
+}
+</script>
+<style>
+.ui-breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-space-1);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+}
+.ui-breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+}
+.ui-breadcrumb-item:first-child .ui-breadcrumb-separator {
+    display: none;
+}
+.ui-breadcrumb-separator {
+    fill: none;
+    stroke: var(--sys-on-bg-tertiary);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+.ui-breadcrumb-link {
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-breadcrumb-link:hover {
+    color: var(--sys-primary);
+}
+.ui-breadcrumb-current {
+    color: var(--sys-on-bg);
+    font-weight: 500;
+}
+</style>

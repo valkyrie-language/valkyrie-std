@@ -1,3 +1,8 @@
+<% match arch %>
+<% case "clr" %>
+namespace std.iterator;
+# CLR: function-valued iterator adapters deferred (field call → DynamicInvoke).
+<% else %>
 namespace std.iterator;
 
 structure TakeWhileIterator<T, I> {
@@ -18,11 +23,11 @@ imply TakeWhileIterator<T, I>: Iterator {
 
     micro next(mut self): Option<T> {
         if self._done {
-            return None
+            return option_none::<Item>()
         }
 
         if !self._iter.has_next() {
-            return None
+            return option_none::<Item>()
         }
 
         let item: T = self._iter.next().unwrap()
@@ -31,6 +36,8 @@ imply TakeWhileIterator<T, I>: Iterator {
         }
 
         self._done = true
-        return None
+        return option_none::<Item>()
     }
 }
+
+<% end %>

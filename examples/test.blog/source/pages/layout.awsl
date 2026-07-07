@@ -1,24 +1,24 @@
-<widget>
-    <div class="blog-layout">
-        <header class="blog-header">
-            <div class="blog-header-inner">
-                <a class="blog-logo" href="/">VOA Blog</a>
-                <nav class="blog-nav">
-                    <Link href="/" exact={true}>首页</Link>
-                    <Link href="/posts">文章</Link>
-                    <Link href="/about">关于</Link>
-                </nav>
-            </div>
-        </header>
+<widget layout>
+<div class="blog-layout">
+    <header class="blog-header">
+        <div class="blog-header-inner">
+            <a class="blog-logo" href="/">VOA Blog</a>
+            <nav class="blog-nav">
+                <Link href="/" :exact="true">首页</Link>
+                <Link href="/posts">文章</Link>
+                <Link href="/about">关于</Link>
+            </nav>
+        </div>
+    </header>
 
-        <main class="blog-main">
-            <slot />
-        </main>
+    <main class="blog-main">
+        <slot />
+    </main>
 
-        <footer class="blog-footer">
-            <p>© 2027 VOA Blog — 使用 <strong>Asgard VOA</strong> 构建 · 纯 GGScript + AWSL</p>
-        </footer>
-    </div>
+    <footer class="blog-footer">
+        <p>© 2027 VOA Blog — 使用 <strong>Asgard VOA</strong> 构建 · 纯 GGScript + AWSL</p>
+    </footer>
+</div>
 </widget>
 
 <style>

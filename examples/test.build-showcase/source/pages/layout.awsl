@@ -1,16 +1,16 @@
-<widget>
-    <div class="build-layout">
-        <header class="build-header">
-            <h1>⚡ VOA 构建优化</h1>
-            <span class="build-subtitle">代码分割 · 图片优化 · 字体优化 · Lighthouse ≥ 90</span>
-        </header>
-        <main class="build-main">
-            <slot />
-        </main>
-        <footer class="build-footer">
-            <p>Powered by <strong>Asgard VOA</strong></p>
-        </footer>
-    </div>
+<widget layout>
+<div class="build-layout">
+    <header class="build-header">
+        <h1>⚡ VOA 构建优化</h1>
+        <span class="build-subtitle">代码分割 · 图片优化 · 字体优化 · Lighthouse ≥ 90</span>
+    </header>
+    <main class="build-main">
+        <slot />
+    </main>
+    <footer class="build-footer">
+        <p>Powered by <strong>Asgard VOA</strong></p>
+    </footer>
+</div>
 </widget>
 
 <style>

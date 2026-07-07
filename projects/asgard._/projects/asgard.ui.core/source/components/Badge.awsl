@@ -1,0 +1,107 @@
+<widget Badge>
+<Box class="ui-badge-wrap" :style="offsetStyle">
+    <slot />
+    <if :condition="visible">
+        <if :condition="dot">
+            <Text @class="ui-badge-dot ui-badge-{variant}"></Text>
+            <else />
+            <Text @class="ui-badge ui-badge-{variant}">{displayCount}</Text>
+        </if>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let count: utf8 = ""
+let dot: bool = false
+let overflowCount: utf8 = "99"
+let variant: utf8 = "error"
+let offset: utf8 = ""
+let showZero: bool = false
+
+let mut visible: bool = false
+let mut displayCount: utf8 = ""
+let mut offsetStyle: utf8 = ""
+
+micro onMount() {
+    if offset != "" {
+        offsetStyle = offset
+    }
+updateDisplay()
+}
+
+micro updateDisplay() {
+    if dot {
+        visible = true
+        displayCount = ""
+        return
+    }
+
+if count == "0" && !showZero {
+    visible = false
+    return
+}
+
+visible = true
+
+let countNum: i32 = count
+let overNum: i32 = overflowCount
+
+if countNum > overNum {
+    displayCount = overflowCount + "+"
+} else {
+displayCount = count
+}
+}
+</script>
+<style>
+.ui-badge-wrap {
+    position: relative;
+    display: inline-flex;
+}
+.ui-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 var(--ui-space-1);
+    box-sizing: border-box;
+    border-radius: var(--sys-radius-full);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+    color: var(--sys-on-primary);
+    font-family: var(--ui-font-sans);
+    white-space: nowrap;
+    box-shadow: var(--sys-shadow);
+}
+.ui-badge-dot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    transform: translate(50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: var(--sys-radius-full);
+    box-shadow: var(--sys-shadow);
+}
+.ui-badge-error, .ui-badge-dot.ui-badge-error {
+    background: var(--sys-error);
+}
+.ui-badge-warning, .ui-badge-dot.ui-badge-warning {
+    background: var(--sys-warning);
+}
+.ui-badge-info, .ui-badge-dot.ui-badge-info {
+    background: var(--sys-info);
+}
+.ui-badge-success, .ui-badge-dot.ui-badge-success {
+    background: var(--sys-success);
+}
+.ui-badge-primary, .ui-badge-dot.ui-badge-primary {
+    background: var(--sys-primary);
+}
+</style>

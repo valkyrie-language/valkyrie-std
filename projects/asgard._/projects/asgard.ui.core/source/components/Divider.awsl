@@ -1,0 +1,101 @@
+<widget Divider>
+<if orientation == "vertical">
+    <Box @class="ui-divider ui-divider-vertical ui-divider-{variant} {label ? 'ui-divider-has-label' : ''}">
+        <if label>
+            <Text @class="ui-divider-label">{label}</Text>
+            <else/>
+        </if>
+    </Box>
+    <else/>
+</if>
+<if orientation == "horizontal">
+    <Box @class="ui-divider ui-divider-horizontal ui-divider-{variant} {label ? 'ui-divider-has-label' : ''}">
+        <if label>
+            <Text @class="ui-divider-label">{label}</Text>
+            <else/>
+        </if>
+    </Box>
+    <else/>
+</if>
+</widget>
+
+<script>
+let orientation: utf8 = "horizontal"
+let variant: utf8 = "solid"
+let label: utf8 = ""
+</script>
+
+<style>
+.ui-divider {
+    box-sizing: border-box;
+    border-color: var(--sys-outline);
+}
+.ui-divider-horizontal {
+    width: 100%;
+    border-top: 1px solid var(--sys-outline);
+}
+.ui-divider-vertical {
+    height: 100%;
+    align-self: stretch;
+    border-left: 1px solid var(--sys-outline);
+}
+.ui-divider-dashed.ui-divider-horizontal {
+    border-top-style: dashed;
+}
+.ui-divider-dashed.ui-divider-vertical {
+    border-left-style: dashed;
+}
+.ui-divider-dotted.ui-divider-horizontal {
+    border-top-style: dotted;
+}
+.ui-divider-dotted.ui-divider-vertical {
+    border-left-style: dotted;
+}
+.ui-divider-has-label {
+    border-top: none;
+    border-left: none;
+    display: flex;
+    gap: var(--ui-space-3);
+}
+.ui-divider-horizontal.ui-divider-has-label {
+    flex-direction: row;
+    align-items: center;
+}
+.ui-divider-vertical.ui-divider-has-label {
+    flex-direction: column;
+    align-items: center;
+}
+.ui-divider-has-label::before,
+.ui-divider-has-label::after {
+    content: '';
+    flex: 1;
+    border-color: var(--sys-outline);
+}
+.ui-divider-horizontal.ui-divider-has-label::before,
+.ui-divider-horizontal.ui-divider-has-label::after {
+    height: 0;
+    border-top: 1px solid var(--sys-outline);
+}
+.ui-divider-vertical.ui-divider-has-label::before,
+.ui-divider-vertical.ui-divider-has-label::after {
+    width: 0;
+    border-left: 1px solid var(--sys-outline);
+}
+.ui-divider-dashed.ui-divider-has-label::before,
+.ui-divider-dashed.ui-divider-has-label::after {
+    border-top-style: dashed;
+    border-left-style: dashed;
+}
+.ui-divider-dotted.ui-divider-has-label::before,
+.ui-divider-dotted.ui-divider-has-label::after {
+    border-top-style: dotted;
+    border-left-style: dotted;
+}
+.ui-divider-label {
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+</style>

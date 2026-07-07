@@ -57,8 +57,8 @@ flowchart LR
 | Family | 典型交付物 | 关注点 | 文档 |
 |:---|:---|:---|:---|
 | `NyarVM` | VM 可加载产物 | VM 专用对象模型、运行时契约 | [nyar-vm.md](nyar-vm.md) |
-| `WASM` | `.wasm` 及宿主配套文件 | 浏览器 / Node / WASI 宿主边界 | [wasm.md](wasm.md) |
-| `JVM` | `.class` / `.jar` | ClassFile、栈机模型、JRE 约束 | [jvm.md](jvm.md) |
+| `WASM` | `.wasm` / `.wasi` 及宿主配套文件 | 浏览器 / Node / WASI 宿主边界 | [wasm.md](wasm.md) |
+| `JVM` | `.class` / `.jar` | ClassFile、栈机模型、JRE 约束；格式包为 `std.data.binary.class` / `std.data.binary.jar`（勿写 `binary.jvm`） | [jvm.md](jvm.md) |
 | `CLR` | `.dll` / `.exe` | IL、元数据、CLR 类型系统 | [clr.md](clr.md) |
 | `Native` | 对象文件 / 可执行文件 / 动态库 | 目标文件格式、ABI、链接与打包 | [native.md](native.md) |
 

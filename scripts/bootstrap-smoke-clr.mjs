@@ -165,7 +165,7 @@ function main() {
     console.log('║        bootstrap-smoke CLR 切片验收                      ║');
     console.log('╚══════════════════════════════════════════════════════════╝\n');
     console.log(`输出根目录：${outputRoot}`);
-    console.log(`自举项目：projects/legion.tools`);
+    console.log(`自举项目：projects/legion._/projects/legion.tools`);
     console.log(`smoke 项目：examples/bootstrap-smoke\n`);
 
     const legionPath = options.legion ? path.resolve(options.legion) : ensurePreviousLegion(outputRoot, options.verbose);
@@ -210,7 +210,7 @@ function main() {
     if (fs.existsSync(smokeDir)) {
         fs.rmSync(smokeDir, { recursive: true, force: true });
     }
-    console.log('\n[3/4] v1 → bootstrap-smoke（真 nyar-driver）...');
+    console.log('\n[3/4] v1 → bootstrap-smoke（真 emitter）...');
     const smokeBuild = dotnetExec(
         v1Exe,
         ['build', SMOKE_PROJECT_DIR, '--target', 'clr', '-o', smokeDir, '--verbose'],
@@ -233,7 +233,7 @@ function main() {
         if (!fs.existsSync(filePath)) {
             console.error(`错误：缺少产物 ${filePath}`);
             console.error('说明：v1 已能通过 [clr] 外调输出 --version，但 legion build 仍需 CLR 分支/内部调用降低；');
-            console.error('      nyar_driver smoke 链已在 V 侧实现，待 CLR 前端补齐后即可通过本门。');
+            console.error('      emitter smoke 链已在 V 侧实现，待 CLR 前端补齐后即可通过本门。');
             const backendResult = path.join(smokeDir, 'backend-result.txt');
             if (fs.existsSync(backendResult)) {
                 console.error(fs.readFileSync(backendResult, 'utf8').slice(0, 1500));

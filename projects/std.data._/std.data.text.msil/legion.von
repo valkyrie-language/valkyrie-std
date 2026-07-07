@@ -1,0 +1,13 @@
+{
+    name: "std.data.text.msil",
+    version: "workspace",
+    description: "MSIL/ILASM 文本解析库 - 词法分析",
+    type: "library",
+    dependencies: {},
+    build: [
+        { target: "nyar" },
+        { target: "clr" },
+        { target: "jvm" },
+        { target: "wasm" }
+    ]
+}

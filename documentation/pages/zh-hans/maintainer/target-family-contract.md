@@ -107,7 +107,7 @@ flowchart TD
 - manifest
 - 运行契约
 
-## `WASM Browser/Node`
+格式编解码包名为 `std.data.binary.class` / `std.data.binary.jar`，勿写 `std.data.binary.jvm`。
 
 ### 输入前提
 

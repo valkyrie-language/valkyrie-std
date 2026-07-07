@@ -1,0 +1,163 @@
+<widget Modal>
+<if :condition="open">
+    <Box @class="ui-modal-overlay" @click="handleOverlayClick">
+        <Box role="dialog" aria-modal="true" @class="ui-modal ui-modal-{size} {centered ? 'ui-modal-centered' : 'ui-modal-top'}">
+            <if :condition="title != &quot;&quot; || showClose">
+                <Box @class="ui-modal-header">
+                    <if :condition="title != &quot;&quot;">
+                        <Text @class="ui-modal-title">{title}</Text>
+                        <else />
+                    </if>
+                    <if :condition="showClose">
+                        <button @class="ui-modal-close" type="button" aria-label="Close" @click="handleClose">
+                            <svg @class="ui-modal-close-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                                <path d="M18 6 6 18M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <else />
+                    </if>
+                </Box>
+                <else />
+            </if>
+            <Box @class="ui-modal-body">
+                <slot />
+            </Box>
+            <Box @class="ui-modal-footer">
+                <slot name="footer" />
+            </Box>
+        </Box>
+    </Box>
+    <else />
+</if>
+</widget>
+
+<script>
+let open: bool = false
+let title: utf8 = ""
+let size: utf8 = "md"
+let closeOnOverlay: bool = true
+let showClose: bool = true
+let centered: bool = true
+
+micro handleOverlayClick(e: MouseEvent) {
+    if e.target == e.currentTarget && closeOnOverlay {
+        emit("close", {})
+    }
+}
+
+micro handleClose() {
+    emit("close", {})
+}
+
+micro onMount() {
+    if open {
+        emit("open", {})
+    }
+}
+</script>
+<style>
+.ui-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: var(--ui-z-modal);
+    display: flex;
+    padding: var(--ui-space-6);
+    overflow-y: auto;
+    animation: ui-modal-overlay-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-modal-centered {
+    align-items: center;
+    justify-content: center;
+}
+.ui-modal-top {
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: var(--ui-space-12);
+}
+.ui-modal {
+    background: var(--sys-surface);
+    border-radius: var(--sys-radius-lg);
+    box-shadow: var(--sys-shadow-lg);
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+    animation: ui-modal-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-modal-sm { max-width: 400px; }
+.ui-modal-md { max-width: 520px; }
+.ui-modal-lg { max-width: 720px; }
+.ui-modal-full {
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+    height: calc(100vh - 32px);
+}
+.ui-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-4);
+    padding: var(--ui-space-5) var(--ui-space-6);
+    border-bottom: 1px solid var(--sys-outline);
+}
+.ui-modal-title {
+    margin: 0;
+    font-size: var(--ui-fs-h3);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+}
+.ui-modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-md);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-modal-close:hover {
+    background: var(--sys-surface-hover);
+    color: var(--sys-on-bg);
+}
+.ui-modal-close-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-modal-body {
+    padding: var(--ui-space-6);
+    overflow-y: auto;
+    flex: 1;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-base);
+}
+.ui-modal-footer {
+    padding: var(--ui-space-4) var(--ui-space-6);
+    border-top: 1px solid var(--sys-outline);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ui-space-3);
+}
+.ui-modal-footer:empty {
+    display: none;
+}
+@keyframes ui-modal-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes ui-modal-in {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>

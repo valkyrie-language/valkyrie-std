@@ -28,7 +28,7 @@ imply BTreeMap<K, V> {
 
     micro get(self, key: K): Option<V> {
         if self._root.is_none() {
-            return None
+            return option_none::<V>()
         }
 
         return self.search_node(self._root.unwrap(), key)
@@ -47,7 +47,7 @@ imply BTreeMap<K, V> {
             root.values.push(value)
             self._root = Some(root)
             self._length = 1
-            return None
+            return option_none::<V>()
         }
 
         let old_option: Option<V> = self.set_existing(self._root.unwrap(), key, value)
@@ -71,13 +71,13 @@ imply BTreeMap<K, V> {
 
         self.insert_non_full(self._root.unwrap(), key, value)
         self._length = self._length + 1
-        return None
+        return option_none::<V>()
     }
 
     micro remove(mut self, key: K): Option<V> {
         let old_option: Option<V> = self.get(key)
         if old_option.is_none() {
-            return None
+            return option_none::<V>()
         }
 
         let mut entries: List<BTreeMapEntry<K, V>> = ArrayList::new(self._length)
@@ -164,7 +164,7 @@ imply BTreeMap<K, V> {
                 cursor = cursor + 1
             }
 
-            return None
+            return option_none::<V>()
         }
 
         return self.search_node(node.children.get(self.find_child_index(node, key) + 1).unwrap(), key)
@@ -183,7 +183,7 @@ imply BTreeMap<K, V> {
                 cursor = cursor + 1
             }
 
-            return None
+            return option_none::<V>()
         }
 
         return self.set_existing(node.children.get(self.find_child_index(node, key) + 1).unwrap(), key, value)

@@ -1,0 +1,44 @@
+<widget Kbd>
+<kbd @class="ui-kbd ui-kbd-{size}">
+    <slot />
+</kbd>
+</widget>
+
+<script>
+let size: utf8 = "md"
+</script>
+<style>
+.ui-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--ui-font-mono);
+    font-weight: 500;
+    color: var(--sys-on-bg);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    box-shadow: 0 2px 0 var(--sys-outline);
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+}
+.ui-kbd-sm {
+    height: 20px;
+    min-width: 20px;
+    padding: 0 var(--ui-space-1);
+    font-size: var(--ui-fs-xs);
+}
+.ui-kbd-md {
+    height: 24px;
+    min-width: 24px;
+    padding: 0 var(--ui-space-2);
+    font-size: var(--ui-fs-sm);
+}
+.ui-kbd-lg {
+    height: 28px;
+    min-width: 28px;
+    padding: 0 var(--ui-space-2);
+    font-size: var(--ui-fs-base);
+}
+</style>

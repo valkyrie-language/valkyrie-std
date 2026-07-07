@@ -1,0 +1,116 @@
+<widget Popover>
+<Text @class="ui-popover-wrapper" @click="handleToggle" @mouseenter="handleEnter" @mouseleave="handleLeave">
+    <Text @class="ui-popover-trigger">
+        <slot />
+    </Text>
+    <if :condition="isOpen">
+        <Box role="dialog" @class="ui-popover ui-popover-{placement}">
+            <if :condition="title != &quot;&quot;">
+                <Box @class="ui-popover-title">{title}</Box>
+                <else />
+            </if>
+            <Box @class="ui-popover-content">
+                <slot name="content" />
+            </Box>
+        </Box>
+        <else />
+    </if>
+</Text>
+</widget>
+
+<script>
+let open: bool = false
+let placement: utf8 = "top"
+let trigger: utf8 = "click"
+let title: utf8 = ""
+let mut isOpen: bool = false
+
+micro handleToggle() {
+    if trigger == "click" {
+        isOpen = !isOpen
+        emit("openChange", {open: isOpen})
+    }
+}
+
+micro handleEnter() {
+    if trigger == "hover" {
+        isOpen = true
+        emit("openChange", {open: true})
+    }
+}
+
+micro handleLeave() {
+    if trigger == "hover" {
+        isOpen = false
+        emit("openChange", {open: false})
+    }
+}
+
+micro onMount() {
+    isOpen = open
+}
+</script>
+<style>
+.ui-popover-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+.ui-popover-trigger {
+    display: inline-flex;
+}
+.ui-popover {
+    position: absolute;
+    z-index: var(--ui-z-overlay);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-3) var(--ui-space-4);
+    min-width: 200px;
+    max-width: 320px;
+    animation: ui-popover-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-popover-top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: var(--ui-space-2);
+}
+.ui-popover-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: var(--ui-space-2);
+}
+.ui-popover-left {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: var(--ui-space-2);
+}
+.ui-popover-right {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: var(--ui-space-2);
+}
+.ui-popover-title {
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    margin-bottom: var(--ui-space-2);
+    padding-bottom: var(--ui-space-2);
+    border-bottom: 1px solid var(--sys-outline);
+}
+.ui-popover-content {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-family: var(--ui-font-sans);
+    line-height: 1.5;
+}
+@keyframes ui-popover-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+    to { opacity: 1; }
+}
+</style>

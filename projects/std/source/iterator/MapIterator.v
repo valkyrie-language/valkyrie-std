@@ -1,3 +1,8 @@
+<% match arch %>
+<% case "clr" %>
+namespace std.iterator;
+# CLR: function-valued iterator adapters deferred (field call → DynamicInvoke).
+<% else %>
 namespace std.iterator;
 
 structure MapIterator<T, U, I> {
@@ -14,10 +19,12 @@ imply MapIterator<T, U, I>: Iterator {
 
     micro next(mut self): Option<U> {
         if !self._iter.has_next() {
-            return None
+            return option_none::<Item>()
         }
 
         let item: T = self._iter.next().unwrap()
         return Some(self._mapper(item))
     }
 }
+
+<% end %>

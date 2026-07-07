@@ -1,0 +1,210 @@
+<widget Steps>
+<Box @class="ui-steps ui-steps-{direction} ui-steps-{variant}">
+    <loop item="step" :each="{stepData}">
+        <Box @class="ui-step ui-step-{step.status} {step.last ? 'ui-step-last' : ''}" @click="handleClick(step.index)">
+            <Box @class="ui-step-head">
+                <Box @class="ui-step-icon">
+                    <if :condition="step.status == &quot;finish&quot;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                            <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                        <else />
+                        <if :condition="step.icon != &quot;&quot;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                <path :d="step.icon" />
+                            </svg>
+                            <else />
+                            <Text @class="ui-step-num">{step.num}</Text>
+                        </if>
+                    </if>
+                </Box>
+                <if :condition="!step.last">
+                    <Box @class="ui-step-line"></Box>
+                    <else />
+                </if>
+            </Box>
+            <Box @class="ui-step-content">
+                <Box @class="ui-step-title">{step.title}</Box>
+                <if :condition="step.description != &quot;&quot;">
+                    <Box @class="ui-step-desc">{step.description}</Box>
+                    <else />
+                </if>
+            </Box>
+        </Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+let current: utf8 = "0"
+let direction: utf8 = "horizontal"
+let variant: utf8 = "default"
+let mut currentNum: i32 = 0
+let mut stepData: list = []
+
+micro computeStatuses() {
+    stepData = []
+    let n: i32 = items.length
+    let mut i: i32 = 0
+    while i < n {
+        let raw = items[i]
+        let s: utf8 = raw.status
+        if s == "" {
+            if i < currentNum { s = "finish" }
+            else if i == currentNum { s = "process" }
+            else { s = "wait" }
+        }
+    stepData.push({title: raw.title, description: raw.description, icon: raw.icon, status: s, index: i, num: i + 1, last: i == n - 1})
+    i = i + 1
+}
+}
+
+micro handleClick(idx: i32) {
+    currentNum = idx
+    computeStatuses()
+    emit("change", {current: idx})
+}
+
+micro onMount() {
+    let c: i32 = parseInt(current)
+    if c < 0 { c = 0 }
+    currentNum = c
+    computeStatuses()
+}
+</script>
+<style>
+.ui-steps {
+    display: flex;
+    font-family: var(--ui-font-sans);
+}
+.ui-steps-horizontal {
+    flex-direction: row;
+}
+.ui-steps-vertical {
+    flex-direction: column;
+}
+.ui-step {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    cursor: pointer;
+    transition: opacity var(--ui-duration-1) var(--ui-easing);
+}
+.ui-steps-horizontal .ui-step {
+    flex-direction: column;
+}
+.ui-steps-vertical .ui-step {
+    flex-direction: row;
+    align-items: flex-start;
+    padding-bottom: var(--ui-space-6);
+}
+.ui-step-last {
+    flex: none;
+}
+.ui-step-head {
+    display: flex;
+    align-items: center;
+}
+.ui-steps-horizontal .ui-step-head {
+    width: 100%;
+}
+.ui-step-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--sys-radius-full);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg-secondary);
+    flex-shrink: 0;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-step-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-step-num {
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+}
+.ui-step-line {
+    flex: 1;
+    height: 1px;
+    background: var(--sys-outline);
+    margin: 0 var(--ui-space-2);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-steps-vertical .ui-step-line {
+    width: 1px;
+    height: 100%;
+    min-height: 24px;
+    margin: var(--ui-space-1) 0;
+}
+.ui-step-content {
+    padding: 0 var(--ui-space-2);
+}
+.ui-steps-vertical .ui-step-content {
+    padding-left: var(--ui-space-3);
+}
+.ui-step-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 500;
+    color: var(--sys-on-bg);
+    line-height: 1.4;
+}
+.ui-step-desc {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+    margin-top: var(--ui-space-1);
+    line-height: 1.5;
+}
+.ui-step-wait .ui-step-icon {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-step-process .ui-step-icon {
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+    color: var(--sys-on-primary);
+}
+.ui-step-finish .ui-step-icon {
+    color: var(--sys-primary);
+    border-color: var(--sys-primary);
+}
+.ui-step-finish .ui-step-line {
+    background: var(--sys-primary);
+}
+.ui-step-error .ui-step-icon {
+    border-color: var(--sys-error);
+    color: var(--sys-error);
+}
+.ui-step-error .ui-step-title {
+    color: var(--sys-error);
+}
+.ui-steps-dot .ui-step-icon {
+    width: 10px;
+    height: 10px;
+    border: none;
+}
+.ui-steps-dot .ui-step-num {
+    display: none;
+}
+.ui-steps-dot .ui-step-icon svg {
+    display: none;
+}
+.ui-steps-dot .ui-step-process .ui-step-icon {
+    background: var(--sys-primary);
+}
+.ui-steps-dot .ui-step-finish .ui-step-icon {
+    background: var(--sys-primary);
+    opacity: 0.5;
+}
+.ui-steps-dot .ui-step-wait .ui-step-icon {
+    background: var(--sys-outline);
+}
+</style>

@@ -19,9 +19,6 @@ env:
   DOTNET_VERSION: '10.0'
 
 jobs:
-  # ─────────────────────────────────────────────────────────────
-  # Seed：构建上一代 legion CLI
-  # ─────────────────────────────────────────────────────────────
   build-legion:
     name: 构建上一代 legion CLI
     runs-on: ubuntu-latest
@@ -32,6 +29,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: valkyrie.v
+
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
 
       - name: 检出 NyarVM.cs
         uses: actions/checkout@v4
@@ -45,30 +47,22 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: 构建 legion CLI
-        working-directory: valkyrie.v
-        run: |
-          dotnet publish ../NyarVM.cs/tools/legion/Legion.CLI.csproj \
-            -c Release \
-            --nologo \
-            -o ./dist/legion \
-            -p:UseAppHost=true
+      - name: 构建 legion CLI（Rust seed 优先）
+        working-directory: valkyrie.rs
+        run: cargo build -p legion --locked
 
       - name: 记录 legion 路径
         id: legion
         run: |
-          echo "path=$(pwd)/valkyrie.v/dist/legion/legion" >> $GITHUB_OUTPUT
+          echo "path=$(pwd)/valkyrie.rs/target/debug/legion" >> $GITHUB_OUTPUT
 
       - name: 上传 legion 产物
         uses: actions/upload-artifact@v4
         with:
           name: legion-cli
-          path: valkyrie.v/dist/legion/
+          path: valkyrie.rs/target/debug/legion
           retention-days: 3
 
-  # ─────────────────────────────────────────────────────────────
-  # 源头自举：seed -> v1.clr -> v2.clr
-  # ─────────────────────────────────────────────────────────────
   bootstrap-clr-source:
     name: CLR 源头自举验证
     runs-on: ubuntu-latest
@@ -78,6 +72,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: valkyrie.v
+
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
 
       - name: 检出 NyarVM.cs
         uses: actions/checkout@v4
@@ -104,8 +103,7 @@ jobs:
         working-directory: valkyrie.v
         env:
           LEGION_PATH: ${{ github.workspace }}/legion/legion
-        run: |
-          node scripts/bootstrap-clr.mjs --verbose
+        run: node scripts/bootstrap-clr.mjs --verbose
 
       - name: 上传自举报告
         if: always()
@@ -115,9 +113,57 @@ jobs:
           path: valkyrie.v/dist/bootstrap-clr/
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────
-  # Node 轨：seed -> v1.node -> v2.node（npm / JSR 发布门）
-  # ─────────────────────────────────────────────────────────────
+  bootstrap-jvm-source:
+    name: JVM 源头自举验证
+    runs-on: ubuntu-latest
+    needs: build-legion
+    steps:
+      - name: 检出 valkyrie.v
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
+
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
+
+      - name: 设置 Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
+
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
+
+      - name: 运行 JVM 自举验证
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
+        run: node scripts/bootstrap-jvm.mjs --verbose
+
+      - name: 上传自举报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-jvm-report
+          path: valkyrie.v/dist/bootstrap-jvm/
+          retention-days: 7
+
   bootstrap-node-source:
     name: Node 源头自举验证（npm / JSR）
     runs-on: ubuntu-latest
@@ -128,17 +174,17 @@ jobs:
         with:
           path: valkyrie.v
 
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
+
       - name: 检出 NyarVM.cs
         uses: actions/checkout@v4
         with:
           repository: oovm/NyarVM.cs
           path: NyarVM.cs
           ref: master
-
-      - name: 设置 .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 设置 Node.js
         uses: actions/setup-node@v4
@@ -158,8 +204,7 @@ jobs:
         working-directory: valkyrie.v
         env:
           LEGION_PATH: ${{ github.workspace }}/legion/legion
-        run: |
-          node scripts/bootstrap-node.mjs --verbose
+        run: node scripts/bootstrap-node.mjs --verbose
 
       - name: 上传自举报告
         if: always()
@@ -169,55 +214,202 @@ jobs:
           path: valkyrie.v/dist/bootstrap-node/
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────
-  # 汇总判定
-  # ─────────────────────────────────────────────────────────────
+  bootstrap-wasi-witness:
+    name: WASI witness lane
+    runs-on: ubuntu-latest
+    needs: build-legion
+    steps:
+      - name: 检出 valkyrie.v
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
+
+      - name: 检出 NyarVM.cs
+        uses: actions/checkout@v4
+        with:
+          repository: oovm/NyarVM.cs
+          path: NyarVM.cs
+          ref: master
+
+      - name: 安装 wasmtime
+        run: curl https://wasmtime.dev/install.sh -sSf | bash
+
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
+
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
+
+      - name: 运行 WASI witness
+        working-directory: valkyrie.v
+        env:
+          LEGION_PATH: ${{ github.workspace }}/legion/legion
+          PATH: ${{ env.HOME }}/.wasmtime/bin:${{ env.PATH }}
+        run: node scripts/bootstrap-wasi-witness.mjs --verbose
+
+      - name: 上传 witness 报告
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-wasi-report
+          path: valkyrie.v/dist/bootstrap-wasi-witness/
+          retention-days: 7
+
+  runtime-matrix:
+    name: 四目标 runtime 矩阵
+    runs-on: ubuntu-latest
+    needs: build-legion
+    steps:
+      - name: 检出 valkyrie.v
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
+
+      - name: 设置 .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 设置 Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: 安装 wasmtime
+        run: curl https://wasmtime.dev/install.sh -sSf | bash
+
+      - name: 下载 legion CLI
+        uses: actions/download-artifact@v4
+        with:
+          name: legion-cli
+          path: ./legion
+
+      - name: 赋予执行权限
+        run: chmod +x ./legion/legion
+
+      - name: 运行 runtime 矩阵
+        working-directory: valkyrie.v
+        env:
+          PATH: ${{ env.HOME }}/.wasmtime/bin:${{ env.PATH }}
+        run: node scripts/run-runtime-matrix.mjs
+
+      - name: 上传 runtime 矩阵结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-matrix-report
+          path: valkyrie.v/dist/monthly-matrix/runtime-matrix.json
+          retention-days: 7
+
   gate:
-    name: 汇总判定
+    name: 四目标联合判定
     runs-on: ubuntu-latest
     needs:
       - build-legion
       - bootstrap-clr-source
+      - bootstrap-jvm-source
       - bootstrap-node-source
+      - bootstrap-wasi-witness
+      - runtime-matrix
     if: always()
 
     steps:
-      - name: 打印自举验证结果
+      - name: 检出 valkyrie.v
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.v
+
+      - name: 检出 valkyrie.rs
+        uses: actions/checkout@v4
+        with:
+          path: valkyrie.rs
+
+      - name: 下载 CLR 报告
+        uses: actions/download-artifact@v4
+        with:
+          name: bootstrap-clr-report
+          path: valkyrie.v/dist/bootstrap-clr
+        continue-on-error: true
+
+      - name: 下载 JVM 报告
+        uses: actions/download-artifact@v4
+        with:
+          name: bootstrap-jvm-report
+          path: valkyrie.v/dist/bootstrap-jvm
+        continue-on-error: true
+
+      - name: 下载 Node 报告
+        uses: actions/download-artifact@v4
+        with:
+          name: bootstrap-node-report
+          path: valkyrie.v/dist/bootstrap-node
+        continue-on-error: true
+
+      - name: 下载 WASI 报告
+        uses: actions/download-artifact@v4
+        with:
+          name: bootstrap-wasi-report
+          path: valkyrie.v/dist/bootstrap-wasi-witness
+        continue-on-error: true
+
+      - name: 下载 runtime 矩阵
+        uses: actions/download-artifact@v4
+        with:
+          name: runtime-matrix-report
+          path: valkyrie.v/dist/monthly-matrix
+        continue-on-error: true
+
+      - name: 反作弊机读检查
+        working-directory: valkyrie.v
+        run: node scripts/check-bootstrap-integrity.mjs
+
+      - name: 月度矩阵聚合
+        working-directory: valkyrie.v
+        run: |
+          node scripts/monthly-matrix.mjs \
+            --runtime-matrix dist/monthly-matrix/runtime-matrix.json
+
+      - name: 打印联合验收结果
         run: |
           {
-            echo "## 自举验证结果"
+            echo "## 四目标联合验收"
             echo ""
-            echo "### Seed 阶段"
-            echo ""
-            echo "| 阶段 | 结果 |"
-            echo "|------|------|"
-            echo "| 上一代 legion CLI | ${{ needs.build-legion.result }} |"
-            echo ""
-            echo "### CLR 源头自举（NuGet）"
-            echo ""
-            echo "| 阶段 | 结果 |"
-            echo "|------|------|"
-            echo "| seed -> v1 -> v2 | ${{ needs.bootstrap-clr-source.result }} |"
-            echo ""
-            echo "### Node 源头自举（npm / JSR）"
-            echo ""
-            echo "| 阶段 | 结果 |"
-            echo "|------|------|"
-            echo "| seed -> v1.node -> v2.node | ${{ needs.bootstrap-node-source.result }} |"
+            echo "| 目标 | Job 结果 |"
+            echo "|------|----------|"
+            echo "| Seed legion | ${{ needs.build-legion.result }} |"
+            echo "| CLR | ${{ needs.bootstrap-clr-source.result }} |"
+            echo "| JVM | ${{ needs.bootstrap-jvm-source.result }} |"
+            echo "| Node | ${{ needs.bootstrap-node-source.result }} |"
+            echo "| WASI witness | ${{ needs.bootstrap-wasi-witness.result }} |"
+            echo "| Runtime 矩阵 | ${{ needs.runtime-matrix.result }} |"
           } >> $GITHUB_STEP_SUMMARY
 
-      - name: 判定
+      - name: 硬阻断判定
         run: |
-          if [ "${{ needs.build-legion.result }}" != "success" ]; then
-            echo "上一代 legion CLI 未构建成功"
-            exit 1
-          fi
-          if [ "${{ needs.bootstrap-clr-source.result }}" != "success" ]; then
-            echo "CLR 源头自举未通过（阻断 NuGet 发布）"
-            exit 1
-          fi
-          if [ "${{ needs.bootstrap-node-source.result }}" != "success" ]; then
-            echo "Node 源头自举未通过（阻断 npm / JSR 发布）"
-            exit 1
-          fi
-          echo "CLR 与 Node 双轨自举均已通过"
+          for job in build-legion bootstrap-clr-source bootstrap-jvm-source bootstrap-node-source bootstrap-wasi-witness runtime-matrix; do
+            result=$(echo '${{ toJSON(needs) }}' | jq -r ".[\"$job\"].result")
+            if [ "$result" != "success" ]; then
+              echo "联合验收失败：$job = $result"
+              exit 1
+            fi
+          done
+          echo "四目标联合验收通过"

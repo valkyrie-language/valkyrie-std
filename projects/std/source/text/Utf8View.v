@@ -60,7 +60,7 @@ imply Utf8View: TextView {
         let end: usize = self.end_offset()
         let mut index: usize = self.span.offset
         while index < end {
-            push(bytes, self.text._repr[index])
+            push(bytes, self.text._repr⁅index⁆)
             index = index + 1
         }
 

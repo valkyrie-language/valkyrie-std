@@ -1,31 +1,31 @@
-<widget>
-    <div class="dash-layout">
-        <header class="dash-header">
-            <h1 class="dash-title">⚡ 实时仪表盘</h1>
-            <div class="dash-header-right">
-                <Badge variant={state.connected ? "success" : "danger"} dot={true}>
-                    {state.connected ? "已连接" : "已断开"}
-                </Badge>
-                <span class="dash-uptime">运行 {state.uptime}</span>
-            </div>
-        </header>
+<widget layout>
+<div class="dash-layout">
+    <header class="dash-header">
+        <h1 class="dash-title">⚡ 实时仪表盘</h1>
+        <div class="dash-header-right">
+            <Badge :variant="state.connected ? "success" : "danger"" :dot="true">
+                {state.connected ? "已连接" : "已断开"}
+            </Badge>
+            <span class="dash-uptime">运行 {state.uptime}</span>
+        </div>
+    </header>
 
-        <main class="dash-main">
-            <slot />
-        </main>
-    </div>
+    <main class="dash-main">
+        <slot />
+    </main>
+</div>
 </widget>
 
 <script>
-    let state = get_dashboard_state()
+let state = get_dashboard_state()
 
-    micro onMount() {
-        connect_websocket("ws://localhost:3000/__voa_ws__")
-    }
+micro onMount() {
+    connect_websocket("ws://localhost:3000/__voa_ws__")
+}
 
-    micro onUnmount() {
-        disconnect_websocket()
-    }
+micro onUnmount() {
+    disconnect_websocket()
+}
 </script>
 
 <style>

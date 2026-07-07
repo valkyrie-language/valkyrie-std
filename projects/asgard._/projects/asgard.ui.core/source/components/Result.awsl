@@ -1,0 +1,118 @@
+<widget Result>
+<Box class="ui-result">
+    <Box class="ui-result-icon">
+        <slot name="icon" />
+        <if status == "success">
+            <svg class="ui-result-svg ui-result-success" viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">
+                <path d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14.1l-3-3" />
+            </svg>
+            <else/>
+        </if>
+        <if status == "error">
+            <svg class="ui-result-svg ui-result-error" viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">
+                <path d="m15 9-6 6M9 9l6 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+            </svg>
+            <else/>
+        </if>
+        <if status == "warning">
+            <svg class="ui-result-svg ui-result-warning" viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">
+                <path d="M12 9v4M12 17h.0M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <else/>
+        </if>
+        <if status == "info">
+            <svg class="ui-result-svg ui-result-info" viewBox="0 0 24 24" width="64" height="64" aria-hidden="true">
+                <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.0" />
+            </svg>
+            <else/>
+        </if>
+        <if status == "404" || status == "403" || status == "500">
+            <Box class="ui-result-code">{status}</Box>
+            <else/>
+        </if>
+    </Box>
+    <if title>
+        <Box class="ui-result-title">{title}</Box>
+        <else/>
+    </if>
+    <if subTitle>
+        <Box class="ui-result-subtitle">{subTitle}</Box>
+        <else/>
+    </if>
+    <Box class="ui-result-extra">
+        <slot />
+    </Box>
+</Box>
+</widget>
+
+<script>
+let status: utf8 = "info"
+let title: utf8 = ""
+let subTitle: utf8 = ""
+</script>
+
+<style>
+.ui-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--ui-space-8) var(--ui-space-4);
+    gap: var(--ui-space-3);
+    font-family: var(--ui-font-sans);
+}
+.ui-result-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--ui-space-2);
+}
+.ui-result-svg {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-result-success {
+    stroke: var(--sys-success);
+}
+.ui-result-error {
+    stroke: var(--sys-error);
+}
+.ui-result-warning {
+    stroke: var(--sys-warning);
+}
+.ui-result-info {
+    stroke: var(--sys-info);
+}
+.ui-result-code {
+    font-size: var(--ui-fs-h1);
+    font-weight: 700;
+    color: var(--sys-on-bg);
+    line-height: 1;
+    font-family: var(--ui-font-mono);
+}
+.ui-result-title {
+    font-size: var(--ui-fs-h3);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    line-height: var(--ui-lh-tight);
+}
+.ui-result-subtitle {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-normal);
+    max-width: 480px;
+}
+.ui-result-extra {
+    margin-top: var(--ui-space-4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-space-2);
+}
+.ui-result-extra:empty {
+    display: none;
+}
+</style>

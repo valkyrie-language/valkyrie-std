@@ -1,40 +1,40 @@
-<widget>
-    <div class="about-page">
-        <h1 class="about-title">关于 VOA Blog</h1>
-        <div class="about-content">
-            <p>
-                这是一个使用 <strong>VOA (Valkyrie Omni App)</strong> 框架构建的全栈博客示例。
-            </p>
-            <p>
-                整个项目 <strong>零行 C#</strong>，所有页面和逻辑都是纯 GGScript + AWSL。
-                C# 仅在构建工具链和 HMR 调试服务中使用。
-            </p>
+<widget about>
+<div class="about-page">
+    <h1 class="about-title">关于 VOA Blog</h1>
+    <div class="about-content">
+        <p>
+            这是一个使用 <strong>VOA (Valkyrie Omni App)</strong> 框架构建的全栈博客示例。
+        </p>
+        <p>
+            整个项目 <strong>零行 C#</strong>，所有页面和逻辑都是纯 GGScript + AWSL。
+            C# 仅在构建工具链和 HMR 调试服务中使用。
+        </p>
 
-            <h2>技术栈</h2>
-            <ul>
-                <li><strong>渲染模式</strong>：SSG（静态站点生成）</li>
-                <li><strong>路由</strong>：文件系统路由（pages/ 目录）</li>
-                <li><strong>数据获取</strong>：voa-fetch + 内置缓存</li>
-                <li><strong>评论</strong>：客户端交互 + API Routes</li>
-                <li><strong>SEO</strong>：自动 meta 标签 + Open Graph</li>
-            </ul>
+        <h2>技术栈</h2>
+        <ul>
+            <li><strong>渲染模式</strong>：SSG（静态站点生成）</li>
+            <li><strong>路由</strong>：文件系统路由（pages/ 目录）</li>
+            <li><strong>数据获取</strong>：voa-fetch + 内置缓存</li>
+            <li><strong>评论</strong>：客户端交互 + API Routes</li>
+            <li><strong>SEO</strong>：自动 meta 标签 + Open Graph</li>
+        </ul>
 
-            <h2>项目结构</h2>
-            <pre class="about-code">
-voa-blog/
-├── source/
-│   ├── pages/          # 页面路由
-│   │   ├── index.awsl  # 首页
-│   │   ├── posts.awsl  # 文章列表
-│   │   ├── about.awsl  # 关于页
-│   │   └── layout.awsl # 布局
-│   ├── posts/
-│   │   └── [slug].awsl # 文章详情（动态路由）
-│   ├── api/
-│   │   └── comments.v  # 评论 API
-│   └── data.v          # 数据层
-├── voa.config.v        # 项目配置
-└── legion.von          # 包清单</pre>
+        <h2>项目结构</h2>
+        <pre class="about-code">
+            voa-blog/
+            ├── source/
+            │   ├── pages/          # 页面路由
+            │   │   ├── index.awsl  # 首页
+            │   │   ├── posts.awsl  # 文章列表
+            │   │   ├── about.awsl  # 关于页
+            │   │   └── layout.awsl # 布局
+            │   ├── posts/
+            │   │   └── [slug].awsl # 文章详情（动态路由）
+            │   ├── api/
+            │   │   └── comments.v  # 评论 API
+            │   └── data.v          # 数据层
+            ├── asgard.config.v        # 项目配置
+            └── legion.von          # 包清单</pre>
         </div>
     </div>
 </widget>

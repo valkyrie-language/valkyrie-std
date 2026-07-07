@@ -1,4 +1,4 @@
-﻿# Asgard CLI 与 VOA 编译实现
+# Asgard CLI 与 VOA 编译实现
 
 **Asgard** 是 GUI 应用框架，**用户 CLI 为 `asgard`**（`asgard build` / `asgard dev` / `asgard pack`）。底层编译由 Rust crate **`voa`** 实现（`cargo build -p voa --bin asgard`）。
 
@@ -6,11 +6,11 @@
 |:---|:---|:---|
 | 角色 | 框架 + CLI 命令 | 编译管线（解析、降级、编译、写 dist） |
 | 典型路径 | `valkyrie.v/projects/asgard/` | `valkyrie.rs/projects/voa/` |
-| 用户配置 | 依赖 `asgard` / `asgard.ui` 等包 | `voa.config.v` |
+| 用户配置 | 依赖 `asgard` / `asgard.ui` 等包 | `asgard.config.v` |
 
 统一编译架构：[Asgard GUI 统一编译架构](../../projects/asgard/documentation/pages/zh-hans/architecture/gui-compilation.md)。UI 策略：[UI 渲染策略](../../projects/asgard/documentation/pages/zh-hans/architecture/ui-rendering.md)。
 
-Asgard 采用约定优于配置，为应用提供类似 Next.js / Nuxt 的 **工程化构建体验**（约定目录、`voa.config.v`）。**`asgard` 是独立 CLI**；`legion` 负责 V 包依赖与通用构建。
+Asgard 采用约定优于配置，为应用提供类似 Next.js / Nuxt 的 **工程化构建体验**（约定目录、`asgard.config.v`）。**`asgard` 是独立 CLI**；`legion` 负责 V 包依赖与通用构建。
 
 ## 核心理念
 
@@ -30,10 +30,10 @@ Asgard 采用约定优于配置，为应用提供类似 Next.js / Nuxt 的 **工
 | 编译主线 | `valkyrie.v` 主编译线 | 复用语义闭合、family lowering 与交付体系 |
 | 逻辑字节码 | **按 `platform`** | `browser` → WASM；`android` → DEX；`ios` → Mach-O；`wechat-miniprogram` → 宿主字节码 |
 | UI | AWSL → RenderIR → **编入制品** | 各宿主原生视图消费（见 [UI 渲染策略](../guides/ui-rendering.md)） |
-| 脚本 | Valkyrie 语言 | `.v` 脚本文件 |
+| 脚本 | Valkyrie 语言（后缀 `.v`，与语言名同一事物） | `.v` 源码文件 |
 | Web 运行时 | `boot.js` + WASM | 仅 `platform: browser`；响应式在 WASM 内 |
 | 包管理 | Legion | 依赖管理与构建工具 |
-| 配置 | `voa.config.v` | `platform` 选字节码后端；`build.mode` 控制 debug 侧车 |
+| 配置 | `asgard.config.v` | `platform` 选字节码后端；`build.mode` 控制 debug 侧车 |
 
 ## 命令体系
 
@@ -67,7 +67,7 @@ my_workspace/
 │   │   │   ├── pages/         # 页面
 │   │   │   ├── services/      # 服务
 │   │   │   └── models/        # 数据模型
-│   │   ├── voa.config.v       # 项目配置
+│   │   ├── asgard.config.v       # 项目配置
 │   │   └── legion.von         # 包定义
 │   ├── project-2/             # 后端项目
 │   └── shared/                # 共享库

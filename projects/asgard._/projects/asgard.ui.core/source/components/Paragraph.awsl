@@ -1,0 +1,40 @@
+<widget Paragraph>
+<Text :style="f\&quot;{lineClamp ? `-webkit-line-clamp: ${lineClamp}` : ''}\&quot;" @class="ui-paragraph ui-paragraph-align-{align} ui-paragraph-spacing-{spacing} {truncate ? 'ui-paragraph-truncate' : ''} {lineClamp ? 'ui-paragraph-clamp' : ''}">
+    <slot />
+</Text>
+</widget>
+
+<script>
+let align: utf8 = "left"
+let spacing: utf8 = "normal"
+let truncate: bool = false
+let lineClamp: utf8 = ""
+</script>
+<style>
+.ui-paragraph {
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-base);
+    color: var(--sys-on-bg);
+    box-sizing: border-box;
+    margin: 0;
+}
+.ui-paragraph-align-left { text-align: left; }
+.ui-paragraph-align-center { text-align: center; }
+.ui-paragraph-align-right { text-align: right; }
+.ui-paragraph-align-justify { text-align: justify; }
+.ui-paragraph-spacing-tight { line-height: var(--ui-lh-tight); }
+.ui-paragraph-spacing-snug { line-height: var(--ui-lh-snug); }
+.ui-paragraph-spacing-normal { line-height: var(--ui-lh-normal); }
+.ui-paragraph-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ui-paragraph-clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+</style>

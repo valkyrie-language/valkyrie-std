@@ -84,6 +84,7 @@ flowchart TD
 ## 使用建议
 
 - 面向人阅读的发布线，可以优先展示 `YearlyVersion`
+- `std` 等核心包以 `yearly.major.minor.patch` 发布，例如 `2020.0.0.0`
 - 面向工具协作和依赖求解的场景，应保留 `SemanticVersion`
 - 文档里描述兼容性时，要直接写清“是否破坏 API / ABI / 包格式”，不要只给版本号让读者自己猜
 

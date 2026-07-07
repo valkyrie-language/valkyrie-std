@@ -1,0 +1,25 @@
+{
+    name: "std.adaptor.wasi",
+    description: "Valkyrie WASI 平台 SDK -- 基于 WASI component model 的宿主绑定",
+    main: "source/io/time.v",
+    dependencies: {
+        "core": "workspace"
+    },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "wasi",
+        kind: "platform-sdk",
+        targets: ["wasi", "wasip3"]
+    },
+    build: [
+        {
+            target: "wasi"
+        },
+        {
+            target: "wasip3"
+        }
+    ],
+    engines: {
+        vcc: "0.1.*"
+    }
+}

@@ -1,0 +1,294 @@
+<widget TreeSelect>
+<Box @class="ui-tree-select-wrapper" @click="toggleOpen">
+    <Box @class="ui-tree-select-trigger ui-tree-select-{size} {disabled ? 'ui-tree-select-disabled' : ''} {isOpen ? 'ui-tree-select-trigger-open' : ''}">
+        <Text @class="ui-tree-select-value {selectedKey == '' ? 'ui-tree-select-placeholder' : ''}">
+            <if selectedKey == ''>
+                {placeholder}
+                <else/>
+                {selectedLabel}
+            </if>
+        </Text>
+        <Text @class="ui-tree-select-arrow {isOpen ? 'ui-tree-select-arrow-open' : ''}">
+            <svg @class="ui-tree-select-arrow-svg" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m6 9 6 6 6-6" />
+            </svg>
+        </Text>
+    </Box>
+    <if isOpen && !disabled>
+        <Box @class="ui-tree-select-dropdown" @click="stopPropagation">
+            <Box @class="ui-tree-select-tree">
+                <loop node in {flatNodes}>
+                    <Box
+                        @class="ui-tree-select-node {selectedKey == node.key ? 'ui-tree-select-node-selected' : ''} {node.disabled ? 'ui-tree-select-node-disabled' : ''}"
+                        :style="f\"padding-left: {node.depth * 16 + 8}px\""
+                        @click="selectNode(node)"
+                    >
+                        <Text @class="ui-tree-select-expand {node.expanded ? 'ui-tree-select-expand-open' : ''}" @click="node.hasChildren ? toggleExpand(node) : null">
+                            <if node.hasChildren>
+                                <svg @class="ui-tree-select-expand-svg" viewBox="0 0 24 24" width="14" height="14">
+                                    <path d="m9 18 6-6-6-6" />
+                                </svg>
+                                <else/>
+                                <Text @class="ui-tree-select-expand-placeholder"></Text>
+                            </if>
+                        </Text>
+                        <Text @class="ui-tree-select-label">{node.label}</Text>
+                    </Box>
+                </loop>
+            </Box>
+        </Box>
+        <else/>
+    </if>
+</Box>
+</widget>
+
+<script>
+let treeData: list = []
+let value: utf8 = ""
+let placeholder: utf8 = "Select..."
+let size: utf8 = "md"
+let multiple: bool = false
+let checkable: bool = false
+let disabled: bool = false
+
+let mut isOpen: bool = false
+let mut selectedKey: utf8 = ""
+let mut expandedKeys: list = []
+
+micro toggleOpen() {
+    if disabled {
+        return
+    }
+isOpen = !isOpen
+}
+
+micro stopPropagation(e) {
+    e.stopPropagation()
+}
+
+micro isExpanded(key: utf8) {
+    return indexOf(expandedKeys, key) >= 0
+}
+
+micro toggleExpand(node, e) {
+    if e {
+        e.stopPropagation()
+    }
+    let key: utf8 = node.key
+    let idx: i32 = indexOf(expandedKeys, key)
+    if idx >= 0 {
+        expandedKeys = splice(expandedKeys, idx, 1)
+    } else {
+    expandedKeys = push(expandedKeys, key)
+}
+}
+
+micro selectNode(node) {
+    if node.disabled {
+        return
+    }
+selectedKey = node.key
+isOpen = false
+emit("change", { value: selectedKey })
+}
+
+micro hasChildren(node) {
+    return node.children && node.children.length > 0
+}
+
+micro flatNodes() {
+    return flatten(treeData, 0, [])
+}
+
+micro flatten(nodes, depth, flat) {
+    let i: i32 = 0
+    while i < nodes.length {
+        let node = nodes[i]
+        let expanded: bool = isExpanded(node.key)
+        let hasKids: bool = hasChildren(node)
+        flat = push(flat, {
+            key: node.key,
+            label: node.label,
+            depth: depth,
+            expanded: expanded,
+            hasChildren: hasKids,
+            disabled: node.disabled
+        })
+    if expanded && hasKids {
+        flat = flatten(node.children, depth + 1, flat)
+    }
+i = i + 1
+}
+return flat
+}
+
+micro selectedLabel() {
+    return findLabel(treeData)
+}
+
+micro findLabel(nodes) {
+    let i: i32 = 0
+    while i < nodes.length {
+        if nodes[i].key == selectedKey {
+            return nodes[i].label
+        }
+    if hasChildren(nodes[i]) {
+        let sub: utf8 = findLabel(nodes[i].children)
+        if sub != "" {
+            return sub
+        }
+}
+i = i + 1
+}
+return ""
+}
+
+micro onMount() {
+    selectedKey = value
+}
+</script>
+
+<style>
+.ui-tree-select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    font-family: var(--ui-font-sans);
+}
+.ui-tree-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    padding: 0 var(--ui-space-3);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tree-select-trigger:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-tree-select-trigger-open {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-tree-select-xs {
+    height: var(--ui-control-h-xs);
+    font-size: var(--ui-fs-xs);
+}
+.ui-tree-select-sm {
+    height: var(--ui-control-h-sm);
+    font-size: var(--ui-fs-sm);
+}
+.ui-tree-select-md {
+    height: var(--ui-control-h-md);
+    font-size: var(--ui-fs-base);
+}
+.ui-tree-select-lg {
+    height: var(--ui-control-h-lg);
+    font-size: var(--ui-fs-lg);
+}
+.ui-tree-select-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-tree-select-value {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--sys-on-bg);
+}
+.ui-tree-select-placeholder {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-tree-select-arrow {
+    display: flex;
+    align-items: center;
+    color: var(--sys-on-bg-tertiary);
+    transition: transform var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tree-select-arrow-open {
+    transform: rotate(180deg);
+}
+.ui-tree-select-arrow-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-tree-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: var(--ui-z-dropdown);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-2);
+    min-width: 100%;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.ui-tree-select-tree {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.ui-tree-select-node {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    padding: var(--ui-space-1) var(--ui-space-2);
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    color: var(--sys-on-bg);
+    font-size: var(--ui-fs-sm);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tree-select-node:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-tree-select-node-selected {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+}
+.ui-tree-select-node-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.ui-tree-select-expand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: var(--sys-on-bg-tertiary);
+    transition: transform var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-tree-select-expand-open {
+    transform: rotate(90deg);
+}
+.ui-tree-select-expand-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-tree-select-expand-placeholder {
+    width: 16px;
+    height: 16px;
+}
+.ui-tree-select-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>

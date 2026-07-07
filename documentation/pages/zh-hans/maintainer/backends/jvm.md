@@ -4,6 +4,8 @@
 
 `JVM` family 面向 `ClassFile` 和 JVM 执行模型。它可以利用宿主现成的类型系统、对象模型和 GC，但不能因此把 JVM 世界观反向抬升成全局公共模型。
 
+格式编解码落在 `std.data.binary.class`（ClassFile）与按需的 `std.data.binary.jar`，**不是** `std.data.binary.jvm`——包名跟格式走，不跟 family 名走。
+
 ## 输入前提
 
 进入 `JVM` 后端前，应当已经完成：

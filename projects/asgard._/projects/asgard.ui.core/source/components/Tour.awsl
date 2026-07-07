@@ -1,0 +1,241 @@
+<widget Tour>
+<if open>
+    <Box @class="ui-tour-mask" @click="handleMaskClick"></Box>
+    <Box
+        @class="ui-tour"
+        :style="tourStyle"
+    >
+        <Box @class="ui-tour-arrow ui-tour-arrow-{currentStep.placement}"></Box>
+        <Box @class="ui-tour-content">
+            <Box @class="ui-tour-header">
+                <Text @class="ui-tour-title">{currentStep.title}</Text>
+                <button @class="ui-tour-close" @click="close" type="button">
+                    <svg @class="ui-tour-close-svg" viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </Box>
+            <Box @class="ui-tour-body">
+                <Text @class="ui-tour-description">{currentStep.description}</Text>
+            </Box>
+            <Box @class="ui-tour-footer">
+                <Text @class="ui-tour-step-info">{currentIndex + 1} / {steps.length}</Text>
+                <Box @class="ui-tour-actions">
+                    <if currentIndex > 0>
+                        <button @class="ui-tour-btn ui-tour-btn-prev" @click="prev" type="button">Prev</button>
+                        <else/>
+                    </if>
+                    <if currentIndex < steps.length - 1>
+                        <button @class="ui-tour-btn ui-tour-btn-next" @click="next" type="button">Next</button>
+                        <else/>
+                    </if>
+                    <if currentIndex == steps.length - 1>
+                        <button @class="ui-tour-btn ui-tour-btn-finish" @click="finish" type="button">Finish</button>
+                        <else/>
+                    </if>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+    <Box @class="ui-tour-highlight" :style="highlightStyle"></Box>
+    <else/>
+</if>
+</widget>
+
+<script>
+let steps: list = []
+let open: bool = false
+let mut current: utf8 = "0"
+
+micro currentIndex() {
+    let idx: i32 = toI32(current)
+    if idx < 0 {
+        idx = 0
+    }
+if idx >= steps.length {
+    idx = steps.length - 1
+}
+return idx
+}
+
+micro currentStep() {
+    return steps[currentIndex()]
+}
+
+micro tourStyle() {
+    let step = currentStep()
+    let top: utf8 = "50%"
+    let left: utf8 = "50%"
+    if step.placement == "bottom" {
+        top = "60%"
+    } else if (step.placement == "top") {
+    top = "40%"
+} else if (step.placement == "right") {
+left = "60%"
+} else if (step.placement == "left") {
+left = "40%"
+}
+return f"top: {top}; left: {left}; transform: translate(-50%, -50%)"
+}
+
+micro highlightStyle() {
+    let step = currentStep()
+    if step.target == "" {
+        return "display: none"
+    }
+return "display: none"
+}
+
+micro next() {
+    let idx: i32 = currentIndex()
+    if idx < steps.length - 1 {
+        current = toString(idx + 1)
+        emit("change", { current: idx + 1 })
+    }
+}
+
+micro prev() {
+    let idx: i32 = currentIndex()
+    if idx > 0 {
+        current = toString(idx - 1)
+        emit("change", { current: idx - 1 })
+    }
+}
+
+micro finish() {
+    emit("close", { finished: true })
+}
+
+micro close() {
+    emit("close", { finished: false })
+}
+
+micro handleMaskClick() {
+    emit("close", { finished: false })
+}
+</script>
+
+<style>
+.ui-tour-mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: var(--ui-z-modal);
+}
+.ui-tour-highlight {
+    position: fixed;
+    border: 2px solid var(--sys-primary);
+    border-radius: var(--sys-radius-md);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);
+    z-index: var(--ui-z-modal);
+    pointer-events: none;
+}
+.ui-tour {
+    position: fixed;
+    z-index: var(--ui-z-modal);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-4);
+    max-width: 320px;
+    min-width: 260px;
+    font-family: var(--ui-font-sans);
+}
+.ui-tour-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
+.ui-tour-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-3);
+}
+.ui-tour-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+}
+.ui-tour-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+}
+.ui-tour-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-tertiary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-sm);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tour-close:hover {
+    color: var(--sys-on-bg);
+    background: var(--sys-surface-hover);
+}
+.ui-tour-close-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-tour-body {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    line-height: 1.5;
+}
+.ui-tour-description {
+    display: block;
+}
+.ui-tour-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-2);
+}
+.ui-tour-step-info {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-tour-actions {
+    display: flex;
+    gap: var(--ui-space-2);
+}
+.ui-tour-btn {
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-3);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tour-btn:hover {
+    border-color: var(--sys-outline-focus);
+    background: var(--sys-surface-hover);
+}
+.ui-tour-btn-next,
+.ui-tour-btn-finish {
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+    color: var(--sys-on-primary);
+}
+.ui-tour-btn-next:hover,
+.ui-tour-btn-finish:hover {
+    background: var(--sys-primary-hover);
+    border-color: var(--sys-primary-hover);
+}
+</style>

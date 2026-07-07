@@ -1,0 +1,93 @@
+<widget Segmented>
+<Box @class="ui-segmented ui-segmented-{size} {fullWidth ? 'ui-segmented-full' : ''}">
+    <loop item="item" :each="{options}">
+        <button type="button" @class="ui-segmented-item {value == item.value ? 'ui-segmented-item-active' : ''}" @click="() => selectSegment(item)">
+            <Text class="ui-segmented-item-label">{item.label}</Text>
+        </button>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let options: list = []
+let value: utf8 = ""
+let size: utf8 = "md"
+let fullWidth: bool = false
+
+micro selectSegment(item: any) {
+    emit("change", { value: item.value, label: item.label })
+}
+</script>
+<style>
+.ui-segmented {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    background: var(--sys-surface-hover);
+    border-radius: var(--sys-radius-md);
+    padding: var(--ui-space-1);
+    font-family: var(--ui-font-sans);
+}
+.ui-segmented-full {
+    display: flex;
+    width: 100%;
+}
+.ui-segmented-full .ui-segmented-item {
+    flex: 1;
+}
+.ui-segmented-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-sm);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    white-space: nowrap;
+    outline: none;
+    line-height: 1;
+}
+.ui-segmented-item:hover {
+    color: var(--sys-on-bg);
+    background: var(--sys-surface);
+}
+.ui-segmented-item-active {
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    box-shadow: var(--sys-shadow);
+}
+.ui-segmented-item-active:hover {
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+}
+.ui-segmented-item:focus-visible {
+    box-shadow: 0 0 0 2px var(--sys-bg), 0 0 0 4px var(--sys-outline-focus);
+}
+.ui-segmented-xs .ui-segmented-item {
+    height: calc(var(--ui-control-h-xs) - var(--ui-space-2));
+    padding: 0 var(--ui-space-2);
+    font-size: var(--ui-fs-xs);
+}
+.ui-segmented-sm .ui-segmented-item {
+    height: calc(var(--ui-control-h-sm) - var(--ui-space-2));
+    padding: 0 var(--ui-space-3);
+    font-size: var(--ui-fs-sm);
+}
+.ui-segmented-md .ui-segmented-item {
+    height: calc(var(--ui-control-h-md) - var(--ui-space-2));
+    padding: 0 var(--ui-space-4);
+    font-size: var(--ui-fs-base);
+}
+.ui-segmented-lg .ui-segmented-item {
+    height: calc(var(--ui-control-h-lg) - var(--ui-space-2));
+    padding: 0 var(--ui-space-5);
+    font-size: var(--ui-fs-lg);
+}
+.ui-segmented-item-label {
+    display: inline-flex;
+    align-items: center;
+}
+
+</style>

@@ -1,0 +1,264 @@
+<widget Tree>
+<Box class="ui-tree">
+    <loop item="entry" :each="{visibleNodes}">
+        <Box
+            @class="ui-tree-row {selectedKey == entry.key ? 'ui-tree-row-selected' : ''} {entry.disabled ? 'ui-tree-row-disabled' : ''} {!entry.hasChildren ? 'ui-tree-row-leaf' : ''}"
+            :style="f\"padding-left: {entry.depth * 16 + 8}px\""
+            @click="handleSelect(entry)"
+        >
+            <Text class="ui-tree-switcher" @click="handleExpandClick(entry)">
+                <if :condition="entry.hasChildren">
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" @class="ui-tree-chevron {isExpanded(entry.key) ? 'ui-tree-chevron-open' : ''}">
+                        <path d="m9 18 6-6-6-6" />
+                    </svg>
+                    <else />
+                </if>
+            </Text>
+            <if :condition="checkable">
+                <label class="ui-tree-check" @click="handleCheckClick(entry)">
+                    <Text @class="ui-tree-check-box {isChecked(entry.key) ? 'ui-tree-check-checked' : ''}"></Text>
+                </label>
+                <else />
+            </if>
+            <if :condition="entry.icon">
+                <Text class="ui-tree-icon">{entry.icon}</Text>
+                <else />
+            </if>
+            <Text class="ui-tree-label">{entry.label}</Text>
+        </Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let data: list = []
+let selectable: bool = true
+let checkable: bool = false
+let defaultExpanded: list = []
+
+let mut expandedKeys: list = []
+let mut selectedKey: utf8 = ""
+let mut checkedKeys: list = []
+
+micro onMount() {
+    expandedKeys = defaultExpanded
+}
+
+micro hasChildren(node) {
+    if len(node.children) > 0 {
+        return true
+    }
+return false
+}
+
+micro visibleNodes() {
+    return flattenVisible(data, 0, [])
+}
+
+micro flattenVisible(nodes, depth, flat) {
+    let i: i32 = 0
+    while i < len(nodes) {
+        let node = nodes[i]
+        let hasKids: bool = hasChildren(node)
+        flat = flat + [{
+            key: node.key,
+            label: node.label,
+            icon: node.icon,
+            disabled: node.disabled,
+            depth: depth,
+            hasChildren: hasKids,
+            children: node.children
+        }]
+        if hasKids && isExpanded(node.key) {
+            flat = flattenVisible(node.children, depth + 1, flat)
+        }
+    i = i + 1
+}
+return flat
+}
+
+micro isExpanded(key) {
+    let i: i32 = 0
+    while i < len(expandedKeys) {
+        if expandedKeys[i] == key {
+            return true
+        }
+    i = i + 1
+}
+return false
+}
+
+micro isChecked(key) {
+    let i: i32 = 0
+    while i < len(checkedKeys) {
+        if checkedKeys[i] == key {
+            return true
+        }
+    i = i + 1
+}
+return false
+}
+
+micro handleExpandClick(node, e) {
+    if e {
+        e.stopPropagation()
+    }
+    if !hasChildren(node) {
+        return
+    }
+    let key: utf8 = node.key
+    let next: list = []
+    let found: bool = false
+    let i: i32 = 0
+    while i < len(expandedKeys) {
+        if expandedKeys[i] == key {
+            found = true
+        } else {
+        next = next + [expandedKeys[i]]
+    }
+i = i + 1
+}
+if !found {
+    next = next + [key]
+}
+expandedKeys = next
+emit("expand", { key: key, expandedKeys: expandedKeys })
+}
+
+micro handleSelect(node) {
+    if node.disabled || !selectable {
+        return
+    }
+selectedKey = node.key
+emit("select", { key: node.key, node: node })
+}
+
+micro handleCheckClick(node, e) {
+    if e {
+        e.stopPropagation()
+    }
+    if node.disabled || !checkable {
+        return
+    }
+let key: utf8 = node.key
+let next: list = []
+let found: bool = false
+let i: i32 = 0
+while i < len(checkedKeys) {
+    if checkedKeys[i] == key {
+        found = true
+    } else {
+    next = next + [checkedKeys[i]]
+}
+i = i + 1
+}
+if !found {
+    next = next + [key]
+}
+checkedKeys = next
+emit("check", { key: key, checkedKeys: checkedKeys })
+}
+</script>
+<style>
+.ui-tree {
+    font-family: var(--ui-font-sans);
+    color: var(--sys-on-bg);
+}
+.ui-tree-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    padding: var(--ui-space-1) var(--ui-space-2);
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    transition: background var(--ui-duration-1) var(--ui-easing);
+    min-height: 28px;
+}
+.ui-tree-row:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-tree-row-selected {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+}
+.ui-tree-row-selected:hover {
+    background: var(--sys-primary-container);
+}
+.ui-tree-row-disabled {
+    cursor: not-allowed;
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-tree-row-disabled:hover {
+    background: transparent;
+}
+.ui-tree-switcher {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+.ui-tree-switcher-leaf {
+    cursor: default;
+}
+.ui-tree-chevron {
+    color: var(--sys-on-bg-secondary);
+    transition: transform var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tree-chevron-open {
+    transform: rotate(90deg);
+}
+.ui-tree-chevron svg, .ui-tree-chevron {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-tree-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.ui-tree-check-box {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    position: relative;
+}
+.ui-tree-check-checked {
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+}
+.ui-tree-check-checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 5px;
+    height: 9px;
+    border: solid var(--sys-on-primary);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+.ui-tree-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.ui-tree-label {
+    flex: 1;
+    font-size: var(--ui-fs-sm);
+    line-height: var(--ui-lh-tight);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>

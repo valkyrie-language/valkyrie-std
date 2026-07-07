@@ -1,0 +1,71 @@
+<widget Field>
+<Box class="ui-field">
+    <if :condition="label">
+        <Box class="ui-field-label">
+            <Text class="ui-field-label-text">{label}</Text>
+            <if :condition="required">
+                <Text class="ui-field-required">*</Text>
+                <else />
+            </if>
+        </Box>
+        <else />
+    </if>
+    <Box class="ui-field-control">
+        <slot />
+    </Box>
+    <if :condition="error">
+        <Text class="ui-field-error">{error}</Text>
+        <else />
+    </if>
+    <if :condition="description">
+        <Text class="ui-field-desc">{description}</Text>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let label: utf8 = ""
+let error: utf8 = ""
+let description: utf8 = ""
+let required: bool = false
+</script>
+<style>
+.ui-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.ui-field-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    font-weight: 500;
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-tight);
+}
+.ui-field-label-text {
+    display: inline-flex;
+    align-items: center;
+}
+.ui-field-required {
+    color: var(--sys-error);
+    font-weight: 600;
+    line-height: 1;
+}
+.ui-field-control {
+    display: flex;
+    flex-direction: column;
+}
+.ui-field-error {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-error);
+}
+.ui-field-desc {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+
+</style>

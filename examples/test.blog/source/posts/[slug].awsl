@@ -1,80 +1,80 @@
-<widget>
-    <div class="blog-post">
-        <article>
-            <header class="post-header">
-                <div class="post-meta">
-                    <span class="post-date">{post.date}</span>
-                    <span class="post-reading-time">{post.reading_time} 分钟阅读</span>
-                </div>
-                <h1 class="post-title">{post.title}</h1>
-                <div class="post-author">by {post.author}</div>
-                <div class="post-tags">
-                    <for each={post.tags}>
-                        <Badge variant="primary" size="small">{tag}</Badge>
-                    </for>
-                </div>
-            </header>
-
-            <div class="post-content">
-                {post.content}
+<widget slug>
+<div class="blog-post">
+    <article>
+        <header class="post-header">
+            <div class="post-meta">
+                <span class="post-date">{post.date}</span>
+                <span class="post-reading-time">{post.reading_time} 分钟阅读</span>
             </div>
-        </article>
-
-        <section class="post-comments">
-            <h2 class="comments-title">评论（{length(comments)}）</h2>
-
-            <for each={comments}>
-                <div class="comment">
-                    <div class="comment-avatar">
-                        <Avatar name={comment.author} size="small" />
-                    </div>
-                    <div class="comment-body">
-                        <div class="comment-header">
-                            <span class="comment-author">{comment.author}</span>
-                            <span class="comment-date">{comment.date}</span>
-                        </div>
-                        <p class="comment-content">{comment.content}</p>
-                    </div>
-                </div>
-            </for>
-
-            <div class="comment-form">
-                <h3 class="comment-form-title">发表评论</h3>
-                <Input label="昵称" placeholder="你的名字" value={newCommentAuthor} on:input={(e: ValueChangeEvent) => { newCommentAuthor = e.value }} />
-                <div class="comment-form-field">
-                    <label class="comment-form-label">评论内容</label>
-                    <textarea
-                        class="comment-textarea"
-                        placeholder="写下你的想法..."
-                        value={newCommentContent}
-                        on:input={(e: InputEvent) => { newCommentContent = e.target.value }}
-                    />
-                </div>
-                <Button variant="primary" label="提交评论" on:click={submitComment} />
+            <h1 class="post-title">{post.title}</h1>
+            <div class="post-author">by {post.author}</div>
+            <div class="post-tags">
+                <loop tag in post.tags>
+                    <Badge variant="primary" size="small">{tag}</Badge>
+                </loop>
             </div>
-        </section>
+        </header>
 
-        <div class="post-nav">
-            <Link href="/posts">← 返回文章列表</Link>
+        <div class="post-content">
+            {post.content}
         </div>
+    </article>
+
+    <section class="post-comments">
+        <h2 class="comments-title">评论（{length(comments)}）</h2>
+
+        <loop comment in comments>
+            <div class="comment">
+                <div class="comment-avatar">
+                    <Avatar :name="comment.author" size="small" />
+                </div>
+                <div class="comment-body">
+                    <div class="comment-header">
+                        <span class="comment-author">{comment.author}</span>
+                        <span class="comment-date">{comment.date}</span>
+                    </div>
+                    <p class="comment-content">{comment.content}</p>
+                </div>
+            </div>
+        </loop>
+
+        <div class="comment-form">
+            <h3 class="comment-form-title">发表评论</h3>
+            <Input label="昵称" placeholder="你的名字" :value="newCommentAuthor" @input="(e: ValueChangeEvent) => { newCommentAuthor = e.value }" />
+            <div class="comment-form-field">
+                <label class="comment-form-label">评论内容</label>
+                <textarea
+                class="comment-textarea"
+                placeholder="写下你的想法..."
+                :value="newCommentContent"
+                @input="(e: InputEvent) => { newCommentContent = e.target.value }"
+                />
+            </div>
+            <Button variant="primary" label="提交评论" @click="submitComment" />
+        </div>
+    </section>
+
+    <div class="post-nav">
+        <Link href="/posts">← 返回文章列表</Link>
     </div>
+</div>
 </widget>
 
 <script>
-    let slug = use_params()["slug"] || ""
-    let post = get_post_by_slug(slug)
-    let comments = get_comments(slug)
-    let newCommentAuthor: string = ""
-    let newCommentContent: string = ""
+let slug = use_params()["slug"] || ""
+let post = get_post_by_slug(slug)
+let comments = get_comments(slug)
+let newCommentAuthor: utf8 = ""
+let newCommentContent: utf8 = ""
 
-    micro submitComment() {
-        if newCommentAuthor != "" && newCommentContent != "" {
-            add_comment(slug, newCommentAuthor, newCommentContent)
-            comments = get_comments(slug)
-            newCommentAuthor = ""
-            newCommentContent = ""
-        }
+micro submitComment() {
+    if newCommentAuthor != "" && newCommentContent != "" {
+        add_comment(slug, newCommentAuthor, newCommentContent)
+        comments = get_comments(slug)
+        newCommentAuthor = ""
+        newCommentContent = ""
     }
+}
 </script>
 
 <style>

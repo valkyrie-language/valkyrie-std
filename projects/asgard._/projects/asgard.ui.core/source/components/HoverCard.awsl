@@ -1,0 +1,63 @@
+<widget HoverCard>
+<Text @class="ui-hover-card-wrapper" @mouseenter="handleEnter" @mouseleave="handleLeave">
+    <Text @class="ui-hover-card-trigger">
+        <slot />
+    </Text>
+    <if :condition="isOpen">
+        <Box @class="ui-hover-card" role="dialog">
+            <slot name="content" />
+        </Box>
+        <else />
+    </if>
+</Text>
+</widget>
+
+<script>
+let openDelay: utf8 = "300"
+let closeDelay: utf8 = "200"
+let mut isOpen: bool = false
+let mut openTimer: i32 = 0
+let mut closeTimer: i32 = 0
+
+micro handleEnter() {
+    clearTimeout(closeTimer)
+    openTimer = setTimeout(function() { isOpen = true }, parseInt(openDelay))
+}
+
+micro handleLeave() {
+    clearTimeout(openTimer)
+    closeTimer = setTimeout(function() { isOpen = false }, parseInt(closeDelay))
+}
+</script>
+<style>
+.ui-hover-card-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+.ui-hover-card-trigger {
+    display: inline-flex;
+}
+.ui-hover-card {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: var(--ui-space-2);
+    z-index: var(--ui-z-overlay);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-4);
+    min-width: 240px;
+    max-width: 360px;
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    line-height: 1.5;
+    animation: ui-hover-card-in var(--ui-duration-1) var(--ui-easing);
+}
+@keyframes ui-hover-card-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>

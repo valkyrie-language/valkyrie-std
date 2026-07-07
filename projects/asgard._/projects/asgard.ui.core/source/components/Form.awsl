@@ -1,0 +1,37 @@
+<widget Form>
+<form @class="ui-form ui-form-{layout} {labelWidth != '' ? 'ui-form-custom-label' : ''}" @submit="handleSubmit">
+    <slot />
+</form>
+</widget>
+
+<script>
+let layout: utf8 = "vertical"
+let labelWidth: utf8 = ""
+
+micro handleSubmit(e: InputEvent) {
+    e.preventDefault()
+    emit("submit", {})
+}
+</script>
+<style>
+.ui-form {
+    display: flex;
+    font-family: var(--ui-font-sans);
+    gap: var(--ui-space-4);
+}
+.ui-form-vertical {
+    flex-direction: column;
+}
+.ui-form-horizontal {
+    flex-direction: column;
+}
+.ui-form-inline {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-space-3);
+}
+.ui-form-custom-label {
+}
+
+</style>

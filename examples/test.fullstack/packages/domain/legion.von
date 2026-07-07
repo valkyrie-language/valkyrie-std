@@ -1,0 +1,10 @@
+{
+    name: "domain",
+    version: "0.1.0.0",
+    description: "领域共享类型库（无 asgard/atlas 宿主配置）",
+    license: "MIT",
+    type: "library",
+    target: "lib",
+    dependencies: {},
+    devDependencies: {}
+}

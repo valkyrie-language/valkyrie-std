@@ -108,11 +108,11 @@ JSR 包使用 flat tarball 布局（无嵌套 `package/` 目录），由 `legion
 
 ## 与自举的关系
 
-- **开发 / 验收**：`legion.tools` 的核心依赖（`nyar`、`std`）必须用 **workspace** 成员，不能用 npm/jsr 包顶替（见 [bootstrap-contract](../../../projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)）。
+- **开发 / 验收**：`legion.tools` 的核心依赖（`nyar`、`std`）必须用 **workspace** 成员，不能用 npm/jsr 包顶替（见 [bootstrap-contract](../../../projects/legion._/projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)）。
 - **分发 / seed**：公开发布的 npm / JSR 包可作为下游用户的 **seed**（仅 `源码→v1`），但同一轮自举验收中不得用 registry 包伪造 workspace 前置门。
 
 ## 相关文档
 
 - [包发布](./publishing.md)
-- [编译器自举契约](../../../projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)
+- [编译器自举契约](../../../projects/legion._/projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)
 - [Canonical Target — `node` 三元组](../developer/target-triples.md)

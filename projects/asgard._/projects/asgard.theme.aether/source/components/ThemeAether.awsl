@@ -1,0 +1,76 @@
+<widget ThemeAether>
+<Box @class="theme-aether-{mode}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let mode: utf8 = "light"
+
+micro setMode(m: utf8) {
+    mode = m
+    emit("modeChange", { mode: mode })
+}
+</script>
+<style>
+.theme-aether-light {
+    --sys-bg: #ffffff;
+    --sys-surface: #fafafa;
+    --sys-surface-hover: #f4f4f5;
+    --sys-on-bg: #09090b;
+    --sys-on-surface: #09090b;
+    --sys-on-bg-secondary: #71717a;
+    --sys-on-bg-tertiary: #a1a1aa;
+    --sys-primary: #09090b;
+    --sys-primary-hover: #27272a;
+    --sys-primary-container: #f4f4f5;
+    --sys-on-primary: #ffffff;
+    --sys-outline: #e4e4e7;
+    --sys-outline-focus: #09090b;
+    --sys-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    --sys-shadow-lg: 0 4px 12px rgba(0,0,0,0.06);
+    --sys-success: #16a34a;
+    --sys-error: #dc2626;
+    --sys-warning: #d97706;
+    --sys-info: #2563eb;
+    --sys-radius-sm: 4px;
+    --sys-radius-md: 6px;
+    --sys-radius-lg: 8px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --ui-font-serif: Georgia, 'Times New Roman', serif;
+    --ui-font-mono: 'SF Mono', 'JetBrains Mono', monospace;
+    --ui-easing: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+    --ui-icon-stroke: 1.5;
+}
+.theme-aether-night {
+    --sys-bg: #000000;
+    --sys-surface: #0a0a0a;
+    --sys-surface-hover: #18181b;
+    --sys-on-bg: #fafafa;
+    --sys-on-surface: #fafafa;
+    --sys-on-bg-secondary: #a1a1aa;
+    --sys-on-bg-tertiary: #71717a;
+    --sys-primary: #fafafa;
+    --sys-primary-hover: #e4e4e7;
+    --sys-primary-container: #27272a;
+    --sys-on-primary: #000000;
+    --sys-outline: #27272a;
+    --sys-outline-focus: #fafafa;
+    --sys-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    --sys-shadow-lg: 0 4px 12px rgba(0,0,0,0.5);
+    --sys-success: #22c55e;
+    --sys-error: #ef4444;
+    --sys-warning: #f59e0b;
+    --sys-info: #3b82f6;
+    --sys-radius-sm: 4px;
+    --sys-radius-md: 6px;
+    --sys-radius-lg: 8px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --ui-font-serif: Georgia, serif;
+    --ui-font-mono: 'SF Mono', monospace;
+    --ui-easing: cubic-bezier(0.2, 0.0, 0.0, 1.0);
+    --ui-icon-stroke: 1.5;
+}
+</style>

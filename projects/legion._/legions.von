@@ -1,0 +1,14 @@
+{
+    version: "1",
+    name: "legion-super-workspace",
+    members: [
+        "projects/legion.tools",
+        "projects/legion.report"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

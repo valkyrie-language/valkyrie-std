@@ -1,0 +1,50 @@
+<widget Code>
+<if :condition="block">
+    <pre class="ui-code-block">
+        <code @class="ui-code ui-code-block-inner {language != '' ? 'ui-code-lang-' + language : ''}">
+            <slot />
+        </code>
+    </pre>
+    <else />
+    <code @class="ui-code ui-code-inline {language != '' ? 'ui-code-lang-' + language : ''}">
+        <slot />
+    </code>
+</if>
+</widget>
+
+<script>
+let language: utf8 = ""
+let block: bool = false
+</script>
+<style>
+.ui-code {
+    font-family: var(--ui-font-mono);
+}
+.ui-code-inline {
+    display: inline;
+    padding: var(--ui-space-1) var(--ui-space-2);
+    font-size: 0.9em;
+    color: var(--sys-primary);
+    background: var(--sys-primary-container);
+    border-radius: var(--sys-radius-sm);
+    white-space: nowrap;
+}
+.ui-code-block {
+    display: block;
+    margin: 0;
+    padding: var(--ui-space-4);
+    background: var(--sys-surface-hover);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    overflow-x: auto;
+}
+.ui-code-block-inner {
+    display: block;
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    line-height: var(--ui-lh-normal);
+    white-space: pre;
+    background: transparent;
+    padding: 0;
+}
+</style>

@@ -1,5 +1,4 @@
-# std.collections: RingBuffer - 固定容量环形缓冲区
-
+# std.collections: RingBuffer
 namespace std.collections;
 
 structure RingBuffer<T> {

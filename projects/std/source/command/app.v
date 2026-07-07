@@ -29,7 +29,7 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
         }
     }
 
-    let first_arg: utf8 = args[0]
+    let first_arg: utf8 = args⁅0⁆
 
     if first_arg == "--help" || first_arg == "-h" {
         return ParsedCommand {
@@ -50,7 +50,7 @@ micro command_app_run(app: CommandApp, args: [utf8]) -> ParsedCommand {
     let cmds: [CommandModel] = app.commands
     let mut i: usize = 0
     while i < cmds.length() {
-        let cmd: CommandModel = cmds[i]
+        let cmd: CommandModel = cmds⁅i⁆
         if cmd.name == first_arg {
             let pos: [utf8] = args
                 .into_iterator()

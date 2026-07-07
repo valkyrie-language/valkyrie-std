@@ -1,0 +1,19 @@
+<widget Mark>
+<mark @class="ui-mark">
+    <slot />
+</mark>
+</widget>
+
+<script>
+</script>
+<style>
+.ui-mark {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+    padding: 0 var(--ui-space-1);
+    border-radius: var(--sys-radius-sm);
+    font-family: var(--ui-font-sans);
+    font-weight: 500;
+}
+
+</style>

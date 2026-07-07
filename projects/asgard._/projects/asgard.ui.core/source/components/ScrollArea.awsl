@@ -1,0 +1,51 @@
+<widget ScrollArea>
+<Box :style="f\&quot;{maxHeight ? `max-height: ${maxHeight}` : ''}\&quot;" @class="ui-scroll ui-scroll-{type}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let type: utf8 = "auto"
+let maxHeight: utf8 = ""
+</script>
+<style>
+.ui-scroll {
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.ui-scroll-auto {
+    overflow: auto;
+}
+.ui-scroll-always {
+    overflow: scroll;
+}
+.ui-scroll-hidden {
+    overflow: hidden;
+}
+.ui-scroll-hover {
+    overflow: hidden;
+}
+.ui-scroll-hover:hover {
+    overflow: auto;
+}
+.ui-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.ui-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.ui-scroll::-webkit-scrollbar-thumb {
+    background: var(--sys-outline);
+    border-radius: var(--sys-radius-full);
+}
+.ui-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--sys-on-bg-tertiary);
+}
+.ui-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--sys-outline) transparent;
+}
+
+</style>

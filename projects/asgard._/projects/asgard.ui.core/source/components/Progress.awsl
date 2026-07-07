@@ -1,0 +1,77 @@
+<widget Progress>
+<Box @class="ui-progress ui-progress-{size} ui-progress-{variant} {striped ? 'ui-progress-striped' : ''}">
+    <Box @class="ui-progress-track" :style="f\&quot;--progress-value: {value}; --progress-max: {max}\&quot;">
+        <Box @class="ui-progress-bar"></Box>
+    </Box>
+    <if :condition="showLabel">
+        <Text @class="ui-progress-label">{percentLabel}</Text>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let value: utf8 = "0"
+let max: utf8 = "100"
+let size: utf8 = "md"
+let variant: utf8 = "default"
+let showLabel: bool = false
+let striped: bool = false
+let mut percentLabel: utf8 = "0%"
+
+micro onMount() {
+    let v: f64 = parseFloat(value)
+    let m: f64 = parseFloat(max)
+    if m > 0 {
+        let p: f64 = (v / m) * 100
+        if p < 0 { p = 0 }
+        if p > 100 { p = 100 }
+        percentLabel = p + "%"
+    } else {
+    percentLabel = "0%"
+}
+}
+</script>
+<style>
+.ui-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-3);
+    width: 100%;
+    font-family: var(--ui-font-sans);
+}
+.ui-progress-track {
+    flex: 1;
+    background: var(--sys-surface-hover);
+    border-radius: var(--sys-radius-full);
+    overflow: hidden;
+}
+.ui-progress-sm .ui-progress-track { height: 4px; }
+.ui-progress-md .ui-progress-track { height: 8px; }
+.ui-progress-lg .ui-progress-track { height: 12px; }
+.ui-progress-bar {
+    height: 100%;
+    width: calc(var(--progress-value, 0) / var(--progress-max, 100) * 100%);
+    border-radius: var(--sys-radius-full);
+    transition: width var(--ui-duration-2) var(--ui-easing);
+}
+.ui-progress-default .ui-progress-bar { background: var(--sys-primary); }
+.ui-progress-success .ui-progress-bar { background: var(--sys-success); }
+.ui-progress-error .ui-progress-bar { background: var(--sys-error); }
+.ui-progress-warning .ui-progress-bar { background: var(--sys-warning); }
+.ui-progress-striped .ui-progress-bar {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.25) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.25) 50%, rgba(255, 255, 255, 0.25) 75%, transparent 75%, transparent);
+    background-size: 16px 16px;
+    animation: ui-progress-stripes 1s linear infinite;
+}
+.ui-progress-label {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-secondary);
+    min-width: 36px;
+    text-align: right;
+}
+@keyframes ui-progress-stripes {
+    from { background-position: 0 0; }
+    to { background-position: 16px 0; }
+}
+</style>

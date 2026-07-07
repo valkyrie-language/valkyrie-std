@@ -1,0 +1,22 @@
+{
+    name: "nyar.language",
+    version: "workspace",
+    description: "Nyar 多语言前端 — Valkyrie 编译器 smoke 子集",
+    type: "library",
+    auto_link: {
+        core: true,
+        std: true
+    },
+    dependencies: {
+        "nyar": { version: "workspace" },
+        "nyar.analyzer": { version: "workspace" },
+        "nyar.emitter": { version: "workspace" },
+        "std.data.text.valkyrie": { version: "workspace" },
+        "std.data.text.msil": { version: "workspace" }
+    },
+    build: [
+        {
+            target: "clr"
+        }
+    ]
+}

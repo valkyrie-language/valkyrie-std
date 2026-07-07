@@ -1,0 +1,20 @@
+{
+    version: "1",
+    name: "gnosis-super-workspace",
+    members: [
+        "projects/gnosis",
+        "projects/gnosis.gpu",
+        "projects/gnosis.text",
+        "projects/gnosis.layout",
+        "projects/gnosis.render",
+        "projects/gnosis.scene",
+        "projects/gnosis.asset",
+        "projects/gnosis.tools"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

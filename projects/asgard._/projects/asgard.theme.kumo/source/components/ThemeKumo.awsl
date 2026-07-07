@@ -1,0 +1,82 @@
+<widget ThemeKumo>
+<Box @class="theme-kumo-{mode}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let mode: utf8 = "light"
+
+micro setMode(m: utf8) {
+    mode = m
+    emit("modeChange", { mode: mode })
+}
+</script>
+<style>
+.theme-kumo-light {
+    --sys-bg: #f0f4ff;
+    --sys-surface: rgba(255, 255, 255, 0.72);
+    --sys-surface-hover: rgba(255, 255, 255, 0.85);
+    --sys-on-bg: #2a3a5a;
+    --sys-on-surface: #2a3a5a;
+    --sys-on-bg-secondary: #6b7d9e;
+    --sys-on-bg-tertiary: #9baac5;
+    --sys-primary: #6366f1;
+    --sys-primary-hover: #5558e0;
+    --sys-primary-container: rgba(99, 102, 241, 0.12);
+    --sys-on-primary: #ffffff;
+    --sys-outline: rgba(255, 255, 255, 0.5);
+    --sys-outline-focus: #6366f1;
+    --sys-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+    --sys-shadow-lg: 0 8px 32px rgba(99, 102, 241, 0.12);
+    --sys-success: #22c55e;
+    --sys-error: #ef4444;
+    --sys-warning: #f59e0b;
+    --sys-info: #3b82f6;
+    --sys-radius-sm: 12px;
+    --sys-radius-md: 20px;
+    --sys-radius-lg: 28px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', -apple-system, sans-serif;
+    --ui-font-serif: Georgia, serif;
+    --ui-font-mono: 'SF Mono', monospace;
+    --ui-easing: cubic-bezier(0.2, 0.8, 0.2, 1.0);
+    --ui-icon-stroke: 2;
+    --ui-glass-blur: blur(12px);
+}
+.theme-kumo-night {
+    --sys-bg: #0f0f1a;
+    --sys-surface: rgba(30, 30, 50, 0.6);
+    --sys-surface-hover: rgba(40, 40, 65, 0.7);
+    --sys-on-bg: #e0e4ff;
+    --sys-on-surface: #e0e4ff;
+    --sys-on-bg-secondary: #9094b8;
+    --sys-on-bg-tertiary: #6a6e90;
+    --sys-primary: #818cf8;
+    --sys-primary-hover: #a5b0fc;
+    --sys-primary-container: rgba(129, 140, 248, 0.15);
+    --sys-on-primary: #0f0f1a;
+    --sys-outline: rgba(100, 100, 150, 0.3);
+    --sys-outline-focus: #818cf8;
+    --sys-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --sys-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --sys-success: #22c55e;
+    --sys-error: #ef4444;
+    --sys-warning: #f59e0b;
+    --sys-info: #3b82f6;
+    --sys-radius-sm: 12px;
+    --sys-radius-md: 20px;
+    --sys-radius-lg: 28px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', sans-serif;
+    --ui-font-serif: Georgia, serif;
+    --ui-font-mono: 'SF Mono', monospace;
+    --ui-easing: cubic-bezier(0.2, 0.8, 0.2, 1.0);
+    --ui-icon-stroke: 2;
+    --ui-glass-blur: blur(16px);
+}
+.theme-kumo-light .ui-glass, .theme-kumo-night .ui-glass {
+    backdrop-filter: var(--ui-glass-blur);
+    -webkit-backdrop-filter: var(--ui-glass-blur);
+}
+</style>

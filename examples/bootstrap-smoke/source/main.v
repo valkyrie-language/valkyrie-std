@@ -1,6 +1,6 @@
 namespace legion.tools.smoke;
 
-[clr("mscorlib", "System.Console", "WriteLine")]
+[clr("System.Console", "System.Console", "WriteLine")]
 micro console_write_line(message: utf16): unit;
 
 micro version_text() -> utf8 {

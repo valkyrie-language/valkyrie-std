@@ -18,12 +18,12 @@ imply OrderedMap<K, V>: Map<K, V> {
     micro get(self, key: K): Option<V> {
         let slot_option: Option<usize> = self.find_slot(key)
         if slot_option.is_none() {
-            return None
+            return option_none::<V>()
         }
 
         let entry: OrderedMapEntry<K, V> = self._entries.get(slot_option.unwrap()).unwrap()
         if !entry.active {
-            return None
+            return option_none::<V>()
         }
 
         return Some(entry.value)
@@ -51,20 +51,20 @@ imply OrderedMap<K, V>: Map<K, V> {
         })
         self._indices.insert(key, slot)
         self._count = self._count + 1
-        return None
+        return option_none::<V>()
     }
 
     [host_contract]
     micro remove(mut self, key: K): Option<V> {
         let slot_option: Option<usize> = self.find_slot(key)
         if slot_option.is_none() {
-            return None
+            return option_none::<V>()
         }
 
         let slot: usize = slot_option.unwrap()
         let entry: OrderedMapEntry<K, V> = self._entries.get(slot).unwrap()
         if !entry.active {
-            return None
+            return option_none::<V>()
         }
 
         self._entries.set(slot, OrderedMapEntry {
@@ -155,6 +155,6 @@ imply OrderedMap<K, V> {
             cursor = cursor + 1
         }
 
-        return None
+        return option_none::<V>()
     }
 }

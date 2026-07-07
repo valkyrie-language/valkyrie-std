@@ -1,0 +1,68 @@
+<widget App>
+<ThemeProvider motion="narrative">
+    <ThemeSwitcher :themes="themeList" :modes="modeList" :currentTheme="theme" :currentMode="siteMode" @themeChange="onThemeChange" @modeChange="onModeChange" />
+    <ThemeShell :theme="theme" :mode="resolvedMode" :themes="themeList" :modes="modeList">
+        <Header :title="siteTitle" :navItems="navItems" />
+        <Home />
+    </ThemeShell>
+</ThemeProvider>
+</widget>
+
+<script>
+# 跨平台说明：
+# - 浏览器：CSS 变量原生支持，prefers-color-scheme 可解析 Auto
+# - 微信小程序：WXSS 支持 CSS 变量，px 自动转 rpx；Auto 需 wx.getSystemInfoSync().theme
+# - 原生（非 webview）：通过 asgard.ui 的 view_tree 解析 CSS 变量；Auto 需平台系统 API
+# - 生产部署：AOT 内联单一主题，不加载全部 6 主题；本 demo 为展示效果加载全部
+
+let mut theme: utf8 = "fate"
+let mut siteMode: utf8 = "light"
+let mut resolvedMode: utf8 = "light"
+let siteTitle: utf8 = "羁绊问答"
+let navItems: list = [
+    { label: "首页" },
+    { label: "板块" },
+    { label: "标签" },
+    { label: "排行" }
+]
+let themeList: list = [
+    { id: "aether", label: "Aether" },
+    { id: "zen", label: "Zen" },
+    { id: "apex", label: "Apex" },
+    { id: "fate", label: "Fate" },
+    { id: "matrix", label: "Matrix" },
+    { id: "kumo", label: "Kumo" }
+]
+let modeList: list = [
+    { id: "auto", label: "Auto" },
+    { id: "light", label: "Light" },
+    { id: "night", label: "Night" }
+]
+
+micro onThemeChange(e: any) {
+    theme = e.theme
+}
+
+micro onModeChange(e: any) {
+    siteMode = e.mode
+    resolveMode()
+}
+
+micro resolveMode() {
+    if siteMode == "auto" {
+        # 生产环境应调用平台 API 解析系统偏好；demo 简化为 light
+        resolvedMode = "light"
+    } else {
+        resolvedMode = siteMode
+    }
+}
+
+micro onMount() {
+    resolveMode()
+}
+</script>
+<style>
+.qa-app-root {
+    min-height: 100vh;
+}
+</style>

@@ -6,7 +6,7 @@ VOA 插件系统允许第三方扩展框架能力，对标 Next.js 插件生态�
 
 ## 在管线中的位置
 
-插件不嵌入编译管线内部，而是在管线的关键节点挂载钩子函数。插件系统在编译启动时加载配置（`voa.config.v`），按优先级排序钩子，在对应事件触发时依次执行。
+插件不嵌入编译管线内部，而是在管线的关键节点挂载钩子函数。插件系统在编译启动时加载配置（`asgard.config.v`），按优先级排序钩子，在对应事件触发时依次执行。
 
 | 钩子 | 触发阶段 | 说明 |
 |:---|:---|:---|
@@ -63,7 +63,7 @@ struct VoaPluginHook
 | `before_build` | 生产构建前 | project_config |
 | `after_build` | 生产构建后 | output_files |
 
-## 配置示例（voa.config.v）
+## 配置示例（asgard.config.v）
 
 ```valkyrie
 let plugins: [VoaPlugin] = [

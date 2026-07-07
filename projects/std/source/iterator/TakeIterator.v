@@ -19,12 +19,12 @@ imply TakeIterator<T, I>: Iterator {
 
     micro next(mut self): Option<T> {
         if self._taken >= self._count {
-            return None
+            return option_none::<Item>()
         }
 
         let item: Option<T> = self._iter.next()
         if item.is_none() {
-            return None
+            return option_none::<Item>()
         }
 
         self._taken = self._taken + 1

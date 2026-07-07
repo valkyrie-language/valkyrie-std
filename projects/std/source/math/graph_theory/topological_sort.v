@@ -3,6 +3,7 @@ namespace std.math.graph_theory;
 # Kahn 拓扑排序算法
 # 对有向无环图 (DAG) 返回拓扑序排列的节点列表
 # 若图中存在循环，返回空列表
+# CLR 自举阶段：避免 iterator HOF（map/skip/collect），改用显式 while。
 micro topological_sort(graph: DirectedGraph) -> [utf8] {
     let mut result: [utf8] = []
     let nodes: [utf8] = directed_graph_nodes(graph)
@@ -12,26 +13,26 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
     }
 
     # 计算所有节点的初始入度
-    let mut in_degree: [usize] = nodes
-        .into_iterator()
-        .map(micro(node: utf8) -> usize {
-            return directed_graph_in_degree(graph, node)
-        })
-        .collect_array()
+    let mut in_degree: [usize] = []
+    let mut n: usize = 0
+    while n < nodes.length() {
+        push(in_degree, directed_graph_in_degree(graph, nodes⁅n⁆))
+        n = n + 1
+    }
 
     # 入度为 0 的节点入队
     let mut queue: [utf8] = []
     let mut i: usize = 0
     while i < nodes.length() {
-        if in_degree[i] == 0 {
-            push(queue, nodes[i])
+        if in_degree⁅i⁆ == 0 {
+            push(queue, nodes⁅i⁆)
         }
         i = i + 1
     }
 
     # Kahn 算法主循环
     while queue.length() > 0 {
-        let current: utf8 = queue[0]
+        let current: utf8 = queue⁅0⁆
         queue = array_remove_first(queue)
         push(result, current)
 
@@ -40,9 +41,9 @@ micro topological_sort(graph: DirectedGraph) -> [utf8] {
             # 找到后继节点在 nodes 中的索引，减少入度
             let mut k: usize = 0
             while k < nodes.length() {
-                if nodes[k] == succ {
-                    in_degree[k] = in_degree[k] - 1
-                    if in_degree[k] == 0 {
+                if nodes⁅k⁆ == succ {
+                    in_degree⁅k⁆ = in_degree⁅k⁆ - 1
+                    if in_degree⁅k⁆ == 0 {
                         push(queue, succ)
                     }
                 }
@@ -65,8 +66,11 @@ micro array_remove_first(arr: [utf8]) -> [utf8] {
         return []
     }
 
-    return arr
-        .into_iterator()
-        .skip(1)
-        .collect_array()
+    let mut result: [utf8] = []
+    let mut i: usize = 1
+    while i < arr.length() {
+        push(result, arr⁅i⁆)
+        i = i + 1
+    }
+    return result
 }

@@ -1,0 +1,126 @@
+<widget RadioGroupField>
+<Box @class="ui-radio-group ui-radio-group-{orientation} ui-radio-group-{size}">
+    <loop item in options>
+        <label @class="ui-radio-group-option {item.disabled ? 'ui-radio-group-option-disabled' : ''} {value == item.value ? 'ui-radio-group-option-checked' : ''}">
+            <Text @class="ui-radio-group-box {value == item.value ? 'ui-radio-group-checked' : ''}">
+                <input
+                    class="ui-radio-group-input"
+                    type="radio"
+                    :checked="value == item.value"
+                    :value="item.value"
+                    :disabled="item.disabled"
+                    @change="() => handleChange(item.value)"
+                />
+                <if value == item.value>
+                    <Text class="ui-radio-group-dot"></Text>
+                    <else/>
+                </if>
+            </Text>
+            <Text class="ui-radio-group-label">{item.label}</Text>
+        </label>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let options: list = []
+let value: utf8 = ""
+let orientation: utf8 = "vertical"
+let size: utf8 = "md"
+
+micro handleChange(selectedValue: utf8) {
+    emit("change", { value: selectedValue })
+}
+</script>
+
+<style>
+.ui-radio-group {
+    display: flex;
+    gap: var(--ui-space-2);
+    font-family: var(--ui-font-sans);
+}
+.ui-radio-group-vertical {
+    flex-direction: column;
+}
+.ui-radio-group-horizontal {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.ui-radio-group-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    cursor: pointer;
+    user-select: none;
+    color: var(--sys-on-bg);
+}
+.ui-radio-group-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+.ui-radio-group-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-radio-group-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-radio-group-checked {
+    border-color: var(--sys-primary);
+}
+.ui-radio-group-dot {
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-primary);
+    width: 50%;
+    height: 50%;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-radio-group-xs .ui-radio-group-box {
+    width: var(--ui-fs-sm);
+    height: var(--ui-fs-sm);
+}
+.ui-radio-group-xs .ui-radio-group-label {
+    font-size: var(--ui-fs-xs);
+}
+.ui-radio-group-sm .ui-radio-group-box {
+    width: var(--ui-fs-base);
+    height: var(--ui-fs-base);
+}
+.ui-radio-group-sm .ui-radio-group-label {
+    font-size: var(--ui-fs-sm);
+}
+.ui-radio-group-md .ui-radio-group-box {
+    width: var(--ui-fs-lg);
+    height: var(--ui-fs-lg);
+}
+.ui-radio-group-md .ui-radio-group-label {
+    font-size: var(--ui-fs-base);
+}
+.ui-radio-group-lg .ui-radio-group-box {
+    width: var(--ui-fs-h3);
+    height: var(--ui-fs-h3);
+}
+.ui-radio-group-lg .ui-radio-group-label {
+    font-size: var(--ui-fs-lg);
+}
+.ui-radio-group-label {
+    line-height: var(--ui-lh-tight);
+}
+.ui-radio-group-option-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-radio-group-option:focus-within .ui-radio-group-box {
+    box-shadow: 0 0 0 2px var(--sys-bg), 0 0 0 4px var(--sys-outline-focus);
+}
+</style>

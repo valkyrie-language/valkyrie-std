@@ -1,0 +1,25 @@
+{
+    name: "unity.engine.sdk",
+    description: "Unity Engine 游戏 SDK -- Unity 游戏宿主 API 绑定",
+    main: "source/net.v",
+    dependencies: {
+        "core": "workspace",
+        "std": "workspace"
+    },
+    sdk-vendor: {
+        organization: "unity",
+        host: "engine",
+        kind: "platform-sdk",
+        targets: ["clr-microsoft-unknown-managed"],
+        publish: ["unity-player"]
+    },
+    build: [
+        {
+            target: "clr-microsoft-unknown-managed",
+            msil: true
+        }
+    ],
+    engines: {
+        vcc: "0.1.*"
+    }
+}

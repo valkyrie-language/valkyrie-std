@@ -1,6 +1,6 @@
 # VCC 编译器
 
-VCC（Valkyrie Compiler Collection）是 Valkyrie 语言编译器，将 `.v` 源码编译为多种目标平台的交付产物。
+VCC（Valkyrie Compiler Collection）是 Valkyrie 语言编译器，将 `.v` 源码（语言名 Valkyrie 与后缀 `.v` 为同一事物）编译为多种目标平台的交付产物。
 
 ## 命令行用法
 

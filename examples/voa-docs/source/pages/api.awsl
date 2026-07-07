@@ -1,33 +1,33 @@
-<widget>
-    <div class="api-page">
-        <h1 class="page-title">API 参考</h1>
-        <p class="page-desc">11 个包 · {totalApis} 个函数 · {totalComponents} 个组件</p>
+<widget api>
+<div class="api-page">
+    <h1 class="page-title">API 参考</h1>
+    <p class="page-desc">11 个包 · {totalApis} 个函数 · {totalComponents} 个组件</p>
 
-        <div class="api-grid">
-            <for each={packages}>
-                <Card variant="bordered">
-                    <div class="api-card-header">
-                        <h3 class="api-card-name">{pkg.name}</h3>
-                        <Badge variant="primary" size="small">v{pkg.version}</Badge>
-                    </div>
-                    <p class="api-card-desc">{pkg.description}</p>
-                    <div class="api-card-stats">
-                        <span>{pkg.functions} 函数</span>
-                        <if condition={pkg.components > 0}>
-                            <span>{pkg.components} 组件</span>
-                        <else/>
-                        </if>
-                    </div>
-                </Card>
-            </for>
-        </div>
-    </div>
+    <div class="api-grid">
+        <loop pkg in packages>
+            <Card variant="bordered">
+                <div class="api-card-header">
+                    <h3 class="api-card-name">{pkg.name}</h3>
+                    <Badge variant="primary" size="small">v{pkg.version}</Badge>
+                </div>
+                <p class="api-card-desc">{pkg.description}</p>
+                <div class="api-card-stats">
+                    <span>{pkg.functions} 函数</span>
+                    <if pkg.components > 0>
+                    <span>{pkg.components} 组件</span>
+                    <else/>
+                </if>
+            </div>
+        </Card>
+    </loop>
+</div>
+</div>
 </widget>
 
 <script>
-    let packages = get_api_packages()
-    let totalApis = get_total_api_count()
-    let totalComponents = get_total_component_count()
+let packages = get_api_packages()
+let totalApis = get_total_api_count()
+let totalComponents = get_total_component_count()
 </script>
 
 <style>

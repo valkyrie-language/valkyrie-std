@@ -1,0 +1,25 @@
+{
+    name: "std.adaptor.wasm",
+    description: "Valkyrie WebAssembly SDK -- Web 浏览器 API 绑定",
+    main: "source/console/_.v",
+    dependencies: {
+        "core": "workspace"
+    },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "browser",
+        kind: "platform-sdk",
+        targets: ["wasm32-unknown-browser-wasm"]
+    },
+    build: [
+        {
+            target: "wasm32-unknown-browser-wasm",
+            source_map: true,
+            typescript: true,
+            wat: true
+        }
+    ],
+    engines: {
+        vcc: "0.1.*"
+    }
+}

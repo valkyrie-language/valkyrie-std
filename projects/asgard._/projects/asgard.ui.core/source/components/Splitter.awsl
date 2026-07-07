@@ -1,0 +1,158 @@
+<widget Splitter>
+<Box @class="ui-splitter ui-splitter-{direction}">
+    <Box @class="ui-splitter-panel ui-splitter-first" :style="firstPanelStyle">
+        <slot name="first" />
+    </Box>
+    <Box @class="ui-splitter-divider {dragging ? 'ui-splitter-divider-dragging' : ''}" @mousedown="startDrag"></Box>
+    <Box @class="ui-splitter-panel ui-splitter-second">
+        <slot name="second" />
+    </Box>
+</Box>
+</widget>
+
+<script>
+let direction: utf8 = "horizontal"
+let min: utf8 = "100"
+let max: utf8 = "100"
+let defaultSize: utf8 = "50%"
+
+let mut size: utf8 = "50%"
+let mut dragging: bool = false
+let mut dragStart: i32 = 0
+let mut dragTotal: i32 = 0
+let mut dragBaseSize: i32 = 50
+
+micro firstPanelStyle() {
+    if direction == "horizontal" {
+        return f"width: {size}; flex: none"
+    }
+return f"height: {size}; flex: none"
+}
+
+micro startDrag(e) {
+    e.preventDefault()
+    dragging = true
+    if direction == "horizontal" {
+        dragStart = e.clientX
+    } else {
+    dragStart = e.clientY
+}
+let container = e.target.parentElement
+let rect = container.getBoundingClientRect()
+if direction == "horizontal" {
+    dragTotal = rect.width
+} else {
+dragTotal = rect.height
+}
+dragBaseSize = toI32(split(size, "%")[0])
+document.addEventListener("mousemove", handleDragMove)
+document.addEventListener("mouseup", handleDragEnd)
+}
+
+micro handleDragMove(e) {
+    if !dragging {
+        return
+    }
+let current: i32 = 0
+if direction == "horizontal" {
+    current = e.clientX
+} else {
+current = e.clientY
+}
+let delta: i32 = current - dragStart
+let pct: i32 = (delta * 100) / dragTotal
+let newSize: i32 = dragBaseSize + pct
+let minPx: i32 = toI32(min)
+let minPct: i32 = (minPx * 100) / dragTotal
+let maxPx: i32 = toI32(max)
+let maxPct: i32 = (maxPx * 100) / dragTotal
+if newSize < minPct {
+    newSize = minPct
+}
+if newSize > 100 - maxPct {
+    newSize = 100 - maxPct
+}
+if newSize < 0 {
+    newSize = 0
+}
+if newSize > 100 {
+    newSize = 100
+}
+size = toString(newSize) + "%"
+emit("resize", { size: size })
+}
+
+micro handleDragEnd() {
+    dragging = false
+    document.removeEventListener("mousemove", handleDragMove)
+    document.removeEventListener("mouseup", handleDragEnd)
+}
+
+micro onMount() {
+    size = defaultSize
+}
+</script>
+<style>
+.ui-splitter {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    font-family: var(--ui-font-sans);
+    overflow: hidden;
+}
+.ui-splitter-horizontal {
+    flex-direction: row;
+}
+.ui-splitter-vertical {
+    flex-direction: column;
+}
+.ui-splitter-panel {
+    overflow: auto;
+}
+.ui-splitter-second {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+.ui-splitter-divider {
+    flex-shrink: 0;
+    background: var(--sys-outline);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+    position: relative;
+}
+.ui-splitter-horizontal .ui-splitter-divider {
+    width: 4px;
+    cursor: col-resize;
+}
+.ui-splitter-vertical .ui-splitter-divider {
+    height: 4px;
+    cursor: row-resize;
+}
+.ui-splitter-divider:hover,
+.ui-splitter-divider-dragging {
+    background: var(--sys-primary);
+}
+.ui-splitter-divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--sys-on-bg-tertiary);
+    border-radius: var(--sys-radius-full);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-splitter-horizontal .ui-splitter-divider::after {
+    width: 2px;
+    height: 24px;
+}
+.ui-splitter-vertical .ui-splitter-divider::after {
+    width: 24px;
+    height: 2px;
+}
+.ui-splitter-divider:hover::after,
+.ui-splitter-divider-dragging::after {
+    background: var(--sys-on-primary);
+}
+
+</style>

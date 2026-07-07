@@ -1,0 +1,13 @@
+{
+    name: "std.data.binary.wasm",
+    version: "workspace",
+    description: "WASM 二进制编解码 — decode/encode .wasm（同构 std-data::binary::wasm）",
+    type: "library",
+    dependencies: {},
+    build: [
+        { target: "nyar" },
+        { target: "clr" },
+        { target: "jvm" },
+        { target: "wasm" }
+    ]
+}

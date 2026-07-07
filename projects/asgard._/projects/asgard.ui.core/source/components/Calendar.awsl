@@ -1,0 +1,382 @@
+<widget Calendar>
+<Box @class="ui-calendar ui-calendar-{mode}">
+    <Box @class="ui-calendar-header">
+        <button @class="ui-calendar-nav-btn" @click="prevPeriod" type="button">
+            <svg @class="ui-calendar-nav-svg" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m15 18-6-6 6-6" />
+            </svg>
+        </button>
+        <Box @class="ui-calendar-title-group">
+            <Text @class="ui-calendar-title">{currentTitle}</Text>
+            <button @class="ui-calendar-mode-btn" @click="toggleMode" type="button">
+                {mode == "month" ? "Year View" : "Month View"}
+            </button>
+        </Box>
+        <button @class="ui-calendar-nav-btn" @click="nextPeriod" type="button">
+            <svg @class="ui-calendar-nav-svg" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m9 18 6-6-6-6" />
+            </svg>
+        </button>
+    </Box>
+    <if mode == "month">
+        <Box @class="ui-calendar-weekdays">
+            <loop wd in {weekdays}>
+                <Text @class="ui-calendar-weekday">{wd}</Text>
+            </loop>
+        </Box>
+        <Box @class="ui-calendar-grid">
+            <loop cell in {calendarCells}>
+                <Box
+                    @class="ui-calendar-cell {cell.isCurrentMonth ? '' : 'ui-calendar-cell-other'} {cell.dateStr == value ? 'ui-calendar-cell-selected' : ''} {cell.isToday ? 'ui-calendar-cell-today' : ''} {cell.disabled ? 'ui-calendar-cell-disabled' : ''}"
+                    @click="selectDate(cell)"
+                >
+                    <Text @class="ui-calendar-day">{cell.day}</Text>
+                </Box>
+            </loop>
+        </Box>
+        <else/>
+        <Box @class="ui-calendar-month-grid">
+            <loop m in {monthList}>
+                <Box
+                    @class="ui-calendar-month-cell {isMonthSelected(m) ? 'ui-calendar-cell-selected' : ''} {isMonthCurrent(m) ? 'ui-calendar-cell-today' : ''}"
+                    @click="selectMonth(m)"
+                >
+                    <Text @class="ui-calendar-month-label">{m.label}</Text>
+                </Box>
+            </loop>
+        </Box>
+    </if>
+</Box>
+</widget>
+
+<script>
+let value: utf8 = ""
+let mut mode: utf8 = "month"
+let minDate: utf8 = ""
+let maxDate: utf8 = ""
+
+let mut viewYear: i32 = 2024
+let mut viewMonth: i32 = 1
+
+let weekdays: list = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+micro currentTitle() {
+    if mode == "month" {
+        return monthLabel() + " " + pad(viewYear)
+    }
+return pad(viewYear)
+}
+
+micro monthLabel() {
+    let names: list = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    return names[viewMonth - 1]
+}
+
+micro prevPeriod() {
+    if mode == "month" {
+        if viewMonth == 1 {
+            viewMonth = 12
+            viewYear = viewYear - 1
+        } else {
+        viewMonth = viewMonth - 1
+    }
+} else {
+viewYear = viewYear - 1
+}
+emit("panelChange", { year: viewYear, month: viewMonth, mode: mode })
+}
+
+micro nextPeriod() {
+    if mode == "month" {
+        if viewMonth == 12 {
+            viewMonth = 1
+            viewYear = viewYear + 1
+        } else {
+        viewMonth = viewMonth + 1
+    }
+} else {
+viewYear = viewYear + 1
+}
+emit("panelChange", { year: viewYear, month: viewMonth, mode: mode })
+}
+
+micro toggleMode() {
+    if mode == "month" {
+        mode = "year"
+    } else {
+    mode = "month"
+}
+emit("panelChange", { year: viewYear, month: viewMonth, mode: mode })
+}
+
+micro isCellDisabled(dateStr: utf8) {
+    if minDate != "" && dateStr < minDate {
+        return true
+    }
+if maxDate != "" && dateStr > maxDate {
+    return true
+}
+return false
+}
+
+micro calendarCells() {
+    let cells: list = []
+    let firstDay: i32 = dayOfWeek(viewYear, viewMonth, 1)
+    let daysInMonth: i32 = daysInMonth(viewYear, viewMonth)
+    let prevDays: i32 = daysInPrevMonth()
+    let i: i32 = 0
+    while i < firstDay {
+        let day: i32 = prevDays - firstDay + 1 + i
+        let prevMonth: i32 = viewMonth - 1
+        let prevYear: i32 = viewYear
+        if prevMonth < 1 {
+            prevMonth = 12
+            prevYear = viewYear - 1
+        }
+    cells = push(cells, makeCell(prevYear, prevMonth, day, false))
+    i = i + 1
+}
+i = 1
+while i <= daysInMonth {
+    cells = push(cells, makeCell(viewYear, viewMonth, i, true))
+    i = i + 1
+}
+let remaining: i32 = 42 - cells.length
+i = 1
+while i <= remaining {
+    let nextMonth: i32 = viewMonth + 1
+    let nextYear: i32 = viewYear
+    if nextMonth > 12 {
+        nextMonth = 1
+        nextYear = viewYear + 1
+    }
+cells = push(cells, makeCell(nextYear, nextMonth, i, false))
+i = i + 1
+}
+return cells
+}
+
+micro daysInPrevMonth() {
+    let prevMonth: i32 = viewMonth - 1
+    let prevYear: i32 = viewYear
+    if prevMonth < 1 {
+        prevMonth = 12
+        prevYear = viewYear - 1
+    }
+return daysInMonth(prevYear, prevMonth)
+}
+
+micro makeCell(year: i32, month: i32, day: i32, isCurrentMonth: bool) {
+    let dateStr: utf8 = pad(year) + "-" + pad2(month) + "-" + pad2(day)
+    let todayStr: utf8 = today()
+    return {
+        year: year,
+        month: month,
+        day: day,
+        isCurrentMonth: isCurrentMonth,
+        dateStr: dateStr,
+        isToday: dateStr == todayStr,
+        disabled: isCellDisabled(dateStr)
+    }
+}
+
+micro selectDate(cell) {
+    if cell.disabled {
+        return
+    }
+if !cell.isCurrentMonth {
+    viewYear = cell.year
+    viewMonth = cell.month
+}
+emit("select", { value: cell.dateStr })
+}
+
+micro monthList() {
+    let names: list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    let list: list = []
+    let i: i32 = 0
+    while i < 12 {
+        list = push(list, { index: i, label: names[i] })
+        i = i + 1
+    }
+return list
+}
+
+micro isMonthSelected(m) {
+    if value == "" {
+        return false
+    }
+let parts: list = split(value, "-")
+if parts.length < 2 {
+    return false
+}
+return toI32(parts[0]) == viewYear && toI32(parts[1]) == (m.index + 1)
+}
+
+micro isMonthCurrent(m) {
+    let todayStr: utf8 = today()
+    let parts: list = split(todayStr, "-")
+    if parts.length < 2 {
+        return false
+    }
+return toI32(parts[0]) == viewYear && toI32(parts[1]) == (m.index + 1)
+}
+
+micro selectMonth(m) {
+    viewMonth = m.index + 1
+    mode = "month"
+    emit("panelChange", { year: viewYear, month: viewMonth, mode: mode })
+}
+
+micro onMount() {
+    if value != "" {
+        let parts: list = split(value, "-")
+        if parts.length >= 2 {
+            viewYear = toI32(parts[0])
+            viewMonth = toI32(parts[1])
+        }
+}
+}
+</script>
+
+<style>
+.ui-calendar {
+    width: 280px;
+    font-family: var(--ui-font-sans);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    padding: var(--ui-space-3);
+}
+.ui-calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ui-space-3);
+}
+.ui-calendar-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-calendar-nav-btn:hover {
+    border-color: var(--sys-outline-focus);
+    background: var(--sys-surface-hover);
+}
+.ui-calendar-nav-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-calendar-title-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-space-1);
+}
+.ui-calendar-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+}
+.ui-calendar-mode-btn {
+    border: none;
+    background: transparent;
+    color: var(--sys-primary);
+    font-size: var(--ui-fs-xs);
+    cursor: pointer;
+    padding: 0;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-calendar-mode-btn:hover {
+    color: var(--sys-primary-hover);
+}
+.ui-calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--ui-space-1);
+    margin-bottom: var(--ui-space-1);
+}
+.ui-calendar-weekday {
+    text-align: center;
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    color: var(--sys-on-bg-tertiary);
+    padding: var(--ui-space-1) 0;
+}
+.ui-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: var(--ui-space-1);
+}
+.ui-calendar-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-calendar-cell:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-calendar-cell-other {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-calendar-cell-today {
+    border: 1px solid var(--sys-primary);
+    color: var(--sys-primary);
+}
+.ui-calendar-cell-selected {
+    background: var(--sys-primary);
+    color: var(--sys-on-primary);
+}
+.ui-calendar-cell-selected:hover {
+    background: var(--sys-primary-hover);
+}
+.ui-calendar-cell-disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+.ui-calendar-cell-disabled:hover {
+    background: transparent;
+}
+.ui-calendar-day {
+    line-height: 1;
+}
+.ui-calendar-month-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ui-space-2);
+}
+.ui-calendar-month-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 48px;
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-calendar-month-cell:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-calendar-month-label {
+    line-height: 1;
+}
+</style>

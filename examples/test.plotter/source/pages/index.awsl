@@ -1,40 +1,40 @@
-<widget>
-    <div class="plotter-page">
-        <header class="plotter-hero">
-            <h1>plotter + asgard.plotter</h1>
-            <p>交互柱图走 InteractiveColPlot（asgard glue）；折线/直方图仍为 plotter SVG</p>
-        </header>
+<widget index>
+<div class="plotter-page">
+    <header class="plotter-hero">
+        <h1>plotter + asgard.plotter</h1>
+        <p>交互柱图走 InteractiveColPlot（asgard glue）；折线/直方图仍为 plotter SVG</p>
+    </header>
 
-        <section class="plotter-grid">
-            <div class="plotter-island-card">
-                <InteractiveColPlot title="Test Status" series={status_series} />
-            </div>
-            <div class="plotter-island-card">
-                <InteractiveColPlot title="Bench Runtime (ms)" series={bench_series} />
-            </div>
-            <PlotCard
-                title="Coverage Trend"
-                subtitle="随时间变化"
-                footer="geom_line + geom_point"
-                svg_html={trend_svg}
-                variant="elevated"
-            />
-            <PlotCard
-                title="Latency Histogram"
-                subtitle="分布"
-                footer="geom_histogram(bins=5)"
-                svg_html={hist_svg}
-                variant="elevated"
-            />
-        </section>
-    </div>
+    <section class="plotter-grid">
+        <div class="plotter-island-card">
+            <InteractiveColPlot title="Test Status" :series="status_series" />
+        </div>
+        <div class="plotter-island-card">
+            <InteractiveColPlot title="Bench Runtime (ms)" :series="bench_series" />
+        </div>
+        <PlotCard
+        title="Coverage Trend"
+        subtitle="随时间变化"
+        footer="geom_line + geom_point"
+        :svg_html="trend_svg"
+        variant="elevated"
+        />
+        <PlotCard
+        title="Latency Histogram"
+        subtitle="分布"
+        footer="geom_histogram(bins=5)"
+        :svg_html="hist_svg"
+        variant="elevated"
+        />
+    </section>
+</div>
 </widget>
 
 <script>
-    let status_series: list = status_chart_series()
-    let bench_series: list = bench_chart_series()
-    let trend_svg: string = trend_chart_svg()
-    let hist_svg: string = latency_histogram_svg()
+let status_series: list = status_chart_series()
+let bench_series: list = bench_chart_series()
+let trend_svg: utf8 = trend_chart_svg()
+let hist_svg: utf8 = latency_histogram_svg()
 </script>
 
 <style>

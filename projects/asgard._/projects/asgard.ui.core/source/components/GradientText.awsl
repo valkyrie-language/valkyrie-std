@@ -1,0 +1,18 @@
+<widget GradientText>
+<Text @class="ui-gradient-text" :style="f\&quot;background: linear-gradient(to right, {from}, {to}); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;\&quot;">
+    <slot />
+</Text>
+</widget>
+
+<script>
+let from: utf8 = "var(--sys-primary)"
+let to: utf8 = "var(--sys-info)"
+</script>
+<style>
+.ui-gradient-text {
+    font-family: var(--ui-font-sans);
+    font-weight: 700;
+    display: inline-block;
+}
+
+</style>

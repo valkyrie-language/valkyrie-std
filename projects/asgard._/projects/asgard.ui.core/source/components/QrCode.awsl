@@ -1,0 +1,91 @@
+<widget QrCode>
+<Box @class="ui-qr" :style="containerStyle">
+    <svg @class="ui-qr-svg" :width="size" :height="size" viewBox="0 0 29 29">
+        <rect @class="ui-qr-bg" x="0" y="0" width="29" height="29" :fill="bgColor" />
+        <loop item="cell" :each="{qrCells}">
+            <if :condition="cell.filled">
+                <rect :x="cell.x" :y="cell.y" width="1" height="1" :fill="color" />
+                <else />
+            </if>
+        </loop>
+        <loop item="finder" :each="{finderPositions}">
+            <rect :x="finder.x" :y="finder.y" width="7" height="7" :fill="color" />
+            <rect :x="finder.x + 1" :y="finder.y + 1" width="5" height="5" :fill="bgColor" />
+            <rect :x="finder.x + 2" :y="finder.y + 2" width="3" height="3" :fill="color" />
+        </loop>
+    </svg>
+</Box>
+</widget>
+
+<script>
+let value: utf8 = ""
+let size: utf8 = "128"
+let color: utf8 = "var(--sys-on-bg)"
+let bgColor: utf8 = "var(--sys-bg)"
+let level: utf8 = "M"
+
+micro containerStyle() {
+    return f"width: {size}px; height: {size}px"
+}
+
+micro qrCells() {
+    let cells: list = []
+    let i: i32 = 0
+    while i < 29 {
+        let j: i32 = 0
+        while j < 29 {
+            if !isFinderArea(i, j) {
+                let filled: bool = pseudoRandom(i, j)
+                cells = push(cells, { x: i, y: j, filled: filled })
+            }
+        j = j + 1
+    }
+i = i + 1
+}
+return cells
+}
+
+micro isFinderArea(x: i32, y: i32) {
+    if x < 8 && y < 8 {
+        return true
+    }
+if x < 8 && y > 20 {
+    return true
+}
+if x > 20 && y < 8 {
+    return true
+}
+return false
+}
+
+micro pseudoRandom(x: i32, y: i32) {
+    let seed: i32 = 0
+    let i: i32 = 0
+    let chars = split(value, "")
+    while i < chars.length {
+        seed = seed + charCode(chars[i])
+        i = i + 1
+    }
+let h: i32 = (x * 31 + y * 17 + seed) % 100
+return h < 48
+}
+
+micro finderPositions() {
+    return [
+    { x: 0, y: 0 },
+    { x: 22, y: 0 },
+    { x: 0, y: 22 }
+    ]
+}
+</script>
+<style>
+.ui-qr {
+    display: inline-block;
+    font-family: var(--ui-font-sans);
+}
+.ui-qr-svg {
+    display: block;
+    shape-rendering: crispEdges;
+}
+
+</style>

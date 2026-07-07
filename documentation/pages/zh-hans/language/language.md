@@ -72,8 +72,8 @@ structure Point(i32, i32)             # 不可变值类型，结构相等
 class Animal { name: string }         # 引用类型，支持继承
 enums Status { Active = 0, Inactive } # 离散枚举
 flags Permission { Read = 1, Write = 2 } # 位标志
-union Option<T> { Some(T), None }     # 代数数据类型（引用）
-unite CompactResult { Ok(i32), Err(string) } # 紧凑内联 union
+union Option<T> { Some { value: T }, None }     # 代数数据类型（引用）
+unite CompactResult { Ok { value: i32 }, Err { error: string } } # 紧凑内联 union
 ```
 
 更多参见：[类型系统](type-system/)、[复合类型](type-system/compound-types.md)、[容器与可空类型](type-system/container-nullable-types.md)
@@ -92,8 +92,8 @@ structure Point(i32, i32)
 class Dog(Animal) { breed: string }  # 单继承
 enums Direction { North, South, East, West }
 flags Permissions { Read = 1, Write = 2 }
-union Result<T, E> { Ok(T), Err(E) }
-unite CompactOption<T> { Some(T), None }
+union Result<T, E> { Ok { value: T }, Err { error: E } }
+unite CompactOption<T> { Some { value: T }, None }
 
 namespace game::physics { ... }
 using game::physics::Vector
@@ -287,7 +287,7 @@ using std::collections::*
 | 类 | `class Animal { name: string; age: i32 }` |
 | 枚举 | `enums Status { Inactive = 0, Active = 1 }` |
 | 标志 | `flags Permission { Read = 1, Write = 2 }` |
-| 联合 | `union Option<T> { Some(T), None }` |
+| 联合 | `union Option<T> { Some { value: T }, None }` |
 | trait | `trait Iterator { type Item; next(mut self) -> Option<Self::Item> }` |
 | 模块 | `namespace foo::bar`、`using foo::bar::Type` |
 | 遍历 | `loop item in items { ... }` |

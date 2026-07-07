@@ -1,0 +1,42 @@
+<widget plot_grid>
+<div class="asgard-plot-grid" :style="f\"grid-template-columns: repeat({columns}, minmax(0, 1fr))\"">
+    <loop item in items>
+        <div class="asgard-plot-grid-cell">
+            <if item.title != ''>
+                <h4 class="asgard-plot-grid-title">{item.title}</h4>
+            </if>
+            <div class="asgard-plot">{item.svg_html}</div>
+        </div>
+    </loop>
+</div>
+</widget>
+
+<script>
+let columns: utf8 = "2"
+let items: list = []
+</script>
+
+<style>
+.asgard-plot-grid {
+    display: grid;
+    gap: 16px;
+}
+.asgard-plot-grid-cell {
+    min-width: 0;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px;
+}
+.asgard-plot-grid-title {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+.asgard-plot svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+</style>

@@ -1,0 +1,13 @@
+{
+    name: "gnosis.tools",
+    version: "workspace",
+    description: "工具与调试 — profiler / debug draw / batch 视图 / particle 视图",
+    author: "Valkyrie Team",
+    auto_link: { core: true, std: true },
+    dependencies: {
+        "gnosis": { version: "workspace" },
+        "gnosis.render": { version: "workspace" }
+    },
+    build: [{ target: "nyar" }],
+    engines: { vcc: "0.1.*" }
+}

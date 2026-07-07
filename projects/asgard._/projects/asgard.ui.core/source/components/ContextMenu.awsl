@@ -1,0 +1,99 @@
+<widget ContextMenu>
+<if :condition="open">
+    <Box @class="ui-context-menu-overlay" @click="handleClose">
+        <Box @class="ui-context-menu" :style="f\&quot;left: {x}px; top: {y}px\&quot;" role="menu">
+            <loop item="item" :each="{items}">
+                <if :condition="item.divider">
+                    <Box @class="ui-context-menu-divider"></Box>
+                    <else />
+                    <Box role="menuitem" @class="ui-context-menu-item {item.disabled ? 'ui-context-menu-item-disabled' : ''}" @click="handleSelect(item)">
+                        <if :condition="item.icon != &quot;&quot;">
+                            <svg @class="ui-context-menu-item-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                                <path :d="item.icon" />
+                            </svg>
+                            <else />
+                        </if>
+                        <Text @class="ui-context-menu-item-label">{item.label}</Text>
+                    </Box>
+                </if>
+            </loop>
+        </Box>
+    </Box>
+    <else />
+</if>
+</widget>
+
+<script>
+let items: list = []
+let x: utf8 = "0"
+let y: utf8 = "0"
+let open: bool = false
+
+micro handleSelect(item) {
+    if item.disabled { return }
+    emit("select", {key: item.key})
+    emit("close", {})
+}
+
+micro handleClose() {
+    emit("close", {})
+}
+</script>
+<style>
+.ui-context-menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--ui-z-dropdown);
+}
+.ui-context-menu {
+    position: fixed;
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-1);
+    min-width: 160px;
+    font-family: var(--ui-font-sans);
+    animation: ui-context-menu-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding: 0 var(--ui-space-3);
+    height: var(--ui-control-h-sm);
+    border-radius: var(--sys-radius-sm);
+    color: var(--sys-on-bg);
+    cursor: pointer;
+    font-size: var(--ui-fs-sm);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+    white-space: nowrap;
+}
+.ui-context-menu-item:hover:not(.ui-context-menu-item-disabled) {
+    background: var(--sys-surface-hover);
+}
+.ui-context-menu-item-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-context-menu-item-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+.ui-context-menu-item-label {
+    flex: 1;
+}
+.ui-context-menu-divider {
+    height: 1px;
+    background: var(--sys-outline);
+    margin: var(--ui-space-1) 0;
+}
+@keyframes ui-context-menu-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+</style>

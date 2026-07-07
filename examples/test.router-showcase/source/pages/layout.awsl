@@ -1,25 +1,25 @@
-<widget>
-    <div class="router-layout">
-        <header class="router-header">
-            <h1 class="router-title">VOA Router + Effect</h1>
-            <span class="router-subtitle">声明式路由 · 编程式导航 · 响应式副作用</span>
-        </header>
+<widget layout>
+<div class="router-layout">
+    <header class="router-header">
+        <h1 class="router-title">VOA Router + Effect</h1>
+        <span class="router-subtitle">声明式路由 · 编程式导航 · 响应式副作用</span>
+    </header>
 
-        <nav class="router-nav">
-            <Link href="/" exact={true}>首页</Link>
-            <Link href="/router-demo">路由演示</Link>
-            <Link href="/effect-demo">Effect 演示</Link>
-            <Link href="/counter">计数器</Link>
-        </nav>
+    <nav class="router-nav">
+        <Link href="/" :exact="true">首页</Link>
+        <Link href="/router-demo">路由演示</Link>
+        <Link href="/effect-demo">Effect 演示</Link>
+        <Link href="/counter">计数器</Link>
+    </nav>
 
-        <main class="router-main">
-            <Outlet />
-        </main>
+    <main class="router-main">
+        <Outlet />
+    </main>
 
-        <footer class="router-footer">
-            <p>Powered by <strong>Asgard VOA</strong></p>
-        </footer>
-    </div>
+    <footer class="router-footer">
+        <p>Powered by <strong>Asgard VOA</strong></p>
+    </footer>
+</div>
 </widget>
 
 <style>

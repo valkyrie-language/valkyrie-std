@@ -1,0 +1,76 @@
+<widget ThemeMatrix>
+<Box @class="theme-matrix-{mode}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let mode: utf8 = "light"
+
+micro setMode(m: utf8) {
+    mode = m
+    emit("modeChange", { mode: mode })
+}
+</script>
+<style>
+.theme-matrix-light {
+    --sys-bg: #f5f5f5;
+    --sys-surface: #ffffff;
+    --sys-surface-hover: #ebebeb;
+    --sys-on-bg: #1a1a1a;
+    --sys-on-surface: #1a1a1a;
+    --sys-on-bg-secondary: #666666;
+    --sys-on-bg-tertiary: #999999;
+    --sys-primary: #008000;
+    --sys-primary-hover: #006600;
+    --sys-primary-container: #d0f0d0;
+    --sys-on-primary: #ffffff;
+    --sys-outline: #d0d0d0;
+    --sys-outline-focus: #008000;
+    --sys-shadow: none;
+    --sys-shadow-lg: none;
+    --sys-success: #008000;
+    --sys-error: #cc0000;
+    --sys-warning: #cc8800;
+    --sys-info: #0066cc;
+    --sys-radius-sm: 0px;
+    --sys-radius-md: 0px;
+    --sys-radius-lg: 0px;
+    --sys-radius-full: 0px;
+    --ui-font-sans: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    --ui-font-serif: 'JetBrains Mono', monospace;
+    --ui-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --ui-easing: linear;
+    --ui-icon-stroke: 1;
+}
+.theme-matrix-night {
+    --sys-bg: #0a0e0a;
+    --sys-surface: #111511;
+    --sys-surface-hover: #1a241a;
+    --sys-on-bg: #88cc88;
+    --sys-on-surface: #88cc88;
+    --sys-on-bg-secondary: #5a8a5a;
+    --sys-on-bg-tertiary: #3a6a3a;
+    --sys-primary: #44ff44;
+    --sys-primary-hover: #66ff66;
+    --sys-primary-container: #1a2a1a;
+    --sys-on-primary: #0a0e0a;
+    --sys-outline: #1a2a1a;
+    --sys-outline-focus: #44ff44;
+    --sys-shadow: none;
+    --sys-shadow-lg: none;
+    --sys-success: #44ff44;
+    --sys-error: #ff4444;
+    --sys-warning: #ffaa00;
+    --sys-info: #44aaff;
+    --sys-radius-sm: 0px;
+    --sys-radius-md: 0px;
+    --sys-radius-lg: 0px;
+    --sys-radius-full: 0px;
+    --ui-font-sans: 'JetBrains Mono', 'Fira Code', monospace;
+    --ui-font-serif: 'JetBrains Mono', monospace;
+    --ui-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --ui-easing: linear;
+    --ui-icon-stroke: 1;
+}
+</style>

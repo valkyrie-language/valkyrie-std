@@ -1,0 +1,67 @@
+# Asgard UI v1 契约
+
+设备侧由**原生 shim**解码（见 [AOT 原则](aot-principles.md)）；本文描述 wire 二进制格式。
+
+## 段封装（section framing）
+
+宿主制品（dex / Mach-O / wasm）尾段可多次追加 Asgard 段；解码取**最后一段**匹配。
+
+```
+magic (8 字节 ASCII) || u32le payload_len || payload
+```
+
+| 魔数 | 含义 |
+|:---|:---|
+| `ASGARDNT` | native AOT 逻辑（Android `.so`、iOS Mach-O 等） |
+| `ASGARDUI` | asgard ui wire 包体 |
+
+UI 包体 `payload` 内层再以 `ASGARDUI` 魔数 + 版本字节开头（7 字节魔数 + 1 字节版本 `0x01`）。
+
+## 节点类型
+
+| kind | 名称 | 载荷 |
+|:---:|:---|:---|
+| 1 | Tag | tag, node_kind, attrs, children |
+| 2 | Text | text_parts |
+| 3 | If | cond, then_children, else_children |
+| 4 | Loop | items_expr, item_var, body |
+
+## If 节点语义
+
+解码器必须保留 `else_children` 为独立子树（见 `asgard.ui` `RenderNode.else_children`），不得展平为兄弟节点。
+
+## 向后兼容
+
+- v1 段可追加在宿主制品末尾多次；解码取**最后一段** Asgard UI wire 匹配。
+- 新增节点 kind 仅允许追加偶数编号；旧解码器忽略未知 kind。
+
+## Wire v2 ABI 段
+
+v2 在 8 字节 `ASGARDUI` 魔数后追加 **1 字节版本 `0x02`**，每个组件在 bindings 之前写入 ABI 段：
+
+```
+u32 property_count
+  repeat: name (string), type_tag (u8), flags (u8), [default_expr (string)]
+u32 event_count
+  repeat: name (string), param_count (u32), (param_name, type_tag)*
+```
+
+| type_tag | 含义 |
+|:---:|:---|
+| 0 | 未知 / 未标注 |
+| 1 | i32 |
+| 2 | utf8 |
+| 3 | bool |
+
+| flags bit | 含义 |
+|:---:|:---|
+| 0x01 | required（无 default） |
+| 0x02 | has_default_expr |
+
+v1 解码器（无版本字节）仍可读旧包；v2 解码器读取版本字节后解析 ABI 段。
+
+## 金样例
+
+`valkyrie.rs/projects/voa/tests/asgard_ui_golden.rs` 对 Counter / If 模板编码快照；四套解码器（Rust encode、V `decode_package`、Kotlin/Swift 生成运行时、JS `mp_ir_runtime`）须与本文一致。
+
+参考实现：[`mobile_ui_binary.rs`](../../../../../../valkyrie.rs/projects/voa/src/codegen/mobile_ui_binary.rs)

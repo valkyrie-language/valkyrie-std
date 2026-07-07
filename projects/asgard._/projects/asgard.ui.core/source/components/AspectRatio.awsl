@@ -1,0 +1,30 @@
+<widget AspectRatio>
+<Box @class="ui-aspect" :style="f\&quot;aspect-ratio: {ratio}\&quot;">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let ratio: utf8 = "16/9"
+</script>
+<style>
+.ui-aspect {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.ui-aspect > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+.ui-aspect > img,
+.ui-aspect > video,
+.ui-aspect > iframe {
+    object-fit: cover;
+}
+
+</style>

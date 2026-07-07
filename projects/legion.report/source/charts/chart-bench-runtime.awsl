@@ -1,8 +1,0 @@
-<widget chart-bench-runtime>
-    <InteractiveColPlot title={title} series={series} />
-</widget>
-
-<script>
-    let title: string = __TITLE__
-    let series: list = __SERIES__
-</script>

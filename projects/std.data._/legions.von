@@ -1,0 +1,21 @@
+{
+    version: "1",
+    name: "std-data-super-workspace",
+    members: [
+        "std.data.binary.clr",
+        "std.data.binary.class",
+        "std.data.binary.jar",
+        "std.data.binary.wasm",
+        "std.data.text.msil",
+        "std.data.text.valkyrie",
+        "std.data.text.von",
+        "std.data.text.wat",
+        "std.data.text.wit"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

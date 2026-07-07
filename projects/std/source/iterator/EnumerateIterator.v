@@ -14,7 +14,7 @@ imply EnumerateIterator<T, I>: Iterator {
 
     micro next(mut self): Option<(ordinal: usize, value: T)> {
         if !self._iter.has_next() {
-            return None
+            return option_none::<Item>()
         }
 
         let ordinal: usize = self._ordinal

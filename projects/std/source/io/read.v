@@ -1,5 +1,4 @@
-# std.io: read — 控制台输入
-
+# std.io: read helpers
 namespace std.io;
 
 micro read_line(): utf8 {
@@ -14,21 +13,8 @@ micro read_char(): i32 {
     return std.console.read_char()
 }
 
-micro read_int(): Option<i32> {
-    let line: utf8 = std.io.read_line()
-    if line == "" {
-        return None
-    }
-    return Some(to_i32(line))
-}
-
-micro read_f64(): Option<f64> {
-    let line: utf8 = std.io.read_line()
-    if line == "" {
-        return None
-    }
-    return Some(to_f64(line))
-}
+# TODO: read_int / read_f64 待 std.text 解析能力落地后实现
+# 当前 stub 返回 none 以避免 to_i32/to_f64 未定义引用
 
 micro stdin_lines(): List<utf8> {
     let lines: List<utf8> = List::new()

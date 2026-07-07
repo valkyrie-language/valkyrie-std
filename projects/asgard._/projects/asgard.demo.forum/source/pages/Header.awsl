@@ -1,0 +1,153 @@
+<widget Header>
+<Box class="forum-header">
+    <Box class="forum-header-inner">
+        <Box class="forum-header-brand">
+            <svg class="forum-icon forum-header-brand-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+            </svg>
+            <Text class="forum-header-brand-text">{title}</Text>
+        </Box>
+        <List :items="navItems" class="forum-header-nav">
+            <Item class="forum-header-nav-item">
+                <Text class="forum-header-nav-prefix">&gt;</Text>
+                <Text class="forum-header-nav-text">{item.label}</Text>
+            </Item>
+        </List>
+        <Box class="forum-header-actions">
+            <Box class="forum-header-search">
+                <svg class="forum-icon forum-header-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input class="forum-header-search-input" type="text" placeholder="// grep threads..." />
+            </Box>
+            <Button class="forum-header-new-btn">
+                <Text class="forum-header-new-btn-text">[ new ]</Text>
+            </Button>
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let title: utf8 = ""
+let navItems: list = []
+</script>
+<style>
+.forum-header {
+    border-bottom: 1px solid var(--sys-border);
+    background: var(--sys-surface);
+    font-family: var(--ui-font-mono);
+}
+.forum-header-inner {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-lg);
+    padding: var(--ui-space-md) var(--ui-space-lg);
+    max-width: var(--ui-content-max, 1200px);
+    margin: 0 auto;
+}
+.forum-header-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-sm);
+    color: var(--sys-text-primary);
+    flex-shrink: 0;
+}
+.forum-header-brand-icon {
+    color: var(--sys-accent);
+    flex-shrink: 0;
+}
+.forum-header-brand-text {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-lg, 18px);
+    font-weight: 700;
+    color: var(--sys-text-primary);
+    letter-spacing: 0.5px;
+}
+.forum-header-nav {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-md);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.forum-header-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-xs, 4px);
+    padding: var(--ui-space-xs, 4px) var(--ui-space-sm);
+    cursor: pointer;
+}
+.forum-header-nav-prefix {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+}
+.forum-header-nav-text {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-header-nav-item:hover .forum-header-nav-text {
+    color: var(--sys-accent);
+}
+.forum-header-nav-item:hover .forum-header-nav-prefix {
+    color: var(--sys-accent);
+}
+.forum-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-md);
+    flex-shrink: 0;
+}
+.forum-header-search {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-xs, 4px);
+    padding: var(--ui-space-xs, 4px) var(--ui-space-sm);
+    border: 1px solid var(--sys-border);
+    background: var(--sys-surface-muted, var(--sys-surface));
+}
+.forum-header-search-icon {
+    color: var(--sys-text-secondary);
+    flex-shrink: 0;
+}
+.forum-header-search-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-primary);
+    width: 200px;
+}
+.forum-header-search-input::placeholder {
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+}
+.forum-header-new-btn {
+    background: transparent;
+    border: 1px solid var(--sys-accent);
+    padding: var(--ui-space-xs, 4px) var(--ui-space-md);
+    font-family: var(--ui-font-mono);
+    cursor: pointer;
+}
+.forum-header-new-btn-text {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-accent);
+    font-weight: 700;
+}
+.forum-header-new-btn:hover {
+    background: var(--sys-accent);
+}
+.forum-header-new-btn:hover .forum-header-new-btn-text {
+    color: var(--sys-surface);
+}
+.forum-icon {
+    stroke-width: var(--ui-icon-stroke, 2);
+}
+</style>

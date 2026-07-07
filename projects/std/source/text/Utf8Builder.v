@@ -19,7 +19,7 @@ imply Utf8Builder {
         let mut bytes: ArrayList<u8> = ArrayList::new(text._repr.length)
         let mut index: usize = 0
         while index < text._repr.length {
-            bytes.push(text._repr[index])
+            bytes.push(text._repr⁅index⁆)
             index = index + 1
         }
 
@@ -39,7 +39,7 @@ imply Utf8Builder {
         let encoded: [u8] = c.to_bytes()
         let mut index: usize = 0
         while index < encoded.length {
-            self.bytes.push(encoded[index])
+            self.bytes.push(encoded⁅index⁆)
             index = index + 1
         }
     }
@@ -47,7 +47,7 @@ imply Utf8Builder {
     micro append(mut self, text: &Utf8Text): unit {
         let mut index: usize = 0
         while index < text._repr.length {
-            self.bytes.push(text._repr[index])
+            self.bytes.push(text._repr⁅index⁆)
             index = index + 1
         }
     }

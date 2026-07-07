@@ -1,0 +1,175 @@
+<widget Popconfirm>
+<Text @class="ui-popconfirm-wrapper">
+    <Text @class="ui-popconfirm-trigger" @click="handleTrigger">
+        <slot />
+    </Text>
+    <if isOpen>
+        <Box @class="ui-popconfirm ui-popconfirm-{variant}" role="dialog">
+            <Box class="ui-popconfirm-header">
+                <Text @class="ui-popconfirm-icon ui-popconfirm-icon-{variant}">
+                    <if variant == "danger">
+                        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <path d="m15 9-6 6M9 9l6 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+                        </svg>
+                        <else/>
+                    </if>
+                    <if variant == "warning">
+                        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <path d="M12 9v4M12 17h.0M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                        </svg>
+                        <else/>
+                    </if>
+                    <if variant == "info">
+                        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                            <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.0" />
+                        </svg>
+                        <else/>
+                    </if>
+                </Text>
+                <Box @class="ui-popconfirm-text">
+                    <Box @class="ui-popconfirm-title">{title}</Box>
+                    <if description != "">
+                        <Box @class="ui-popconfirm-desc">{description}</Box>
+                        <else/>
+                    </if>
+                </Box>
+            </Box>
+            <Box @class="ui-popconfirm-footer">
+                <button @class="ui-popconfirm-cancel" type="button" @click="handleCancel">{cancelText}</button>
+                <button @class="ui-popconfirm-confirm ui-popconfirm-confirm-{variant}" type="button" @click="handleConfirm">{confirmText}</button>
+            </Box>
+        </Box>
+        <else/>
+    </if>
+</Text>
+</widget>
+
+<script>
+let title: utf8 = ""
+let description: utf8 = ""
+let confirmText: utf8 = "OK"
+let cancelText: utf8 = "Cancel"
+let variant: utf8 = "warning"
+let mut isOpen: bool = false
+
+micro handleTrigger() {
+    isOpen = !isOpen
+}
+
+micro handleCancel() {
+    isOpen = false
+    emit("cancel", {})
+}
+
+micro handleConfirm() {
+    isOpen = false
+    emit("confirm", {})
+}
+</script>
+
+<style>
+.ui-popconfirm-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+.ui-popconfirm-trigger {
+    display: inline-flex;
+}
+.ui-popconfirm {
+    position: absolute;
+    z-index: var(--ui-z-overlay);
+    top: 100%;
+    left: 0;
+    margin-top: var(--ui-space-3);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-4);
+    min-width: 240px;
+    max-width: 320px;
+    animation: ui-popconfirm-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-popconfirm-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ui-space-3);
+}
+.ui-popconfirm-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.ui-popconfirm-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-popconfirm-icon-danger { color: var(--sys-error); }
+.ui-popconfirm-icon-warning { color: var(--sys-warning); }
+.ui-popconfirm-icon-info { color: var(--sys-info); }
+.ui-popconfirm-text {
+    flex: 1;
+}
+.ui-popconfirm-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    line-height: 1.4;
+}
+.ui-popconfirm-desc {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-family: var(--ui-font-sans);
+    margin-top: var(--ui-space-1);
+    line-height: 1.5;
+}
+.ui-popconfirm-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ui-space-2);
+    margin-top: var(--ui-space-4);
+}
+.ui-popconfirm-cancel {
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-4);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-popconfirm-cancel:hover {
+    background: var(--sys-surface-hover);
+    border-color: var(--sys-outline-focus);
+}
+.ui-popconfirm-confirm {
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-4);
+    border: 1px solid transparent;
+    color: var(--sys-on-primary);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-popconfirm-confirm-danger { background: var(--sys-error); border-color: var(--sys-error); }
+.ui-popconfirm-confirm-danger:hover { opacity: 0.9; }
+.ui-popconfirm-confirm-warning { background: var(--sys-warning); border-color: var(--sys-warning); }
+.ui-popconfirm-confirm-warning:hover { opacity: 0.9; }
+.ui-popconfirm-confirm-info { background: var(--sys-primary); border-color: var(--sys-primary); }
+.ui-popconfirm-confirm-info:hover { background: var(--sys-primary-hover); border-color: var(--sys-primary-hover); }
+@keyframes ui-popconfirm-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>

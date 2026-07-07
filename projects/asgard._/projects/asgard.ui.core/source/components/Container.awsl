@@ -1,0 +1,38 @@
+<widget Container>
+<Box @class="ui-container ui-container-{size} {centered ? 'ui-container-centered' : ''}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let size: utf8 = "md"
+let centered: bool = true
+</script>
+<style>
+.ui-container {
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: var(--ui-space-4);
+    padding-right: var(--ui-space-4);
+}
+.ui-container-centered {
+    margin-left: auto;
+    margin-right: auto;
+}
+.ui-container-sm {
+    max-width: 640px;
+}
+.ui-container-md {
+    max-width: 768px;
+}
+.ui-container-lg {
+    max-width: 1024px;
+}
+.ui-container-xl {
+    max-width: 1280px;
+}
+.ui-container-full {
+    max-width: 100%;
+}
+
+</style>

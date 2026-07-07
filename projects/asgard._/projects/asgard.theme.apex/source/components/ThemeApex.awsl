@@ -1,0 +1,76 @@
+<widget ThemeApex>
+<Box @class="theme-apex-{mode}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let mode: utf8 = "light"
+
+micro setMode(m: utf8) {
+    mode = m
+    emit("modeChange", { mode: mode })
+}
+</script>
+<style>
+.theme-apex-light {
+    --sys-bg: #ffffff;
+    --sys-surface: #f5f7fa;
+    --sys-surface-hover: #ebeef3;
+    --sys-on-bg: #1a1a2e;
+    --sys-on-surface: #1a1a2e;
+    --sys-on-bg-secondary: #6b7280;
+    --sys-on-bg-tertiary: #9ca3af;
+    --sys-primary: #1677ff;
+    --sys-primary-hover: #0958d9;
+    --sys-primary-container: #e6f0ff;
+    --sys-on-primary: #ffffff;
+    --sys-outline: #e4e7ed;
+    --sys-outline-focus: #1677ff;
+    --sys-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --sys-shadow-lg: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+    --sys-success: #52c41a;
+    --sys-error: #ff4d4f;
+    --sys-warning: #faad14;
+    --sys-info: #1677ff;
+    --sys-radius-sm: 2px;
+    --sys-radius-md: 4px;
+    --sys-radius-lg: 8px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', -apple-system, sans-serif;
+    --ui-font-serif: Georgia, serif;
+    --ui-font-mono: 'JetBrains Mono', monospace;
+    --ui-easing: cubic-bezier(0.3, 0.0, 0.1, 1.0);
+    --ui-icon-stroke: 2;
+}
+.theme-apex-night {
+    --sys-bg: #0f1419;
+    --sys-surface: #1a1f2e;
+    --sys-surface-hover: #242a3d;
+    --sys-on-bg: #e6edf3;
+    --sys-on-surface: #e6edf3;
+    --sys-on-bg-secondary: #8b949e;
+    --sys-on-bg-tertiary: #6e7681;
+    --sys-primary: #3b82f6;
+    --sys-primary-hover: #60a5fa;
+    --sys-primary-container: #1e3a5f;
+    --sys-on-primary: #ffffff;
+    --sys-outline: #2a3242;
+    --sys-outline-focus: #3b82f6;
+    --sys-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --sys-shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+    --sys-success: #3fb950;
+    --sys-error: #f85149;
+    --sys-warning: #d29922;
+    --sys-info: #58a6ff;
+    --sys-radius-sm: 2px;
+    --sys-radius-md: 4px;
+    --sys-radius-lg: 8px;
+    --sys-radius-full: 9999px;
+    --ui-font-sans: 'Inter', sans-serif;
+    --ui-font-serif: Georgia, serif;
+    --ui-font-mono: 'JetBrains Mono', monospace;
+    --ui-easing: cubic-bezier(0.3, 0.0, 0.1, 1.0);
+    --ui-icon-stroke: 2;
+}
+</style>

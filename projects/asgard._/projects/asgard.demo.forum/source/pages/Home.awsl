@@ -1,0 +1,487 @@
+<widget Home>
+<Box class="forum-home">
+    <Box class="forum-home-inner">
+        <Box class="forum-home-layout">
+            <Box class="forum-main">
+                <Box class="forum-section">
+                    <Box class="forum-section-header">
+                        <Box class="forum-section-title-wrap">
+                            <svg class="forum-icon forum-section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="4" y1="9" x2="20" y2="9"></line>
+                                <line x1="4" y1="15" x2="20" y2="15"></line>
+                                <line x1="10" y1="3" x2="8" y2="21"></line>
+                                <line x1="16" y1="3" x2="14" y2="21"></line>
+                            </svg>
+                            <Text class="forum-section-title">$ boards</Text>
+                        </Box>
+                        <Text class="forum-section-count">5 entries</Text>
+                    </Box>
+                    <List :items="boards" class="forum-board-list">
+                        <Item class="forum-board-row">
+                            <Box class="forum-board-info">
+                                <Text class="forum-board-name">{item.name}</Text>
+                                <Text class="forum-board-desc">{item.desc}</Text>
+                            </Box>
+                            <Box class="forum-board-stats">
+                                <Text class="forum-board-threads">{item.threads} threads</Text>
+                                <Text class="forum-board-time">{item.lastPost}</Text>
+                            </Box>
+                        </Item>
+                    </List>
+                </Box>
+
+                <Box class="forum-section">
+                    <Box class="forum-section-header">
+                        <Box class="forum-section-title-wrap">
+                            <svg class="forum-icon forum-section-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                            <Text class="forum-section-title">$ latest threads</Text>
+                        </Box>
+                        <Text class="forum-section-count">8 entries</Text>
+                    </Box>
+                    <Box class="forum-table-wrap">
+                        <table class="forum-thread-table">
+                            <thead>
+                                <tr>
+                                    <th class="forum-th forum-th-title">title</th>
+                                    <th class="forum-th forum-th-author">author</th>
+                                    <th class="forum-th forum-th-num">replies</th>
+                                    <th class="forum-th forum-th-num">views</th>
+                                    <th class="forum-th forum-th-time">last</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <List :items="threads">
+                                    <Item>
+                                        <tr class="forum-thread-row">
+                                            <td class="forum-td forum-td-title">
+                                                <Text class="forum-thread-title">{item.title}</Text>
+                                            </td>
+                                            <td class="forum-td forum-td-author">
+                                                <Text class="forum-thread-author">{item.author}</Text>
+                                            </td>
+                                            <td class="forum-td forum-td-num">
+                                                <Text class="forum-thread-num">{item.replies}</Text>
+                                            </td>
+                                            <td class="forum-td forum-td-num">
+                                                <Text class="forum-thread-num">{item.views}</Text>
+                                            </td>
+                                            <td class="forum-td forum-td-time">
+                                                <Text class="forum-thread-time">{item.lastActivity}</Text>
+                                            </td>
+                                        </tr>
+                                    </Item>
+                                </List>
+                            </tbody>
+                        </table>
+                    </Box>
+                </Box>
+            </Box>
+
+            <Box class="forum-sidebar">
+                <Box class="forum-card">
+                    <Box class="forum-card-header">
+                        <Box class="forum-section-title-wrap">
+                            <svg class="forum-icon forum-section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            </svg>
+                            <Text class="forum-card-title">$ system</Text>
+                        </Box>
+                    </Box>
+                    <List :items="systemStats" class="forum-kv-list">
+                        <Item class="forum-kv-row">
+                            <Text class="forum-kv-key">{item.key}</Text>
+                            <Text class="forum-kv-val">{item.value}</Text>
+                        </Item>
+                    </List>
+                </Box>
+
+                <Box class="forum-card">
+                    <Box class="forum-card-header">
+                        <Box class="forum-section-title-wrap">
+                            <svg class="forum-icon forum-section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <Text class="forum-card-title">$ top users</Text>
+                        </Box>
+                    </Box>
+                    <List :items="topUsers" class="forum-user-list">
+                        <Item class="forum-user-row">
+                            <Text class="forum-user-rank">{item.rank}</Text>
+                            <Text class="forum-user-name">{item.name}</Text>
+                            <Text class="forum-user-posts">{item.posts}</Text>
+                        </Item>
+                    </List>
+                </Box>
+
+                <Box class="forum-card">
+                    <Box class="forum-card-header">
+                        <Box class="forum-section-title-wrap">
+                            <svg class="forum-icon forum-section-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="8" rx="0" ry="0"></rect>
+                                <rect x="2" y="14" width="20" height="8" rx="0" ry="0"></rect>
+                                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                            </svg>
+                            <Text class="forum-card-title">$ servers</Text>
+                        </Box>
+                    </Box>
+                    <List :items="servers" class="forum-server-list">
+                        <Item class="forum-server-row">
+                            <Box class="forum-server-dot"></Box>
+                            <Text class="forum-server-name">{item.name}</Text>
+                            <Text class="forum-server-latency">{item.latency}</Text>
+                        </Item>
+                    </List>
+                </Box>
+            </Box>
+        </Box>
+
+        <Box class="forum-footer">
+            <Text class="forum-footer-text">$ echo "powered by asgard" | 2026</Text>
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let boards: list = [
+    { name: "#general", desc: "闲聊与公告", threads: "1.2k", lastPost: "2m ago" },
+    { name: "#tech", desc: "技术讨论", threads: "3.4k", lastPost: "12m ago" },
+    { name: "#awsl", desc: "AWSL 语言", threads: "876", lastPost: "1h ago" },
+    { name: "#asgard", desc: "Asgard 框架", threads: "1.5k", lastPost: "4h ago" },
+    { name: "#valkyrie", desc: "Valkyrie 编译器", threads: "642", lastPost: "1d ago" }
+]
+let threads: list = [
+    { title: "MIR 优化 pass 顺序对性能的影响", author: "@compiler_guru", replies: "42", views: "1.2k", lastActivity: "5m" },
+    { title: "AWSL `<loop>` 与 `<for>` 的语义差异", author: "@awsl_dev", replies: "18", views: "432", lastActivity: "22m" },
+    { title: "[ANN] asgard.ui.core 0.2.0 发布", author: "@release_bot", replies: "7", views: "89", lastActivity: "1h" },
+    { title: "native backend Raise lowering 在 Linux 上的实现", author: "@linux_hacker", replies: "31", views: "780", lastActivity: "2h" },
+    { title: "求助：微信小程序端 rpx 转换异常", author: "@mini_newbie", replies: "12", views: "156", lastActivity: "3h" },
+    { title: "RFC: 引入 effect handler 语法糖", author: "@lang_designer", replies: "56", views: "2.1k", lastActivity: "5h" },
+    { title: "benchmark: AOT 内联 vs 运行时主题切换", author: "@perf_nerd", replies: "9", views: "234", lastActivity: "8h" },
+    { title: "整理：标准库 effect carrier 类型清单", author: "@doc_master", replies: "4", views: "67", lastActivity: "1d" }
+]
+let systemStats: list = [
+    { key: "online", value: "234 users" },
+    { key: "threads", value: "7.6k" },
+    { key: "posts", value: "89.2k" },
+    { key: "uptime", value: "312d 4h" }
+]
+let topUsers: list = [
+    { rank: "01", name: "@compiler_guru", posts: "1.2k" },
+    { rank: "02", name: "@awsl_dev", posts: "987" },
+    { rank: "03", name: "@perf_nerd", posts: "765" },
+    { rank: "04", name: "@lang_designer", posts: "654" },
+    { rank: "05", name: "@doc_master", posts: "543" }
+]
+let servers: list = [
+    { name: "core-01", latency: "12ms", status: "ok" },
+    { name: "edge-as", latency: "28ms", status: "ok" },
+    { name: "db-shard-3", latency: "41ms", status: "ok" }
+]
+</script>
+<style>
+.forum-home {
+    font-family: var(--ui-font-mono);
+    color: var(--sys-text-primary);
+    background: var(--sys-background);
+    min-height: 100vh;
+}
+.forum-home-inner {
+    max-width: var(--ui-content-max, 1200px);
+    margin: 0 auto;
+    padding: var(--ui-space-lg);
+}
+.forum-home-layout {
+    display: flex;
+    gap: var(--ui-space-lg);
+    align-items: flex-start;
+}
+.forum-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-lg);
+}
+.forum-sidebar {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-md);
+}
+.forum-section {
+    border: 1px solid var(--sys-border);
+    background: var(--sys-surface);
+}
+.forum-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ui-space-sm) var(--ui-space-md);
+    border-bottom: 1px solid var(--sys-border);
+    background: var(--sys-surface-muted, var(--sys-surface));
+}
+.forum-section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-sm);
+}
+.forum-section-icon {
+    color: var(--sys-accent);
+    flex-shrink: 0;
+}
+.forum-section-title {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-base, 15px);
+    font-weight: 700;
+    color: var(--sys-text-primary);
+}
+.forum-section-count {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+}
+.forum-icon {
+    stroke-width: var(--ui-icon-stroke, 2);
+}
+.forum-board-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.forum-board-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ui-space-sm) var(--ui-space-md);
+    border-bottom: 1px solid var(--sys-border);
+}
+.forum-board-row:last-child {
+    border-bottom: none;
+}
+.forum-board-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-xs, 4px);
+}
+.forum-board-name {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-base, 15px);
+    font-weight: 700;
+    color: var(--sys-accent);
+}
+.forum-board-desc {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-board-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--ui-space-xs, 4px);
+}
+.forum-board-threads {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-board-time {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+}
+.forum-table-wrap {
+    overflow-x: auto;
+}
+.forum-thread-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--ui-font-mono);
+}
+.forum-th {
+    text-align: left;
+    padding: var(--ui-space-sm) var(--ui-space-md);
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    font-weight: 700;
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+    text-transform: lowercase;
+    border-bottom: 1px solid var(--sys-border);
+    background: var(--sys-surface-muted, var(--sys-surface));
+}
+.forum-th-num {
+    text-align: right;
+}
+.forum-thread-row {
+    border-bottom: 1px solid var(--sys-border);
+}
+.forum-thread-row:last-child {
+    border-bottom: none;
+}
+.forum-td {
+    padding: var(--ui-space-sm) var(--ui-space-md);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--sys-border);
+}
+.forum-td-num {
+    text-align: right;
+}
+.forum-thread-title {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-primary);
+    cursor: pointer;
+}
+.forum-thread-title:hover {
+    color: var(--sys-accent);
+    text-decoration: underline;
+}
+.forum-thread-author {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-thread-num {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-thread-time {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+}
+.forum-card {
+    border: 1px solid var(--sys-border);
+    background: var(--sys-surface);
+}
+.forum-card-header {
+    padding: var(--ui-space-sm) var(--ui-space-md);
+    border-bottom: 1px solid var(--sys-border);
+    background: var(--sys-surface-muted, var(--sys-surface));
+}
+.forum-card-title {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    font-weight: 700;
+    color: var(--sys-text-primary);
+}
+.forum-kv-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.forum-kv-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--ui-space-xs, 4px) var(--ui-space-md);
+    border-bottom: 1px solid var(--sys-border);
+}
+.forum-kv-row:last-child {
+    border-bottom: none;
+}
+.forum-kv-key {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-kv-val {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-primary);
+    font-weight: 700;
+}
+.forum-user-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.forum-user-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-sm);
+    padding: var(--ui-space-xs, 4px) var(--ui-space-md);
+    border-bottom: 1px solid var(--sys-border);
+}
+.forum-user-row:last-child {
+    border-bottom: none;
+}
+.forum-user-rank {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+    width: 24px;
+}
+.forum-user-name {
+    flex: 1;
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-accent);
+}
+.forum-user-posts {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-secondary);
+}
+.forum-server-list {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.forum-server-row {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-sm);
+    padding: var(--ui-space-xs, 4px) var(--ui-space-md);
+    border-bottom: 1px solid var(--sys-border);
+}
+.forum-server-row:last-child {
+    border-bottom: none;
+}
+.forum-server-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sys-success);
+    flex-shrink: 0;
+}
+.forum-server-name {
+    flex: 1;
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-sm, 13px);
+    color: var(--sys-text-primary);
+}
+.forum-server-latency {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    color: var(--sys-text-secondary);
+}
+.forum-footer {
+    margin-top: var(--ui-space-lg);
+    padding: var(--ui-space-md);
+    border-top: 1px solid var(--sys-border);
+    text-align: center;
+}
+.forum-footer-text {
+    font-family: var(--ui-font-mono);
+    font-size: var(--ui-font-size-xs, 12px);
+    color: var(--sys-text-tertiary, var(--sys-text-secondary));
+}
+</style>

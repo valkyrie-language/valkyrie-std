@@ -1,0 +1,10 @@
+{
+    name: "gnosis.scene",
+    version: "workspace",
+    description: "2D 物理最小集 — circle/aabb/spatial_hash/collision_query/kinematics",
+    author: "Valkyrie Team",
+    auto_link: { core: true, std: true, "gnosis": true },
+    dependencies: { "gnosis": { version: "workspace" } },
+    build: [{ target: "nyar" }],
+    engines: { vcc: "0.1.*" }
+}

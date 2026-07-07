@@ -1,31 +1,31 @@
-<widget>
-    <div class="components-page">
-        <h1 class="page-title">组件库</h1>
-        <p class="page-desc">VOA 提供 {length(allDocs)} 个内置组件，覆盖通用、布局、表单、数据展示、反馈五大类。</p>
+<widget components>
+<div class="components-page">
+    <h1 class="page-title">组件库</h1>
+    <p class="page-desc">VOA 提供 {length(allDocs)} 个内置组件，覆盖通用、布局、表单、数据展示、反馈五大类。</p>
 
-        <div class="comp-grid">
-            <for each={allDocs}>
-                <Link href={"/components/" + doc.name}>
-                    <Card variant="bordered" class="comp-card">
-                        <div class="comp-card-header">
-                            <span class="comp-card-name">{doc.name}</span>
-                            <Badge variant="info" size="small">{doc.category}</Badge>
-                        </div>
-                        <p class="comp-card-desc">{doc.description}</p>
-                        <div class="comp-card-meta">
-                            <span>{length(doc.props)} props</span>
-                            <span>{length(doc.events)} events</span>
-                            <span>{length(doc.slots)} slots</span>
-                        </div>
-                    </Card>
-                </Link>
-            </for>
-        </div>
+    <div class="comp-grid">
+        <loop doc in allDocs>
+            <Link :href=""/components/" + doc.name">
+                <Card variant="bordered" class="comp-card">
+                    <div class="comp-card-header">
+                        <span class="comp-card-name">{doc.name}</span>
+                        <Badge variant="info" size="small">{doc.category}</Badge>
+                    </div>
+                    <p class="comp-card-desc">{doc.description}</p>
+                    <div class="comp-card-meta">
+                        <span>{length(doc.props)} props</span>
+                        <span>{length(doc.events)} events</span>
+                        <span>{length(doc.slots)} slots</span>
+                    </div>
+                </Card>
+            </Link>
+        </loop>
     </div>
+</div>
 </widget>
 
 <script>
-    let allDocs = get_component_docs()
+let allDocs = get_component_docs()
 </script>
 
 <style>

@@ -2,7 +2,7 @@
 
 L2 自举分 **CLR**（NuGet）与 **Node**（**npm / JSR**）两条并行轨，完整契约见：
 
-**[projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md](../../../../projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)**
+**[projects/legion._/projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md](../../../../projects/legion._/projects/legion.tools/documentation/pages/zh-hans/bootstrap-contract.md)**
 
 | 轨 | 目标 | 验收 | 发布 |
 |:---|:---|:---|:---|

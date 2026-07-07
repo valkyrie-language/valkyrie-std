@@ -2,18 +2,18 @@
 
 ## 教程一：个人博客
 
-**技术栈**：`voa-core` + `voa-seo` + SSR
+**技术栈**：Asgard/VOA（**SSG 默认**）+ 可选 SEO 元标签
 
 **功能**：
 
 - `pages/` 文件路由（首页 / 文章详情 / 关于页）
-- SSR 渲染 + SEO 元标签
+- SSG 静态页 + hydrated 岛（非整站 SSR / LiveView）
 - `<Head>` 动态标题
 - `<Breadcrumb>` 面包屑导航
 - Markdown 文章存储（`wasi-filesystem`）
 - 暗色/亮色主题切换
 
-**学习目标**：SSR、SEO、文件路由、动态路由
+**学习目标**：SSG、SEO、文件路由、动态路由；Atlas server 岛为 **planned**
 
 ---
 
@@ -98,6 +98,6 @@ voa-tutorials/
 
 每个教程目录含：
 
-- `voa.config.v` — VOA 项目配置
+- `asgard.config.v` — VOA 项目配置
 - `source/` — 源码（`.v` + `.awsl`）
 - `assets/` — 静态资源

@@ -2,12 +2,16 @@ namespace std.collection;
 
 [clr("System.Runtime", "System.Array")]
 [jvm("java.lang.Object[]")]
-class Array<T> {}
+class Array<T> {
+    _address: usize,
+    _length: usize,
+    _typing: Phantom<T>
+}
 
 imply Array<T> {
     [host_contract]
     micro length(self): usize {
-        return self.length
+        return __array_len(self)
     }
 
     micro is_empty(self): bool {
@@ -15,10 +19,14 @@ imply Array<T> {
     }
 
     [host_contract]
-    micro get(self, ordinal: usize): Option<T>
+    micro get(self, ordinal: usize): Option<T> {
+
+    }
 
     [host_contract]
-    micro set(mut self, ordinal: usize, value: T): unit
+    micro set(mut self, ordinal: usize, value: T): unit {
+
+    }
 
     micro first(self): Option<T> {
         return self.get(1)
@@ -46,22 +54,30 @@ imply Array<T> {
         return false
     }
 
-    suffix `[ ]`(self, ordinal: usize): Option<T> {
+    # Names must match HIR sugar (`suffix []` / `suffix ⁅⁆`) with no interior spaces.
+    suffix `[]`(self, ordinal: usize): Option<T> {
         return self.get(ordinal)
     }
 
-    suffix `[ ]=`(mut self, ordinal: usize, value: T): unit {
+    suffix `[]=`(mut self, ordinal: usize, value: T): unit {
         self.set(ordinal, value)
     }
 
-    suffix `⁅ ⁆`(self, cardinal: usize): Option<T> {
+    suffix `⁅⁆`(self, cardinal: usize): Option<T> {
         return self.get(cardinal + 1)
     }
 
-    suffix `⁅ ⁆=`(mut self, cardinal: usize, value: T): unit {
+    suffix `⁅⁆=`(mut self, cardinal: usize, value: T): unit {
         self.set(cardinal + 1, value)
     }
 }
+
+[intrinsic("array.len")]
+private micro __array_len<T>(self: Array<T>): usize { }
+
+# Functional append: `result = push(result, item)`. Backends expand `[intrinsic("array.push")]`.
+[intrinsic("array.push")]
+micro push<T>(array: Array<T>, value: T): Array<T> { }
 
 structure ArrayIterator<T> {
     _array: Array<T>

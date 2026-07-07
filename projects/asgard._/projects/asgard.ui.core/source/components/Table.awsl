@@ -1,0 +1,126 @@
+<widget Table>
+<Box @class="ui-table ui-table-{size} {bordered ? 'ui-table-bordered' : ''}">
+    <if :condition="loading">
+        <Box class="ui-table-loading">
+            <Box class="ui-table-loading-bar"></Box>
+        </Box>
+        <else />
+    </if>
+    <Box class="ui-table-scroll">
+        <table class="ui-table-inner">
+            <thead class="ui-table-head">
+                <tr class="ui-table-row">
+                    <loop item="col" :each="{columns}">
+                        <th class="ui-table-cell ui-table-head-cell" :style="colStyle(col)" :align="col.align">{col.title}</th>
+                    </loop>
+                </tr>
+            </thead>
+            <tbody class="ui-table-body">
+                <loop item="row" :each="{dataSource}">
+                    <tr class="ui-table-row ui-table-body-row" @click="handleRowClick(row)">
+                        <loop item="col" :each="{columns}">
+                            <td class="ui-table-cell ui-table-body-cell" :align="col.align">{row[col.key]}</td>
+                        </loop>
+                    </tr>
+                </loop>
+            </tbody>
+        </table>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let columns: list = []
+let dataSource: list = []
+let bordered: bool = false
+let size: utf8 = "md"
+let loading: bool = false
+
+micro handleRowClick(row) {
+    emit("rowClick", { row: row })
+}
+
+micro colStyle(col) {
+    if col.width != "" {
+        return "width: " + col.width + ";"
+    }
+return ""
+}
+</script>
+<style>
+.ui-table {
+    position: relative;
+    width: 100%;
+    background: var(--sys-surface);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+}
+.ui-table-bordered {
+    border: 1px solid var(--sys-outline);
+}
+.ui-table-scroll {
+    width: 100%;
+    overflow-x: auto;
+}
+.ui-table-inner {
+    width: 100%;
+    border-collapse: collapse;
+}
+.ui-table-head {
+    background: var(--sys-surface-hover);
+}
+.ui-table-head-cell {
+    font-weight: 600;
+    color: var(--sys-on-bg-secondary);
+    text-align: left;
+    white-space: nowrap;
+}
+.ui-table-body-cell {
+    color: var(--sys-on-bg);
+}
+.ui-table-cell {
+    padding: var(--ui-space-3) var(--ui-space-4);
+    font-size: var(--ui-fs-sm);
+    line-height: var(--ui-lh-normal);
+}
+.ui-table-sm .ui-table-cell {
+    padding: var(--ui-space-2) var(--ui-space-3);
+    font-size: var(--ui-fs-xs);
+}
+.ui-table-lg .ui-table-cell {
+    padding: var(--ui-space-4) var(--ui-space-5);
+    font-size: var(--ui-fs-base);
+}
+.ui-table-bordered .ui-table-cell {
+    border-right: 1px solid var(--sys-outline);
+}
+.ui-table-bordered .ui-table-cell:last-child {
+    border-right: none;
+}
+.ui-table-body-row {
+    transition: background var(--ui-duration-1) var(--ui-easing);
+    border-top: 1px solid var(--sys-outline);
+    cursor: pointer;
+}
+.ui-table-body-row:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-table-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    overflow: hidden;
+    z-index: var(--ui-z-sticky);
+}
+.ui-table-loading-bar {
+    height: 100%;
+    background: var(--sys-primary);
+    animation: ui-table-load 1.2s ease-in-out infinite;
+}
+@keyframes ui-table-load {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+</style>

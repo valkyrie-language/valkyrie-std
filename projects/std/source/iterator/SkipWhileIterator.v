@@ -1,3 +1,8 @@
+<% match arch %>
+<% case "clr" %>
+namespace std.iterator;
+# CLR: function-valued iterator adapters deferred (field call → DynamicInvoke).
+<% else %>
 namespace std.iterator;
 
 structure SkipWhileIterator<T, I> {
@@ -24,9 +29,11 @@ imply SkipWhileIterator<T, I>: Iterator {
             }
 
             self._skipped = true
-            return None
+            return option_none::<Item>()
         }
 
         return self._iter.next()
     }
 }
+
+<% end %>

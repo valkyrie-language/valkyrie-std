@@ -1,0 +1,29 @@
+namespace std.effect;
+
+using std.async;
+
+# 异步等待效应
+# 用于标记一个异步操作，等待 Future 完成
+# 约束 F 必须实现 Future trait
+structure Await<F: Future> {
+    future: F
+}
+
+# 异步唤醒效应
+# 用于标记一个 Future 已完成，需要恢复执行
+# 约束 F 必须实现 Future trait
+structure Awake<F: Future> {
+    future: F
+}
+
+# 为 Await<F> 实现 Effectful trait
+# 等待完成后恢复为 Future 的 Output 类型
+imply Await<F>: Effectful {
+    type Resume = F::Output;
+}
+
+# 为 Awake<F> 实现 Effectful trait
+# 唤醒后恢复为 ()
+imply Awake<F>: Effectful {
+    type Resume = ();
+}

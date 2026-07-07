@@ -1,0 +1,130 @@
+<widget CheckboxField>
+<label @class="ui-checkbox ui-checkbox-{size} {disabled ? 'ui-checkbox-disabled' : ''}">
+    <Text @class="ui-checkbox-box {isChecked ? 'ui-checkbox-checked' : ''} {indeterminate ? 'ui-checkbox-indeterminate' : ''}">
+        <input class="ui-checkbox-input" type="checkbox" :checked="isChecked" :disabled="disabled" @change="handleChange" />
+        <if :condition="indeterminate">
+            <svg class="ui-checkbox-icon" viewBox="0 0 24 24" width="14" height="14">
+                <path class="ui-checkbox-path" d="M5 12h14" />
+            </svg>
+            <else />
+            <if :condition="isChecked">
+                <svg class="ui-checkbox-icon" viewBox="0 0 24 24" width="14" height="14">
+                    <path class="ui-checkbox-path" d="M20 6 9 17l-5-5" />
+                </svg>
+                <else />
+            </if>
+        </if>
+    </Text>
+    <if :condition="label">
+        <Text class="ui-checkbox-label">{label}</Text>
+        <else />
+    </if>
+</label>
+</widget>
+
+<script>
+let checked: bool = false
+let indeterminate: bool = false
+let disabled: bool = false
+let label: utf8 = ""
+let size: utf8 = "md"
+let mut isChecked: bool = false
+
+micro handleChange(e: InputEvent) {
+    if disabled { return }
+    isChecked = e.target.checked
+    emit("change", { checked: isChecked })
+}
+
+micro onMount() {
+    isChecked = checked
+}
+</script>
+<style>
+.ui-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    cursor: pointer;
+    user-select: none;
+    font-family: var(--ui-font-sans);
+    color: var(--sys-on-bg);
+}
+.ui-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+.ui-checkbox-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-checkbox-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-checkbox-checked {
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+}
+.ui-checkbox-indeterminate {
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+}
+.ui-checkbox-icon {
+    opacity: 1;
+}
+.ui-checkbox-path {
+    fill: none;
+    stroke: var(--sys-on-primary);
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-checkbox-xs .ui-checkbox-box {
+    width: var(--ui-fs-sm);
+    height: var(--ui-fs-sm);
+}
+.ui-checkbox-xs .ui-checkbox-label {
+    font-size: var(--ui-fs-xs);
+}
+.ui-checkbox-sm .ui-checkbox-box {
+    width: var(--ui-fs-base);
+    height: var(--ui-fs-base);
+}
+.ui-checkbox-sm .ui-checkbox-label {
+    font-size: var(--ui-fs-sm);
+}
+.ui-checkbox-md .ui-checkbox-box {
+    width: var(--ui-fs-lg);
+    height: var(--ui-fs-lg);
+}
+.ui-checkbox-md .ui-checkbox-label {
+    font-size: var(--ui-fs-base);
+}
+.ui-checkbox-lg .ui-checkbox-box {
+    width: var(--ui-fs-h3);
+    height: var(--ui-fs-h3);
+}
+.ui-checkbox-lg .ui-checkbox-label {
+    font-size: var(--ui-fs-lg);
+}
+.ui-checkbox-label {
+    line-height: var(--ui-lh-tight);
+}
+.ui-checkbox-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-checkbox:focus-within .ui-checkbox-box {
+    box-shadow: 0 0 0 2px var(--sys-bg), 0 0 0 4px var(--sys-outline-focus);
+}
+
+</style>

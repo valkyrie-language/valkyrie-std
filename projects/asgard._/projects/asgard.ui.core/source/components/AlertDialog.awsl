@@ -1,0 +1,179 @@
+<widget AlertDialog>
+<if open>
+    <Box @class="ui-alert-dialog-overlay" @click="handleOverlayClick">
+        <Box @class="ui-alert-dialog ui-alert-dialog-{variant}" role="alertdialog" aria-modal="true">
+            <Box @class="ui-alert-dialog-header">
+                <Text @class="ui-alert-dialog-icon ui-alert-dialog-icon-{variant}">
+                    <if variant == "danger">
+                        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                            <path d="m15 9-6 6M9 9l6 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+                        </svg>
+                        <else/>
+                    </if>
+                    <if variant == "warning">
+                        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                            <path d="M12 9v4M12 17h.0M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                        </svg>
+                        <else/>
+                    </if>
+                    <if variant == "info">
+                        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                            <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.0" />
+                        </svg>
+                        <else/>
+                    </if>
+                </Text>
+                <Text @class="ui-alert-dialog-title">{title}</Text>
+            </Box>
+            <Box @class="ui-alert-dialog-body">
+                <slot />
+                <if description != "">
+                    <Text @class="ui-alert-dialog-desc">{description}</Text>
+                    <else/>
+                </if>
+            </Box>
+            <Box @class="ui-alert-dialog-footer">
+                <button @class="ui-alert-dialog-cancel" type="button" @click="handleCancel">{cancelText}</button>
+                <button @class="ui-alert-dialog-confirm ui-alert-dialog-confirm-{variant}" type="button" @click="handleConfirm">{confirmText}</button>
+            </Box>
+        </Box>
+    </Box>
+    <else/>
+</if>
+</widget>
+
+<script>
+let open: bool = false
+let title: utf8 = ""
+let description: utf8 = ""
+let confirmText: utf8 = "Confirm"
+let cancelText: utf8 = "Cancel"
+let variant: utf8 = "danger"
+
+micro handleOverlayClick(e: MouseEvent) {
+    if e.target == e.currentTarget {
+        emit("cancel", {})
+    }
+}
+
+micro handleCancel() {
+    emit("cancel", {})
+}
+
+micro handleConfirm() {
+    emit("confirm", {})
+}
+</script>
+
+<style>
+.ui-alert-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: var(--ui-z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--ui-space-6);
+    animation: ui-alert-dialog-overlay-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-alert-dialog {
+    background: var(--sys-surface);
+    border-radius: var(--sys-radius-lg);
+    box-shadow: var(--sys-shadow-lg);
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: ui-alert-dialog-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-alert-dialog-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ui-space-3);
+    padding: var(--ui-space-5) var(--ui-space-6) var(--ui-space-2);
+}
+.ui-alert-dialog-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ui-alert-dialog-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-alert-dialog-icon-danger { color: var(--sys-error); }
+.ui-alert-dialog-icon-warning { color: var(--sys-warning); }
+.ui-alert-dialog-icon-info { color: var(--sys-info); }
+.ui-alert-dialog-title {
+    margin: 0;
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    line-height: 1.4;
+}
+.ui-alert-dialog-body {
+    padding: 0 var(--ui-space-6) var(--ui-space-4);
+    color: var(--sys-on-bg-secondary);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-base);
+}
+.ui-alert-dialog-desc {
+    margin: 0;
+    line-height: 1.5;
+}
+.ui-alert-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--ui-space-3);
+    padding: var(--ui-space-4) var(--ui-space-6) var(--ui-space-5);
+    border-top: 1px solid var(--sys-outline);
+}
+.ui-alert-dialog-cancel {
+    height: var(--ui-control-h-md);
+    padding: 0 var(--ui-space-5);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-base);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-alert-dialog-cancel:hover {
+    background: var(--sys-surface-hover);
+    border-color: var(--sys-outline-focus);
+}
+.ui-alert-dialog-confirm {
+    height: var(--ui-control-h-md);
+    padding: 0 var(--ui-space-5);
+    border: 1px solid transparent;
+    color: var(--sys-on-primary);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-base);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-alert-dialog-confirm-danger { background: var(--sys-error); border-color: var(--sys-error); }
+.ui-alert-dialog-confirm-danger:hover { opacity: 0.9; }
+.ui-alert-dialog-confirm-warning { background: var(--sys-warning); border-color: var(--sys-warning); }
+.ui-alert-dialog-confirm-warning:hover { opacity: 0.9; }
+.ui-alert-dialog-confirm-info { background: var(--sys-primary); border-color: var(--sys-primary); }
+.ui-alert-dialog-confirm-info:hover { background: var(--sys-primary-hover); border-color: var(--sys-primary-hover); }
+@keyframes ui-alert-dialog-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes ui-alert-dialog-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+</style>

@@ -1,0 +1,8 @@
+<widget chart_coverage_features>
+<InteractiveColPlot :title="title" :series="series" />
+</widget>
+
+<script>
+let title: utf8 = __TITLE__
+let series: list = __SERIES__
+</script>

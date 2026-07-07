@@ -1,5 +1,6 @@
 {
     name: "std",
+    version: "2020.0.0.0",
     description: "Valkyrie 标准库 -- 跨平台统一接口, 编译时分发到各平台 SDK",
     auto_link: {
         core: true,
@@ -23,8 +24,7 @@
             target: "clr-microsoft-unknown-managed",
             msil: true,
             exclude_directories: [
-                "source/command",
-                "source/math/graph_theory"
+                "source/command"
             ],
             exclude_files: [
                 "source/collection/sorted/BTreeMap.v",
@@ -52,7 +52,15 @@
                 "test/collection/test_core_collection.v",
                 "source/text/Utf8Builder.v",
                 "source/text/Utf8View.v",
-                "source/text/utf8.v"
+                "source/text/utf8.v",
+                "source/iterator/FilterIterator.v",
+                "source/iterator/FilterMapIterator.v",
+                "source/iterator/MapIterator.v",
+                "source/iterator/SkipWhileIterator.v",
+                "source/iterator/TakeWhileIterator.v",
+                "source/collection/hashed/SwissTable.v",
+                "source/collection/hashed/SwissSet.v",
+                "source/collection/hashed/HashMultiSet.v"
             ]
         },
         {
@@ -95,9 +103,44 @@
             source_map: true,
             typescript: true,
             wat: true
+        },
+        {
+            target: "wasm32-node-unknown-wasm",
+            exclude_directories: [
+                "source/command",
+                "source/math/graph_theory"
+            ],
+            exclude_files: [
+                "source/collection/sorted/BTreeMap.v",
+                "source/collection/sorted/BTreeSet.v",
+                "source/collection/BitSet.v",
+                "source/collection/Deque.v",
+                "source/collection/Hash.v",
+                "source/collection/hashed/HashMap.v",
+                "source/collection/hashed/HashPrimitives.v",
+                "source/collection/hashed/HashSet.v",
+                "source/collection/ordered/OrderedMap.v",
+                "source/collection/ordered/OrderedSet.v",
+                "source/collection/LinkedList.v",
+                "source/collection/Map.v",
+                "source/collection/PriorityQueue.v",
+                "source/collection/Queue.v",
+                "source/collection/RingBuffer.v",
+                "source/collection/Set.v",
+                "source/collection/sort.v",
+                "source/collection/Stack.v",
+                "source/io/read.v",
+                "source/text/_.v",
+                "source/text/AsciiText.v",
+                "source/ffi/CText.v",
+                "test/collection/test_core_collection.v",
+                "source/text/Utf8Builder.v",
+                "source/text/Utf8View.v",
+                "source/text/utf8.v"
+            ]
         }
     ],
     engines: {
-        vcc: ">=0.1.0"
+        vcc: "0.1.*"
     }
 }

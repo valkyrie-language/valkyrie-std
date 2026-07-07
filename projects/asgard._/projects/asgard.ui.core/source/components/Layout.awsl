@@ -1,0 +1,64 @@
+<widget Layout>
+<Box @class="ui-layout {hasSider ? 'ui-layout-has-sider' : ''}">
+    <if :condition="hasSider">
+        <Box @class="ui-layout-sider" :style="f\&quot;width: {collapsed ? '0' : siderWidth}\&quot;">
+            <slot name="sider" />
+        </Box>
+        <else />
+    </if>
+    <Box @class="ui-layout-main">
+        <Box @class="ui-layout-header">
+            <slot name="header" />
+        </Box>
+        <Box @class="ui-layout-content">
+            <slot />
+        </Box>
+        <Box @class="ui-layout-footer">
+            <slot name="footer" />
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let hasSider: bool = false
+let siderWidth: utf8 = "240px"
+let collapsed: bool = false
+</script>
+<style>
+.ui-layout {
+    display: flex;
+    box-sizing: border-box;
+    min-height: 100%;
+    width: 100%;
+}
+.ui-layout-has-sider {
+    flex-direction: row;
+}
+.ui-layout-sider {
+    flex-shrink: 0;
+    overflow: hidden;
+    transition: width var(--ui-duration-2) var(--ui-easing);
+    box-sizing: border-box;
+}
+.ui-layout-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    box-sizing: border-box;
+}
+.ui-layout-header {
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+.ui-layout-content {
+    flex: 1;
+    box-sizing: border-box;
+}
+.ui-layout-footer {
+    flex-shrink: 0;
+    box-sizing: border-box;
+}
+
+</style>

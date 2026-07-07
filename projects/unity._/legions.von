@@ -1,0 +1,14 @@
+{
+    version: "1",
+    name: "unity-super-workspace",
+    members: [
+        "projects/unity.engine.sdk",
+        "projects/valkyrie.unity"
+    ],
+    dependencies: {},
+    workspace: {
+        author: "Valkyrie Team",
+        license: "MIT",
+        version: "0.1.0"
+    }
+}

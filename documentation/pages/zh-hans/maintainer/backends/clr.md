@@ -8,10 +8,13 @@
 
 进入 `CLR` 后端前，应当已经完成：
 
-- 语义闭合
-- `Partition`
-- `CLR` family 专属 lowering
+- 语义闭合（`nyar.language` AST→HIR→MIR）
+- `nyar.analyzer` / `nyar.optimizer`
+- 适配为中性 **`ExecutableModule`**（全称；禁止 `Exec` / `ExecModule`）
+- `Partition` 与 `CLR` family 专属 lane（`nyar.emitter` CLR：`ExecutableModule`→typed MSIL）
 - CLR 入口、程序集、元数据与宿主依赖的整理
+
+正式路径不是 `body_source→MSIL` 或 type-name 特判直出。`nyar.vm.clr` 只消费产物，不依赖 language。
 
 ## Validate
 

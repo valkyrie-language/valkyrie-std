@@ -1,0 +1,42 @@
+<widget Surface>
+<Box @class="ui-box ui-box-p-{p} ui-box-m-{m} ui-box-bg-{bg}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let as: utf8 = "div"
+let p: utf8 = ""
+let m: utf8 = ""
+let bg: utf8 = ""
+</script>
+<style>
+.ui-box {
+    display: block;
+    box-sizing: border-box;
+}
+.ui-box-p-1 { padding: var(--ui-space-1); }
+.ui-box-p-2 { padding: var(--ui-space-2); }
+.ui-box-p-3 { padding: var(--ui-space-3); }
+.ui-box-p-4 { padding: var(--ui-space-4); }
+.ui-box-p-5 { padding: var(--ui-space-5); }
+.ui-box-p-6 { padding: var(--ui-space-6); }
+.ui-box-p-8 { padding: var(--ui-space-8); }
+.ui-box-p-10 { padding: var(--ui-space-10); }
+.ui-box-p-12 { padding: var(--ui-space-12); }
+.ui-box-m-1 { margin: var(--ui-space-1); }
+.ui-box-m-2 { margin: var(--ui-space-2); }
+.ui-box-m-3 { margin: var(--ui-space-3); }
+.ui-box-m-4 { margin: var(--ui-space-4); }
+.ui-box-m-5 { margin: var(--ui-space-5); }
+.ui-box-m-6 { margin: var(--ui-space-6); }
+.ui-box-m-8 { margin: var(--ui-space-8); }
+.ui-box-m-10 { margin: var(--ui-space-10); }
+.ui-box-m-12 { margin: var(--ui-space-12); }
+.ui-box-bg-bg { background: var(--sys-bg); }
+.ui-box-bg-surface { background: var(--sys-surface); }
+.ui-box-bg-surface-hover { background: var(--sys-surface-hover); }
+.ui-box-bg-primary { background: var(--sys-primary); }
+.ui-box-bg-primary-container { background: var(--sys-primary-container); }
+
+</style>

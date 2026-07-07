@@ -1,0 +1,22 @@
+<widget Ellipsis>
+<Text @class="ui-ellipsis" :style="f\&quot;-webkit-line-clamp: {lineClamp}\&quot;">
+    <slot />
+</Text>
+</widget>
+
+<script>
+let lineClamp: utf8 = "1"
+let tooltip: bool = false
+</script>
+<style>
+.ui-ellipsis {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: break-word;
+    font-family: var(--ui-font-sans);
+    color: var(--sys-on-bg);
+}
+
+</style>

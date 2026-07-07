@@ -1,0 +1,151 @@
+<widget Alert>
+<if !closed>
+    <Box @class="ui-alert ui-alert-{variant} {closable ? 'ui-alert-closable' : ''}" role="alert">
+        <if icon>
+            <Text @class="ui-alert-icon">
+                <if variant == "success">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14.1l-3-3" />
+                    </svg>
+                    <else/>
+                </if>
+                <if variant == "error">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="m15 9-6 6M9 9l6 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+                    </svg>
+                    <else/>
+                </if>
+                <if variant == "warning">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M12 9v4M12 17h.0M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                    </svg>
+                    <else/>
+                </if>
+                <if variant == "info">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.0" />
+                    </svg>
+                    <else/>
+                </if>
+            </Text>
+            <else/>
+        </if>
+        <Box @class="ui-alert-content">
+            <if title != "">
+                <Box @class="ui-alert-title">{title}</Box>
+                <else/>
+            </if>
+            <Box @class="ui-alert-desc">
+                <slot />
+            </Box>
+        </Box>
+        <if closable>
+            <button @class="ui-alert-close" type="button" @click="handleClose" aria-label="Close">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+            <else/>
+        </if>
+    </Box>
+    <else/>
+</if>
+</widget>
+
+<script>
+let variant: utf8 = "info"
+let title: utf8 = ""
+let closable: bool = false
+let icon: bool = true
+let mut closed: bool = false
+
+micro handleClose() {
+    closed = true
+    emit("close", {})
+}
+</script>
+
+<style>
+.ui-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ui-space-3);
+    padding: var(--ui-space-4) var(--ui-space-5);
+    border-radius: var(--sys-radius-md);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    font-family: var(--ui-font-sans);
+}
+.ui-alert-success {
+    background: var(--sys-success);
+    border-color: var(--sys-success);
+    color: var(--sys-on-primary);
+}
+.ui-alert-error {
+    background: var(--sys-error);
+    border-color: var(--sys-error);
+    color: var(--sys-on-primary);
+}
+.ui-alert-warning {
+    background: var(--sys-warning);
+    border-color: var(--sys-warning);
+    color: var(--sys-on-primary);
+}
+.ui-alert-info {
+    background: var(--sys-info);
+    border-color: var(--sys-info);
+    color: var(--sys-on-primary);
+}
+.ui-alert-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.ui-alert-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-alert-content {
+    flex: 1;
+    min-width: 0;
+}
+.ui-alert-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 600;
+    margin-bottom: var(--ui-space-1);
+    line-height: 1.4;
+}
+.ui-alert-desc {
+    font-size: var(--ui-fs-sm);
+    line-height: 1.5;
+    opacity: 0.95;
+}
+.ui-alert-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: currentColor;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    opacity: 0.8;
+    transition: opacity var(--ui-duration-1) var(--ui-easing);
+}
+.ui-alert-close svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-alert-close:hover {
+    opacity: 1;
+}
+</style>

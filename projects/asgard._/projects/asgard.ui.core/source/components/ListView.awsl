@@ -1,0 +1,129 @@
+<widget ListView>
+<Box @class="ui-list ui-list-{size} {bordered ? 'ui-list-bordered' : ''}">
+    <if :condition="header">
+        <Box class="ui-list-header">{header}</Box>
+        <else />
+    </if>
+    <Box class="ui-list-body">
+        <loop item="item" :each="{items}">
+            <Box @class="ui-list-item {item.active ? 'ui-list-item-active' : ''}" @click="handleSelect(item)">
+                <if :condition="item.icon">
+                    <Text class="ui-list-item-icon">{item.icon}</Text>
+                    <else />
+                </if>
+                <Box class="ui-list-item-main">
+                    <Box class="ui-list-item-label">{item.label}</Box>
+                    <if :condition="item.description">
+                        <Box class="ui-list-item-desc">{item.description}</Box>
+                        <else />
+                    </if>
+                </Box>
+                <if :condition="item.badge">
+                    <Text class="ui-list-item-badge">{item.badge}</Text>
+                    <else />
+                </if>
+            </Box>
+        </loop>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+let header: utf8 = ""
+let bordered: bool = true
+let size: utf8 = "md"
+
+micro handleSelect(item) {
+    emit("select", { item: item })
+}
+</script>
+<style>
+.ui-list {
+    display: flex;
+    flex-direction: column;
+    background: var(--sys-surface);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+}
+.ui-list-bordered {
+    border: 1px solid var(--sys-outline);
+}
+.ui-list-header {
+    padding: var(--ui-space-3) var(--ui-space-4);
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--sys-on-bg-secondary);
+    border-bottom: 1px solid var(--sys-outline);
+}
+.ui-list-body {
+    display: flex;
+    flex-direction: column;
+}
+.ui-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-3);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    color: var(--sys-on-bg);
+}
+.ui-list-sm .ui-list-item {
+    padding: var(--ui-space-2) var(--ui-space-3);
+}
+.ui-list-md .ui-list-item {
+    padding: var(--ui-space-3) var(--ui-space-4);
+}
+.ui-list-lg .ui-list-item {
+    padding: var(--ui-space-4) var(--ui-space-5);
+}
+.ui-list-bordered .ui-list-item + .ui-list-item {
+    border-top: 1px solid var(--sys-outline);
+}
+.ui-list-item:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-list-item-active {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+}
+.ui-list-item-active:hover {
+    background: var(--sys-primary-container);
+}
+.ui-list-item-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.ui-list-item-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+    min-width: 0;
+}
+.ui-list-item-label {
+    font-size: var(--ui-fs-base);
+    font-weight: 500;
+    line-height: var(--ui-lh-tight);
+}
+.ui-list-sm .ui-list-item-label {
+    font-size: var(--ui-fs-sm);
+}
+.ui-list-item-desc {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-list-item-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--ui-space-2);
+    height: 18px;
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-primary);
+    color: var(--sys-on-primary);
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    flex-shrink: 0;
+}
+</style>

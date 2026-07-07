@@ -1,0 +1,7 @@
+{
+    name: "usize_cmp",
+    version: "0.1.0",
+    auto_link: { core: true, std: false },
+    dependencies: {},
+    build: [{ target: "clr", msil: true }]
+}

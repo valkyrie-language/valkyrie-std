@@ -1,0 +1,422 @@
+<widget Transfer>
+<Box @class="ui-transfer">
+    <Box @class="ui-transfer-panel">
+        <Box @class="ui-transfer-panel-header">
+            <input type="checkbox" @class="ui-transfer-checkbox" :checked="leftAllChecked" @change="toggleLeftAll" />
+            <Text @class="ui-transfer-panel-title">{titleLeft}</Text>
+            <Text @class="ui-transfer-panel-count">{leftSelected.length}/{leftData.length}</Text>
+        </Box>
+        <if :condition="filterable">
+            <Box @class="ui-transfer-panel-filter">
+                <input @class="ui-transfer-filter-input" type="text" placeholder="Search..." :value="leftFilter" @input="onLeftFilter" />
+            </Box>
+            <else />
+        </if>
+        <List @class="ui-transfer-list">
+            <loop item="item" :each="{filteredLeftData}">
+                <Item @class="ui-transfer-list-item {item.disabled ? 'ui-transfer-list-item-disabled' : ''}" @click="toggleLeftItem(item)">
+                    <input type="checkbox" @class="ui-transfer-checkbox" :checked="isLeftSelected(item)" :disabled="item.disabled" />
+                    <Text @class="ui-transfer-list-label">{item.label}</Text>
+                </Item>
+            </loop>
+            <if :condition="filteredLeftData.length == 0">
+                <Item @class="ui-transfer-list-empty">No data</Item>
+                <else />
+            </if>
+        </List>
+    </Box>
+    <Box @class="ui-transfer-operations">
+        <button @class="ui-transfer-btn" :disabled="leftSelected.length == 0 || oneWay" type="button" @click="toRight">
+            <svg @class="ui-transfer-btn-svg" viewBox="0 0 24 24" width="16" height="16">
+                <path d="m9 18 6-6-6-6" />
+            </svg>
+        </button>
+        <if :condition="!oneWay">
+            <button @class="ui-transfer-btn" :disabled="rightSelected.length == 0" type="button" @click="toLeft">
+                <svg @class="ui-transfer-btn-svg" viewBox="0 0 24 24" width="16" height="16">
+                    <path d="m15 18-6-6 6-6" />
+                </svg>
+            </button>
+            <else />
+        </if>
+    </Box>
+    <Box @class="ui-transfer-panel">
+        <Box @class="ui-transfer-panel-header">
+            <input type="checkbox" @class="ui-transfer-checkbox" :checked="rightAllChecked" @change="toggleRightAll" />
+            <Text @class="ui-transfer-panel-title">{titleRight}</Text>
+            <Text @class="ui-transfer-panel-count">{rightSelected.length}/{rightData.length}</Text>
+        </Box>
+        <if :condition="filterable">
+            <Box @class="ui-transfer-panel-filter">
+                <input @class="ui-transfer-filter-input" type="text" placeholder="Search..." :value="rightFilter" @input="onRightFilter" />
+            </Box>
+            <else />
+        </if>
+        <List @class="ui-transfer-list">
+            <loop item="item" :each="{filteredRightData}">
+                <Item @class="ui-transfer-list-item {item.disabled ? 'ui-transfer-list-item-disabled' : ''}" @click="toggleRightItem(item)">
+                    <input type="checkbox" @class="ui-transfer-checkbox" :checked="isRightSelected(item)" :disabled="item.disabled" />
+                    <Text @class="ui-transfer-list-label">{item.label}</Text>
+                </Item>
+            </loop>
+            <if :condition="filteredRightData.length == 0">
+                <Item @class="ui-transfer-list-empty">No data</Item>
+                <else />
+            </if>
+        </List>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let dataSource: list = []
+let targetKeys: list = []
+let titles: list = ["Source", "Target"]
+let filterable: bool = true
+let oneWay: bool = false
+
+let mut leftSelected: list = []
+let mut rightSelected: list = []
+let mut leftFilter: utf8 = ""
+let mut rightFilter: utf8 = ""
+
+micro titleLeft() {
+    if titles.length > 0 {
+        return titles[0]
+    }
+return "Source"
+}
+
+micro titleRight() {
+    if titles.length > 1 {
+        return titles[1]
+    }
+return "Target"
+}
+
+micro leftData() {
+    let data: list = []
+    let i: i32 = 0
+    while i < dataSource.length {
+        if indexOf(targetKeys, dataSource[i].key) < 0 {
+            data = push(data, dataSource[i])
+        }
+    i = i + 1
+}
+return data
+}
+
+micro rightData() {
+    let data: list = []
+    let i: i32 = 0
+    while i < dataSource.length {
+        if indexOf(targetKeys, dataSource[i].key) >= 0 {
+            data = push(data, dataSource[i])
+        }
+    i = i + 1
+}
+return data
+}
+
+micro filteredLeftData() {
+    if leftFilter == "" {
+        return leftData()
+    }
+let data: list = []
+let i: i32 = 0
+let src: list = leftData()
+while i < src.length {
+    if contains(src[i].label, leftFilter) {
+        data = push(data, src[i])
+    }
+i = i + 1
+}
+return data
+}
+
+micro filteredRightData() {
+    if rightFilter == "" {
+        return rightData()
+    }
+let data: list = []
+let i: i32 = 0
+let src: list = rightData()
+while i < src.length {
+    if contains(src[i].label, rightFilter) {
+        data = push(data, src[i])
+    }
+i = i + 1
+}
+return data
+}
+
+micro onLeftFilter(e) {
+    leftFilter = e.target.value
+}
+
+micro onRightFilter(e) {
+    rightFilter = e.target.value
+}
+
+micro isLeftSelected(item) {
+    return indexOf(leftSelected, item.key) >= 0
+}
+
+micro isRightSelected(item) {
+    return indexOf(rightSelected, item.key) >= 0
+}
+
+micro toggleLeftItem(item) {
+    if item.disabled {
+        return
+    }
+let idx: i32 = indexOf(leftSelected, item.key)
+if idx >= 0 {
+    leftSelected = splice(leftSelected, idx, 1)
+} else {
+leftSelected = push(leftSelected, item.key)
+}
+}
+
+micro toggleRightItem(item) {
+    if item.disabled {
+        return
+    }
+let idx: i32 = indexOf(rightSelected, item.key)
+if idx >= 0 {
+    rightSelected = splice(rightSelected, idx, 1)
+} else {
+rightSelected = push(rightSelected, item.key)
+}
+}
+
+micro leftAllChecked() {
+    let data: list = filteredLeftData()
+    if data.length == 0 {
+        return false
+    }
+let i: i32 = 0
+while i < data.length {
+    if !data[i].disabled && indexOf(leftSelected, data[i].key) < 0 {
+        return false
+    }
+i = i + 1
+}
+return true
+}
+
+micro rightAllChecked() {
+    let data: list = filteredRightData()
+    if data.length == 0 {
+        return false
+    }
+let i: i32 = 0
+while i < data.length {
+    if !data[i].disabled && indexOf(rightSelected, data[i].key) < 0 {
+        return false
+    }
+i = i + 1
+}
+return true
+}
+
+micro toggleLeftAll() {
+    let data: list = filteredLeftData()
+    if leftAllChecked() {
+        let i: i32 = 0
+        while i < data.length {
+            let idx: i32 = indexOf(leftSelected, data[i].key)
+            if idx >= 0 {
+                leftSelected = splice(leftSelected, idx, 1)
+            }
+        i = i + 1
+    }
+} else {
+let i: i32 = 0
+while i < data.length {
+    if !data[i].disabled && indexOf(leftSelected, data[i].key) < 0 {
+        leftSelected = push(leftSelected, data[i].key)
+    }
+i = i + 1
+}
+}
+}
+
+micro toggleRightAll() {
+    let data: list = filteredRightData()
+    if rightAllChecked() {
+        let i: i32 = 0
+        while i < data.length {
+            let idx: i32 = indexOf(rightSelected, data[i].key)
+            if idx >= 0 {
+                rightSelected = splice(rightSelected, idx, 1)
+            }
+        i = i + 1
+    }
+} else {
+let i: i32 = 0
+while i < data.length {
+    if !data[i].disabled && indexOf(rightSelected, data[i].key) < 0 {
+        rightSelected = push(rightSelected, data[i].key)
+    }
+i = i + 1
+}
+}
+}
+
+micro toRight() {
+    let i: i32 = 0
+    while i < leftSelected.length {
+        targetKeys = push(targetKeys, leftSelected[i])
+        i = i + 1
+    }
+leftSelected = []
+emit("change", { targetKeys: targetKeys, direction: "right" })
+}
+
+micro toLeft() {
+    let i: i32 = 0
+    while i < rightSelected.length {
+        let idx: i32 = indexOf(targetKeys, rightSelected[i])
+        if idx >= 0 {
+            targetKeys = splice(targetKeys, idx, 1)
+        }
+    i = i + 1
+}
+rightSelected = []
+emit("change", { targetKeys: targetKeys, direction: "left" })
+}
+</script>
+<style>
+.ui-transfer {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-3);
+    font-family: var(--ui-font-sans);
+}
+.ui-transfer-panel {
+    display: flex;
+    flex-direction: column;
+    width: 200px;
+    height: 280px;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    overflow: hidden;
+}
+.ui-transfer-panel-header {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding: var(--ui-space-2) var(--ui-space-3);
+    border-bottom: 1px solid var(--sys-outline);
+    background: var(--sys-surface-hover);
+}
+.ui-transfer-panel-title {
+    flex: 1;
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+}
+.ui-transfer-panel-count {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-transfer-panel-filter {
+    padding: var(--ui-space-2);
+    border-bottom: 1px solid var(--sys-outline);
+}
+.ui-transfer-filter-input {
+    width: 100%;
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-2);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    font-size: var(--ui-fs-xs);
+    outline: none;
+    transition: border-color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-transfer-filter-input:focus {
+    border-color: var(--sys-outline-focus);
+}
+.ui-transfer-list {
+    flex: 1;
+    list-style: none;
+    margin: 0;
+    padding: var(--ui-space-1);
+    overflow-y: auto;
+}
+.ui-transfer-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding: var(--ui-space-1) var(--ui-space-2);
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-transfer-list-item:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-transfer-list-item-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.ui-transfer-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--sys-primary);
+    flex-shrink: 0;
+}
+.ui-transfer-list-label {
+    flex: 1;
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ui-transfer-list-empty {
+    text-align: center;
+    padding: var(--ui-space-4);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-transfer-operations {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-2);
+}
+.ui-transfer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-transfer-btn:hover:not(:disabled) {
+    border-color: var(--sys-outline-focus);
+    background: var(--sys-surface-hover);
+}
+.ui-transfer-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.ui-transfer-btn-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+</style>

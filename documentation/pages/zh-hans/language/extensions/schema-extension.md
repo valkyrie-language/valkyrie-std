@@ -2,6 +2,8 @@
 
 Valkyrie 语言的 Schema 扩展为数据模式定义提供声明式语法，用于游戏配置、资源描述和网络协议。
 
+命名对齐 C# 侧 **Hermes**。对 Atlas：Hermes 是 schema 真源与默认 query；执行走 **Query IR**。详见 [Query IR](../../../../../projects/atlas._/projects/atlas/documentation/pages/zh-hans/data-access/query-ir.md) 与 [数据访问总览](../../../../../projects/atlas._/projects/atlas/documentation/pages/zh-hans/data-access/index.md)。与 **yyds** 无关。
+
 ## 设计理念
 
 游戏引擎需要大量结构化数据定义（配置文件、资源清单、网络消息），Schema 扩展采用三维正交设计：

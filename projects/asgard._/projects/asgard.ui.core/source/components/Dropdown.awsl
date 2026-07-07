@@ -1,0 +1,163 @@
+<widget Dropdown>
+<Text @class="ui-dropdown-wrapper" @click="handleToggle" @mouseenter="handleEnter" @mouseleave="handleLeave">
+    <Text @class="ui-dropdown-trigger">
+        <slot />
+    </Text>
+    <if :condition="isOpen">
+        <Box @class="ui-dropdown ui-dropdown-{placement}">
+            <loop item="item" :each="{items}">
+                <if :condition="item.divider">
+                    <Box @class="ui-dropdown-divider"></Box>
+                    <else />
+                    <Box @class="ui-dropdown-item {item.disabled ? 'ui-dropdown-item-disabled' : ''} {item.children ? 'ui-dropdown-item-parent' : ''}" @click="handleSelect(item)">
+                        <if :condition="item.icon != &quot;&quot;">
+                            <svg @class="ui-dropdown-item-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                                <path :d="item.icon" />
+                            </svg>
+                            <else />
+                        </if>
+                        <Text @class="ui-dropdown-item-label">{item.label}</Text>
+                    </Box>
+                    <if :condition="item.children">
+                        <Box @class="ui-dropdown-submenu">
+                            <loop item="child" :each="{item.children}">
+                                <Box @class="ui-dropdown-item ui-dropdown-submenu-item {child.disabled ? 'ui-dropdown-item-disabled' : ''}" @click="handleSelect(child)">
+                                    <if :condition="child.icon != &quot;&quot;">
+                                        <svg @class="ui-dropdown-item-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                                            <path :d="child.icon" />
+                                        </svg>
+                                        <else />
+                                    </if>
+                                    <Text @class="ui-dropdown-item-label">{child.label}</Text>
+                                </Box>
+                            </loop>
+                        </Box>
+                        <else />
+                    </if>
+                </if>
+            </loop>
+        </Box>
+        <else />
+    </if>
+</Text>
+</widget>
+
+<script>
+let items: list = []
+let trigger: utf8 = "click"
+let placement: utf8 = "bottom-start"
+let mut isOpen: bool = false
+
+micro handleToggle() {
+    if trigger == "click" {
+        isOpen = !isOpen
+    }
+}
+
+micro handleEnter() {
+    if trigger == "hover" {
+        isOpen = true
+    }
+}
+
+micro handleLeave() {
+    if trigger == "hover" {
+        isOpen = false
+    }
+}
+
+micro handleSelect(item) {
+    if item.disabled { return }
+    if item.children { return }
+    isOpen = false
+    emit("select", {key: item.key})
+}
+</script>
+<style>
+.ui-dropdown-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+.ui-dropdown-trigger {
+    display: inline-flex;
+}
+.ui-dropdown {
+    position: absolute;
+    z-index: var(--ui-z-dropdown);
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    padding: var(--ui-space-1);
+    min-width: 160px;
+    animation: ui-dropdown-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-dropdown-bottom-start {
+    top: 100%;
+    left: 0;
+    margin-top: var(--ui-space-1);
+}
+.ui-dropdown-bottom-end {
+    top: 100%;
+    right: 0;
+    margin-top: var(--ui-space-1);
+}
+.ui-dropdown-top-start {
+    bottom: 100%;
+    left: 0;
+    margin-bottom: var(--ui-space-1);
+}
+.ui-dropdown-top-end {
+    bottom: 100%;
+    right: 0;
+    margin-bottom: var(--ui-space-1);
+}
+.ui-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding: 0 var(--ui-space-3);
+    height: var(--ui-control-h-sm);
+    border-radius: var(--sys-radius-sm);
+    color: var(--sys-on-bg);
+    cursor: pointer;
+    font-size: var(--ui-fs-sm);
+    font-family: var(--ui-font-sans);
+    transition: background var(--ui-duration-1) var(--ui-easing);
+    white-space: nowrap;
+}
+.ui-dropdown-item:hover:not(.ui-dropdown-item-disabled) {
+    background: var(--sys-surface-hover);
+}
+.ui-dropdown-item-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-dropdown-item-parent {
+    font-weight: 500;
+    color: var(--sys-on-bg-secondary);
+}
+.ui-dropdown-item-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+.ui-dropdown-item-label {
+    flex: 1;
+}
+.ui-dropdown-submenu {
+    padding-left: var(--ui-space-4);
+}
+.ui-dropdown-divider {
+    height: 1px;
+    background: var(--sys-outline);
+    margin: var(--ui-space-1) 0;
+}
+@keyframes ui-dropdown-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>

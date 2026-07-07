@@ -45,6 +45,7 @@ flowchart TD
 ## 设计文档
 
 - [架构详解](architecture.md)
+- [公共图形栈](graphics-stack.md)
 - [Canonical Target 规范](target-triples.md)
 - [编译管线逐阶段详解](../maintainer/compilation.md)
 - [目标家族契约](../maintainer/target-family-contract.md)

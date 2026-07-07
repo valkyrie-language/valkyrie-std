@@ -1,0 +1,138 @@
+<widget Textarea>
+<Box class="ui-textarea-wrapper">
+    <if :condition="label">
+        <label class="ui-textarea-label">{label}</label>
+        <else />
+    </if>
+    <Box @class="ui-textarea-box ui-textarea-{size} {error ? 'ui-textarea-error' : ''} {disabled ? 'ui-textarea-disabled' : ''}">
+        <textarea class="ui-textarea-field" :placeholder="placeholder" :rows="rows" :maxlength="maxLength" :value="value" :disabled="disabled" @input="handleInput" @focus="handleFocus" @blur="handleBlur"></textarea>
+        <if :condition="maxLength">
+            <Text class="ui-textarea-counter">{value.length}/{maxLength}</Text>
+            <else />
+        </if>
+    </Box>
+    <if :condition="error">
+        <Text class="ui-textarea-error-text">{error}</Text>
+        <else />
+    </if>
+    <if :condition="description">
+        <Text class="ui-textarea-desc">{description}</Text>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let mut value: utf8 = ""
+let placeholder: utf8 = ""
+let size: utf8 = "md"
+let disabled: bool = false
+let error: utf8 = ""
+let label: utf8 = ""
+let description: utf8 = ""
+let rows: utf8 = "4"
+let maxLength: utf8 = ""
+let resize: utf8 = "vertical"
+
+micro handleInput(e: InputEvent) {
+    value = e.target.value
+    emit("input", { value: value })
+}
+
+micro handleFocus() {
+    emit("focus", {})
+}
+
+micro handleBlur() {
+    emit("blur", {})
+}
+</script>
+<style>
+.ui-textarea-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.ui-textarea-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-weight: 500;
+}
+.ui-textarea-box {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-textarea-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-textarea-box:focus-within {
+    border-color: var(--sys-outline-focus);
+    box-shadow: 0 0 0 3px var(--sys-primary-container);
+}
+.ui-textarea-xs {
+    padding: var(--ui-space-2);
+}
+.ui-textarea-xs .ui-textarea-field {
+    font-size: var(--ui-fs-xs);
+}
+.ui-textarea-sm {
+    padding: var(--ui-space-3);
+}
+.ui-textarea-sm .ui-textarea-field {
+    font-size: var(--ui-fs-sm);
+}
+.ui-textarea-md {
+    padding: var(--ui-space-4);
+}
+.ui-textarea-md .ui-textarea-field {
+    font-size: var(--ui-fs-base);
+}
+.ui-textarea-lg {
+    padding: var(--ui-space-5);
+}
+.ui-textarea-lg .ui-textarea-field {
+    font-size: var(--ui-fs-lg);
+}
+.ui-textarea-field {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    line-height: var(--ui-lh-normal);
+    resize: vertical;
+}
+.ui-textarea-field::placeholder {
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-textarea-counter {
+    align-self: flex-end;
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+    margin-top: var(--ui-space-1);
+}
+.ui-textarea-error .ui-textarea-box {
+    border-color: var(--sys-error);
+}
+.ui-textarea-error-text {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-error);
+}
+.ui-textarea-desc {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-textarea-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-textarea-disabled .ui-textarea-field {
+    cursor: not-allowed;
+}
+
+</style>

@@ -1,0 +1,140 @@
+<widget Accordion>
+<Box class="ui-accordion">
+    <loop item="item" :each="{items}">
+        <Box @class="ui-accordion-item {item.disabled ? 'ui-accordion-item-disabled' : ''} {isActive(item.key) ? 'ui-accordion-item-active' : ''}">
+            <button class="ui-accordion-header" type="button" :disabled="item.disabled" @click="handleToggle(item)">
+                <Text class="ui-accordion-title">{item.title}</Text>
+                <Text @class="ui-accordion-chevron {isActive(item.key) ? 'ui-accordion-chevron-open' : ''}">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
+                </Text>
+            </button>
+            <if :condition="isActive(item.key)">
+                <Box class="ui-accordion-content">{item.content}</Box>
+                <else />
+            </if>
+        </Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+let multiple: bool = false
+let defaultActive: list = []
+
+let mut activeKeys: list = []
+
+micro onMount() {
+    activeKeys = defaultActive
+}
+
+micro isActive(key) {
+    let i: i32 = 0
+    while i < len(activeKeys) {
+        if activeKeys[i] == key {
+            return true
+        }
+    i = i + 1
+}
+return false
+}
+
+micro handleToggle(item) {
+    if item.disabled {
+        return
+    }
+let key: utf8 = item.key
+let next: list = []
+let found: bool = false
+let i: i32 = 0
+while i < len(activeKeys) {
+    if activeKeys[i] == key {
+        found = true
+    } else {
+    if multiple {
+        next = next + [activeKeys[i]]
+    }
+}
+i = i + 1
+}
+if !found {
+    if multiple {
+        next = next + [key]
+    } else {
+    next = [key]
+}
+}
+activeKeys = next
+emit("change", { activeKeys: activeKeys })
+}
+</script>
+
+<style>
+.ui-accordion {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    background: var(--sys-surface);
+    overflow: hidden;
+    font-family: var(--ui-font-sans);
+}
+.ui-accordion-item + .ui-accordion-item {
+    border-top: 1px solid var(--sys-outline);
+}
+.ui-accordion-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--ui-space-3) var(--ui-space-4);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: var(--ui-fs-base);
+    font-weight: 500;
+    color: var(--sys-on-bg);
+    text-align: left;
+    transition: background var(--ui-duration-1) var(--ui-easing);
+}
+.ui-accordion-header:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-accordion-item-disabled .ui-accordion-header {
+    cursor: not-allowed;
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-accordion-item-disabled .ui-accordion-header:hover {
+    background: transparent;
+}
+.ui-accordion-title {
+    flex: 1;
+}
+.ui-accordion-chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sys-on-bg-secondary);
+    transition: transform var(--ui-duration-1) var(--ui-easing);
+}
+.ui-accordion-chevron-open {
+    transform: rotate(180deg);
+}
+.ui-accordion-chevron svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-accordion-content {
+    padding: var(--ui-space-3) var(--ui-space-4) var(--ui-space-4);
+    color: var(--sys-on-bg-secondary);
+    font-size: var(--ui-fs-sm);
+    line-height: var(--ui-lh-normal);
+    border-top: 1px solid var(--sys-outline);
+}
+</style>

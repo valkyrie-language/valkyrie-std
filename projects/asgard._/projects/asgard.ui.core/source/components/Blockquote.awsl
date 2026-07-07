@@ -1,0 +1,38 @@
+<widget Blockquote>
+<figure @class="ui-blockquote">
+    <blockquote @class="ui-blockquote-content">
+        <slot />
+    </blockquote>
+    <if :condition="cite">
+        <figcaption @class="ui-blockquote-cite">{cite}</figcaption>
+        <else />
+    </if>
+</figure>
+</widget>
+
+<script>
+let cite: utf8 = ""
+</script>
+<style>
+.ui-blockquote {
+    margin: 0;
+    box-sizing: border-box;
+    padding-left: var(--ui-space-4);
+    border-left: 3px solid var(--sys-primary);
+}
+.ui-blockquote-content {
+    margin: 0;
+    font-family: var(--ui-font-serif);
+    font-size: var(--ui-fs-lg);
+    line-height: var(--ui-lh-normal);
+    color: var(--sys-on-bg);
+}
+.ui-blockquote-cite {
+    margin-top: var(--ui-space-2);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-style: italic;
+}
+
+</style>

@@ -13,63 +13,70 @@ trait Iterator {
     ⍝ `Item?` 无法区分“产出了一个 `null`”与“迭代已经结束”这两种语义。
     micro next(mut self): Option<Item>
 
-    micro map<U>(self, f: micro(Item) -> U) -> MapIterator<Item, U, Self> {
-        return MapIterator::<Item, U, Self> {
-            _iter: self,
-            _mapper: f,
-        }
-    }
-
-    micro filter(self, pred: micro(Item) -> bool) -> FilterIterator<Item, Self> {
-        return FilterIterator::<Item, Self> {
-            _iter: self,
-            _predicate: pred,
-        }
-    }
-
-    micro filter_map<U>(self, f: micro(Item) -> Option<U>) -> FilterMapIterator<Item, U, Self> {
-        return FilterMapIterator::<Item, U, Self> {
-            _iter: self,
-            _mapper: f,
-        }
-    }
-
     micro enumerate(self) -> EnumerateIterator<Item, Self> {
-        return EnumerateIterator::<Item, Self> {
+        return EnumerateIterator {
             _iter: self,
             _ordinal: 1,
         }
     }
 
     micro skip(self, count: usize) -> SkipIterator<Item, Self> {
-        return SkipIterator::<Item, Self> {
+        return SkipIterator {
             _iter: self,
             _count: count,
             _skipped: 0,
         }
     }
 
-    micro skip_while(self, pred: micro(Item) -> bool) -> SkipWhileIterator<Item, Self> {
-        return SkipWhileIterator::<Item, Self> {
-            _iter: self,
-            _predicate: pred,
-            _skipped: false,
-        }
-    }
-
     micro take(self, count: usize) -> TakeIterator<Item, Self> {
-        return TakeIterator::<Item, Self> {
+        return TakeIterator {
             _iter: self,
             _count: count,
             _taken: 0,
         }
     }
 
+    # Function-valued adapters (`filter` / `map` / …) need CLR DynamicInvoke for
+    # field calls like `self._predicate(item)`. Gate them off the CLR seed path until
+    # that ABI is wired; other backends keep the full adaptor surface.
+    <% match arch %>
+    <% case "clr" %>
+    <% else %>
+    micro map<U>(self, f: micro(Item) -> U) -> MapIterator<Item, U, Self> {
+        return MapIterator {
+            _iter: self,
+            _mapper: f,
+        }
+    }
+
+    micro filter(self, pred: micro(Item) -> bool) -> FilterIterator<Item, Self> {
+        return FilterIterator {
+            _iter: self,
+            _predicate: pred,
+        }
+    }
+
+    micro filter_map<U>(self, f: micro(Item) -> Option<U>) -> FilterMapIterator<Item, U, Self> {
+        return FilterMapIterator {
+            _iter: self,
+            _mapper: f,
+        }
+    }
+
+    micro skip_while(self, pred: micro(Item) -> bool) -> SkipWhileIterator<Item, Self> {
+        return SkipWhileIterator {
+            _iter: self,
+            _predicate: pred,
+            _skipped: false,
+        }
+    }
+
     micro take_while(self, pred: micro(Item) -> bool) -> TakeWhileIterator<Item, Self> {
-        return TakeWhileIterator::<Item, Self> {
+        return TakeWhileIterator {
             _iter: self,
             _predicate: pred,
             _done: false,
         }
     }
+    <% end %>
 }

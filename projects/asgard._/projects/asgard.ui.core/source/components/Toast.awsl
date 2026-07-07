@@ -1,0 +1,199 @@
+<widget Toast>
+<Box @class="ui-toast-container ui-toast-{position}">
+    <loop item="item" :each="{toasts}">
+        <Box role="alert" @class="ui-toast ui-toast-{item.type} {item.closing ? 'ui-toast-closing' : ''}">
+            <if :condition="item.type == &quot;success&quot;">
+                <svg @class="ui-toast-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14.1l-3-3" />
+                </svg>
+                <else />
+            </if>
+            <if :condition="item.type == &quot;error&quot;">
+                <svg @class="ui-toast-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="m15 9-6 6M9 9l6 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+                </svg>
+                <else />
+            </if>
+            <if :condition="item.type == &quot;warning&quot;">
+                <svg @class="ui-toast-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M12 9v4M12 17h.0M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                </svg>
+                <else />
+            </if>
+            <if :condition="item.type == &quot;info&quot;">
+                <svg @class="ui-toast-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.0" />
+                </svg>
+                <else />
+            </if>
+            <Box @class="ui-toast-content">
+                <if :condition="item.title != &quot;&quot;">
+                    <Box @class="ui-toast-title">{item.title}</Box>
+                    <else />
+                </if>
+                <Box @class="ui-toast-message">{item.message}</Box>
+            </Box>
+            <button @class="ui-toast-close" type="button" aria-label="Dismiss" @click="dismiss(item.id)">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let position: utf8 = "top-right"
+let mut toasts: list = []
+let mut nextId: i32 = 0
+
+micro success(message: utf8) {
+    let id: i32 = nextId
+    nextId = nextId + 1
+    toasts.push({id: id, type: "success", title: "", message: message, closing: false})
+    emit("show", {id: id, type: "success", message: message})
+    setTimeout(function() { dismiss(id) }, 3000)
+}
+
+micro error(message: utf8) {
+    let id: i32 = nextId
+    nextId = nextId + 1
+    toasts.push({id: id, type: "error", title: "", message: message, closing: false})
+    emit("show", {id: id, type: "error", message: message})
+    setTimeout(function() { dismiss(id) }, 5000)
+}
+
+micro warning(message: utf8) {
+    let id: i32 = nextId
+    nextId = nextId + 1
+    toasts.push({id: id, type: "warning", title: "", message: message, closing: false})
+    emit("show", {id: id, type: "warning", message: message})
+    setTimeout(function() { dismiss(id) }, 3000)
+}
+
+micro info(message: utf8) {
+    let id: i32 = nextId
+    nextId = nextId + 1
+    toasts.push({id: id, type: "info", title: "", message: message, closing: false})
+    emit("show", {id: id, type: "info", message: message})
+    setTimeout(function() { dismiss(id) }, 3000)
+}
+
+micro dismiss(id: i32) {
+    toasts = toasts.map(function(t) {
+        if t.id == id {
+            return {id: t.id, type: t.type, title: t.title, message: t.message, closing: true}
+        }
+    return t
+})
+emit("dismiss", {id: id})
+setTimeout(function() {
+    toasts = toasts.filter(function(t) { return t.id != id })
+}, 300)
+}
+</script>
+<style>
+.ui-toast-container {
+    position: fixed;
+    z-index: var(--ui-z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-3);
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    pointer-events: none;
+}
+.ui-toast-top-right { top: var(--ui-space-4); right: var(--ui-space-4); }
+.ui-toast-top-left { top: var(--ui-space-4); left: var(--ui-space-4); }
+.ui-toast-bottom-right { bottom: var(--ui-space-4); right: var(--ui-space-4); }
+.ui-toast-bottom-left { bottom: var(--ui-space-4); left: var(--ui-space-4); }
+.ui-toast-top-center {
+    top: var(--ui-space-4);
+    left: 50%;
+    transform: translateX(-50%);
+}
+.ui-toast-bottom-center {
+    bottom: var(--ui-space-4);
+    left: 50%;
+    transform: translateX(-50%);
+}
+.ui-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ui-space-3);
+    padding: var(--ui-space-4);
+    background: var(--sys-surface);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    border-left: 4px solid var(--sys-outline);
+    pointer-events: auto;
+    animation: ui-toast-in var(--ui-duration-1) var(--ui-easing);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-toast-closing {
+    opacity: 0;
+    transform: translateX(16px);
+}
+.ui-toast-success { border-left-color: var(--sys-success); }
+.ui-toast-success .ui-toast-icon { color: var(--sys-success); }
+.ui-toast-error { border-left-color: var(--sys-error); }
+.ui-toast-error .ui-toast-icon { color: var(--sys-error); }
+.ui-toast-warning { border-left-color: var(--sys-warning); }
+.ui-toast-warning .ui-toast-icon { color: var(--sys-warning); }
+.ui-toast-info { border-left-color: var(--sys-info); }
+.ui-toast-info .ui-toast-icon { color: var(--sys-info); }
+.ui-toast-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.ui-toast-content {
+    flex: 1;
+    min-width: 0;
+}
+.ui-toast-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    margin-bottom: var(--ui-space-1);
+}
+.ui-toast-message {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-family: var(--ui-font-sans);
+    line-height: 1.5;
+    word-break: break-word;
+}
+.ui-toast-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-tertiary);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-toast-close svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-toast-close:hover {
+    color: var(--sys-on-bg);
+}
+@keyframes ui-toast-in {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+</style>

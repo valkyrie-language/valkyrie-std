@@ -24,11 +24,14 @@ import { fileURLToPath } from 'url';
 
 import {
     BOOTSTRAP_PROJECT,
+    BOOTSTRAP_TRACKS,
     collectFiles,
     computeDirHash,
     computeFileHash,
     createGate,
+    createL2ReportSkeleton,
     findLegion,
+    l2GateNamesForTrack,
     printGateSummary,
     repoRootFrom,
     resolveArtifactDir,
@@ -40,6 +43,8 @@ import {
     writeReport,
 } from './bootstrap-lib.mjs';
 
+const TRACK = BOOTSTRAP_TRACKS.node;
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = repoRootFrom(SCRIPT_DIR);
 const VALKYRIE_RS_DIR = path.resolve(ROOT_DIR, '..', 'valkyrie.rs');
@@ -47,8 +52,8 @@ const NYARVM_DIR = path.resolve(ROOT_DIR, '..', 'NyarVM.cs');
 const LEGION_CSPROJ = path.join(NYARVM_DIR, 'tools', 'legion', 'Legion.CLI.csproj');
 
 const BOOTSTRAP_PROJECT_DIR = path.join(ROOT_DIR, BOOTSTRAP_PROJECT);
-const TARGET_TRIPLE = 'wasm32-node-unknown-wasm';
-const TARGET_ALIAS = 'node';
+const TARGET_TRIPLE = TRACK.targetTriple;
+const TARGET_ALIAS = TRACK.targetAlias;
 const MODULE_GUARD_SKIPPED_REASON = '由于模块系统前置门未通过，`seed -> v1.node` 未执行。';
 const LEVEL2_SKIPPED_REASON = '由于上游门禁未通过，`v1.node -> v2.node` 未执行。';
 
@@ -131,7 +136,7 @@ function compileV1(legionPath, outputDir, verbose) {
     const manifestParseErrorFound = MANIFEST_PARSE_ERROR_PATTERN.test(buildOutput);
 
     if (manifestParseErrorFound) {
-        console.error('错误：构建日志仍含 `projects/legion.tools/source/manifest.v` 相关错误');
+        console.error('错误：构建日志仍含 `projects/legion._/projects/legion.tools/source/manifest.v` 相关错误');
     }
 
     if (!buildResult.success) {
@@ -206,7 +211,7 @@ function compileV1(legionPath, outputDir, verbose) {
     };
 }
 
-function compileV2(v1Result, outputDir, verbose) {
+function compileV2(v1Result, outputDir, verbose, legionHostPath) {
     console.log('\n══════════════════════════════════════════════════');
     console.log('  Level 2：v1.node → v2.node');
     console.log('══════════════════════════════════════════════════\n');
@@ -221,7 +226,13 @@ function compileV2(v1Result, outputDir, verbose) {
 
     const buildResult = runCommand(
         `node "${v1Result.entry.legionMjs}" build "${BOOTSTRAP_PROJECT_DIR}" --target ${TARGET_ALIAS} -o "${outputDir}"`,
-        { cwd: ROOT_DIR, timeout: 300000 },
+        {
+            cwd: ROOT_DIR,
+            timeout: 300000,
+            env: {
+                LEGION_BOOTSTRAP_HOST: legionHostPath,
+            },
+        },
     );
 
     const targetDir = resolveArtifactDir(outputDir, TARGET_TRIPLE);
@@ -272,6 +283,42 @@ function compileV2(v1Result, outputDir, verbose) {
     };
 }
 
+/**
+ * 规范化 `.mjs` 内容：折叠所有空白为单个空格，用于结构性比对。
+ *
+ * 此规范化保留注释与字符串内容，仅消除空格 / 制表符 / 换行差异，
+ * 确保 v1 与 v2 的 `.mjs` 胶水代码在结构层面一致而非仅"能运行"。
+ *
+ * @param {string} content - 原始 `.mjs` 文件内容
+ * @returns {string} 规范化后的字符串
+ */
+function normalizeMjsContent(content) {
+    return content.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * 解析 `run-contract*.txt` 中的语义字段（Von `key: "value"` 格式）。
+ *
+ * 提取所有 `key: "value"` 对，用于逐字段比对而非整体哈希比对，
+ * 精确定位契约漂移发生在哪个字段。
+ *
+ * @param {string} filePath - run-contract 文件路径
+ * @returns {Object|null} 字段键值对象，或 `null`（文件不存在）
+ */
+function parseContractFields(filePath) {
+    if (!fs.existsSync(filePath)) {
+        return null;
+    }
+    const text = fs.readFileSync(filePath, 'utf8');
+    const fields = {};
+    const regex = /(\w+)\s*:\s*"([^"]*)"/g;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        fields[match[1]] = match[2];
+    }
+    return fields;
+}
+
 function compareArtifacts(v1Result, v2Result) {
     console.log('\n══════════════════════════════════════════════════');
     console.log('  v1 / v2 比对');
@@ -282,43 +329,45 @@ function compareArtifacts(v1Result, v2Result) {
         return { match: false, skipped: true };
     }
 
-    const mustCompareExtensions = ['.wasm'];
-    const mustCompareFiles = ['run-contract.txt', 'run-contracts.txt'];
-    const allowedDiffExtensions = ['.mjs', '.json'];
+    const allExtensions = ['.wasm', '.mjs', '.json', '.txt'];
+    const contractFiles = ['run-contract.txt', 'run-contracts.txt'];
 
     console.log('比对规则：');
-    console.log('  必须一致：.wasm 文件、run-contract*.txt');
-    console.log('  允许差异：.mjs、.json（胶水与非确定性元数据）');
+    console.log('  必须一致（哈希）：.wasm');
+    console.log('  必须一致（语义字段）：run-contract*.txt');
+    console.log('  必须一致（规范化比对）：.mjs');
+    console.log('  文件清单必须一致：所有扩展名（.json / 非 contract .txt 仅比对清单）');
     console.log('');
-
-    const v1WasmFiles = collectFiles(v1Result.outputDir, mustCompareExtensions);
-    const v2WasmFiles = collectFiles(v2Result.outputDir, mustCompareExtensions);
-
-    const v1WasmNames = new Set(v1WasmFiles.map((file) => path.basename(file)));
-    const v2WasmNames = new Set(v2WasmFiles.map((file) => path.basename(file)));
 
     let allMatch = true;
     const details = [];
 
-    const onlyInV1 = [...v1WasmNames].filter((name) => !v2WasmNames.has(name));
-    const onlyInV2 = [...v2WasmNames].filter((name) => !v1WasmNames.has(name));
+    const v1AllFiles = collectFiles(v1Result.outputDir, allExtensions);
+    const v2AllFiles = collectFiles(v2Result.outputDir, allExtensions);
+    const v1Names = new Set(v1AllFiles.map((file) => path.basename(file)));
+    const v2Names = new Set(v2AllFiles.map((file) => path.basename(file)));
+
+    const onlyInV1 = [...v1Names].filter((name) => !v2Names.has(name));
+    const onlyInV2 = [...v2Names].filter((name) => !v1Names.has(name));
 
     if (onlyInV1.length > 0) {
-        console.log(`  [阻断] 仅在 v1 中存在的 .wasm 文件：${onlyInV1.join(', ')}`);
+        console.log(`  [阻断] 仅在 v1 中存在的文件：${onlyInV1.join(', ')}`);
         details.push({ type: 'missing_in_v2', files: onlyInV1 });
         allMatch = false;
     }
     if (onlyInV2.length > 0) {
-        console.log(`  [阻断] 仅在 v2 中存在的 .wasm 文件：${onlyInV2.join(', ')}`);
+        console.log(`  [阻断] 仅在 v2 中存在的文件：${onlyInV2.join(', ')}`);
         details.push({ type: 'extra_in_v2', files: onlyInV2 });
         allMatch = false;
     }
 
-    const common = [...v1WasmNames].filter((name) => v2WasmNames.has(name));
+    const common = [...v1Names].filter((name) => v2Names.has(name));
     for (const name of common) {
-        const v1File = v1WasmFiles.find((file) => path.basename(file) === name);
-        const v2File = v2WasmFiles.find((file) => path.basename(file) === name);
-        if (v1File && v2File) {
+        const v1File = v1AllFiles.find((file) => path.basename(file) === name);
+        const v2File = v2AllFiles.find((file) => path.basename(file) === name);
+        const ext = path.extname(name).toLowerCase();
+
+        if (ext === '.wasm') {
             const h1 = computeFileHash(v1File);
             const h2 = computeFileHash(v2File);
             if (h1 !== h2) {
@@ -330,33 +379,43 @@ function compareArtifacts(v1Result, v2Result) {
             } else {
                 console.log(`  [通过] ${name}：一致`);
             }
-        }
-    }
-
-    for (const fileName of mustCompareFiles) {
-        const v1File = path.join(v1Result.outputDir, fileName);
-        const v2File = path.join(v2Result.outputDir, fileName);
-        const v1Exists = fs.existsSync(v1File);
-        const v2Exists = fs.existsSync(v2File);
-
-        if (v1Exists && v2Exists) {
-            const h1 = computeFileHash(v1File);
-            const h2 = computeFileHash(v2File);
-            if (h1 !== h2) {
-                console.log(`  [阻断] ${fileName}：不一致`);
-                details.push({ type: 'contract_mismatch', file: fileName });
+        } else if (ext === '.mjs') {
+            const n1 = normalizeMjsContent(fs.readFileSync(v1File, 'utf8'));
+            const n2 = normalizeMjsContent(fs.readFileSync(v2File, 'utf8'));
+            if (n1 !== n2) {
+                console.log(`  [阻断] ${name}：规范化后不一致（v1=${n1.length}字符, v2=${n2.length}字符）`);
+                details.push({ type: 'mjs_normalized_mismatch', file: name, v1Length: n1.length, v2Length: n2.length });
                 allMatch = false;
             } else {
-                console.log(`  [通过] ${fileName}：一致`);
+                console.log(`  [通过] ${name}：规范化后一致`);
             }
         }
     }
 
-    const allowedFiles = collectFiles(v1Result.outputDir, allowedDiffExtensions);
-    if (allowedFiles.length > 0) {
-        console.log(`\n允许差异的文件（${allowedFiles.length} 个，不参与比对）：`);
-        for (const file of allowedFiles) {
-            console.log(`  ${path.relative(v1Result.outputDir, file)}`);
+    for (const fileName of contractFiles) {
+        const v1File = path.join(v1Result.outputDir, fileName);
+        const v2File = path.join(v2Result.outputDir, fileName);
+        const v1Fields = parseContractFields(v1File);
+        const v2Fields = parseContractFields(v2File);
+
+        if (v1Fields && v2Fields) {
+            const allKeys = new Set([...Object.keys(v1Fields), ...Object.keys(v2Fields)]);
+            let fieldMatch = true;
+            for (const key of allKeys) {
+                const v1Value = v1Fields[key];
+                const v2Value = v2Fields[key];
+                if (v1Value !== v2Value) {
+                    console.log(`  [阻断] ${fileName}：字段 ${key} 不一致`);
+                    console.log(`    v1: ${v1Value ?? '(缺失)'}`);
+                    console.log(`    v2: ${v2Value ?? '(缺失)'}`);
+                    details.push({ type: 'contract_field_mismatch', file: fileName, field: key, v1: v1Value, v2: v2Value });
+                    fieldMatch = false;
+                    allMatch = false;
+                }
+            }
+            if (fieldMatch) {
+                console.log(`  [通过] ${fileName}：语义字段一致`);
+            }
         }
     }
 
@@ -404,7 +463,7 @@ Node（wasm32-node-unknown-wasm）自举验证
 
 function main() {
     const options = parseArgs();
-    const outputRoot = path.resolve(options.output || path.join(ROOT_DIR, 'dist', 'bootstrap-node'));
+    const outputRoot = path.resolve(options.output || path.join(ROOT_DIR, 'dist', TRACK.outputSubdir));
     const v1OutputDir = path.join(outputRoot, 'v1');
     const v2OutputDir = path.join(outputRoot, 'v2');
 
@@ -418,22 +477,17 @@ function main() {
 
     const moduleSystemResult = validateModuleSystem(ROOT_DIR, options.verbose);
     if (!moduleSystemResult.success) {
-        const gates = [
-            createGate('模块系统前置门', '未通过', shortenText(moduleSystemResult.errors.join('；'), 400)),
-            createGate('上一代编译器入口', '跳过', MODULE_GUARD_SKIPPED_REASON),
-            createGate('源码 -> v1.node', '跳过', MODULE_GUARD_SKIPPED_REASON),
-            createGate('v1 --version', '跳过', MODULE_GUARD_SKIPPED_REASON),
-            createGate('v1 --help', '跳过', MODULE_GUARD_SKIPPED_REASON),
-            createGate('v1 -> v2.node', '跳过', LEVEL2_SKIPPED_REASON),
-            createGate('v1 / v2 比对', '跳过', '由于上游门禁未通过，比对未执行'),
-        ];
-        const reportPath = writeReport(outputRoot, {
-            success: false,
-            track: 'node',
+        const gates = l2GateNamesForTrack('node').map((name, index) => createGate(
+            name,
+            index === 0 ? '未通过' : '跳过',
+            index === 0 ? shortenText(moduleSystemResult.errors.join('；'), 400) : MODULE_GUARD_SKIPPED_REASON,
+        ));
+        const reportPath = writeReport(outputRoot, createL2ReportSkeleton('node', {
             gates,
             blockers: moduleSystemResult.errors.map((error) => `模块系统前置门失败：${error}`),
             moduleSystem: moduleSystemResult,
-        });
+            v2: { attempted: false, success: false, outputDir: null, compared: false, match: false, reason: LEVEL2_SKIPPED_REASON },
+        }));
         printGateSummary(gates);
         console.log(`\n报告已写入：${reportPath}`);
         process.exit(1);
@@ -444,13 +498,13 @@ function main() {
         const gates = [
             createGate('模块系统前置门', '通过', moduleSystemResult.detail),
             createGate('上一代编译器入口', '未通过', '未找到可用 `legion`'),
-            createGate('源码 -> v1.node', '跳过', '上一代编译器入口未就绪'),
-            createGate('v1 --version', '跳过', '源码 -> v1.node 未执行'),
-            createGate('v1 --help', '跳过', '源码 -> v1.node 未执行'),
-            createGate('v1 -> v2.node', '跳过', LEVEL2_SKIPPED_REASON),
-            createGate('v1 / v2 比对', '跳过', '由于上游门禁未通过，比对未执行'),
+            ...l2GateNamesForTrack('node').slice(2).map((name) => createGate(name, '跳过', '上一代编译器入口未就绪')),
         ];
-        const reportPath = writeReport(outputRoot, { success: false, track: 'node', gates, blockers: ['上一代编译器入口未就绪'] });
+        const reportPath = writeReport(outputRoot, createL2ReportSkeleton('node', {
+            gates,
+            blockers: ['上一代编译器入口未就绪'],
+            moduleSystem: moduleSystemResult,
+        }));
         printGateSummary(gates);
         console.error('\n错误：找不到上一代 legion CLI');
         console.log(`\n报告已写入：${reportPath}`);
@@ -462,7 +516,7 @@ function main() {
     const v1HelpPassed = Boolean(v1Result.runtime?.help?.success);
     const v1RuntimePassed = v1VersionPassed && v1HelpPassed;
 
-    const v2Result = v1Result.success && v1RuntimePassed ? compileV2(v1Result, v2OutputDir, options.verbose) : null;
+    const v2Result = v1Result.success && v1RuntimePassed ? compileV2(v1Result, v2OutputDir, options.verbose, legionPath) : null;
     const compareResult = compareArtifacts(v1Result, v2Result);
 
     const blockers = [];
@@ -495,7 +549,7 @@ function main() {
         createGate('v1 --version', v1VersionPassed ? '通过' : '未通过', v1VersionPassed ? '退出码 0' : '执行失败'),
         createGate('v1 --help', v1HelpPassed ? '通过' : '未通过', v1HelpPassed ? '退出码 0' : '执行失败'),
         createGate('v1 -> v2.node', v2Result ? (v2Result.success ? '通过' : '未通过') : '跳过', v2Result?.success ? `产物：${v2Result.entry.legionMjs}` : v2Result?.error || LEVEL2_SKIPPED_REASON),
-        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? 'v1->v2 未完成' : '`.wasm` + `run-contract*.txt`'),
+        createGate('v1 / v2 比对', compareResult.skipped ? '跳过' : (compareResult.match ? '通过' : '未通过'), compareResult.skipped ? 'v1->v2 未完成' : '`.wasm` 哈希 + `run-contract*.txt` 语义字段 + `.mjs` 规范化 + 全文件清单'),
     ];
 
     console.log('\n══════════════════════════════════════════════════');
@@ -508,12 +562,21 @@ function main() {
 
     const reportPath = writeReport(outputRoot, {
         success: blockers.length === 0,
-        track: 'node',
+        track: TRACK.track,
+        profile: TRACK.profile,
         targetTriple: TARGET_TRIPLE,
         gates,
         blockers,
         previousLegion: legionPath,
         moduleSystem: moduleSystemResult,
+        matrix: {
+            build: v1Result.success,
+            cli: v1VersionPassed && v1HelpPassed,
+            runContract: v1Result.success,
+            runtime: v1VersionPassed && v1HelpPassed,
+            v1ToV2: Boolean(v2Result?.success),
+            compared: compareResult.match,
+        },
         v1: {
             success: v1Result.success,
             outputDir: v1Result.outputDir,

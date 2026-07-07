@@ -1,0 +1,24 @@
+{
+  name: "cdn+serverless",
+  description: "SSG/hydrated → CDN；可选 Atlas server 岛 → serverless。编排构建仍为 stub。",
+  status: "implemented",
+  topology: {
+    static: "cdn",
+    server: "serverless"
+  },
+  artifacts: [
+    {
+      pipeline: "asgard",
+      platform: "browser",
+      role: "static-web",
+      output: "dist/shell",
+      status: "implemented"
+    },
+    {
+      pipeline: "atlas",
+      role: "server-islands",
+      output: "dist/atlas",
+      status: "planned"
+    }
+  ]
+}

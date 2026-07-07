@@ -48,7 +48,7 @@ micro hash_utf8(s: utf8) -> usize {
     let mut hash: usize = 0
     let mut i: usize = 0
     while i < s.length {
-        hash = hash * 31 + s[i] as usize
+        hash = hash * 31 + s⁅i⁆ as usize
         i = i + 1
     }
     return hash

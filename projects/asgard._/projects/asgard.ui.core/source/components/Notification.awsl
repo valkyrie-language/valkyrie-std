@@ -1,0 +1,177 @@
+<widget Notification>
+<Box @class="ui-notification-container ui-notification-{position}">
+    <loop item="item" :each="{notifications}">
+        <Box role="alert" @class="ui-notification ui-notification-{item.variant}">
+            <Text @class="ui-notification-icon ui-notification-icon-{item.variant}">
+                <if :condition="item.variant == &quot;success&quot;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M22 11.1V12a10 10 0 1 1-5.9-9.1M22 4 12 14.1l-3-3" />
+                    </svg>
+                    <else />
+                </if>
+                <if :condition="item.variant == &quot;error&quot;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="m15 9-6 6M9 9l6 6M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />
+                    </svg>
+                    <else />
+                </if>
+                <if :condition="item.variant == &quot;warning&quot;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M12 9v4M12 17h.0M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                    </svg>
+                    <else />
+                </if>
+                <if :condition="item.variant == &quot;info&quot;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                        <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.0" />
+                    </svg>
+                    <else />
+                </if>
+            </Text>
+            <Box @class="ui-notification-content">
+                <Box @class="ui-notification-title">{item.title}</Box>
+                <Box @class="ui-notification-message">{item.message}</Box>
+                <if :condition="item.action != &quot;&quot;">
+                    <Box @class="ui-notification-action">{item.action}</Box>
+                    <else />
+                </if>
+            </Box>
+            <button @class="ui-notification-close" type="button" aria-label="Close" @click="dismiss(item.id)">
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+            </button>
+        </Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let position: utf8 = "top-right"
+let mut notifications: list = []
+let mut nextId: i32 = 0
+
+micro show(title: utf8, message: utf8, variant: utf8) {
+    let id: i32 = nextId
+    nextId = nextId + 1
+    notifications.push({id: id, title: title, message: message, variant: variant, action: ""})
+    setTimeout(function() { dismiss(id) }, 4500)
+}
+
+micro dismiss(id: i32) {
+    emit("close", {id: id})
+    notifications = notifications.filter(function(n) { return n.id != id })
+}
+</script>
+<style>
+.ui-notification-container {
+    position: fixed;
+    z-index: var(--ui-z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-3);
+    width: 380px;
+    max-width: calc(100vw - 32px);
+    pointer-events: none;
+}
+.ui-notification-top-right { top: var(--ui-space-4); right: var(--ui-space-4); }
+.ui-notification-top-left { top: var(--ui-space-4); left: var(--ui-space-4); }
+.ui-notification-bottom-right { bottom: var(--ui-space-4); right: var(--ui-space-4); }
+.ui-notification-bottom-left { bottom: var(--ui-space-4); left: var(--ui-space-4); }
+.ui-notification-top-center {
+    top: var(--ui-space-4);
+    left: 50%;
+    transform: translateX(-50%);
+}
+.ui-notification-bottom-center {
+    bottom: var(--ui-space-4);
+    left: 50%;
+    transform: translateX(-50%);
+}
+.ui-notification {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--ui-space-3);
+    padding: var(--ui-space-4) var(--ui-space-5);
+    background: var(--sys-surface);
+    border-radius: var(--sys-radius-md);
+    box-shadow: var(--sys-shadow-lg);
+    border-left: 4px solid var(--sys-outline);
+    pointer-events: auto;
+    animation: ui-notification-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-notification-success { border-left-color: var(--sys-success); }
+.ui-notification-success .ui-notification-icon { color: var(--sys-success); }
+.ui-notification-error { border-left-color: var(--sys-error); }
+.ui-notification-error .ui-notification-icon { color: var(--sys-error); }
+.ui-notification-warning { border-left-color: var(--sys-warning); }
+.ui-notification-warning .ui-notification-icon { color: var(--sys-warning); }
+.ui-notification-info { border-left-color: var(--sys-info); }
+.ui-notification-info .ui-notification-icon { color: var(--sys-info); }
+.ui-notification-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.ui-notification-icon svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-notification-content {
+    flex: 1;
+    min-width: 0;
+}
+.ui-notification-title {
+    font-size: var(--ui-fs-base);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    font-family: var(--ui-font-sans);
+    margin-bottom: var(--ui-space-1);
+}
+.ui-notification-message {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    font-family: var(--ui-font-sans);
+    line-height: 1.5;
+    word-break: break-word;
+}
+.ui-notification-action {
+    margin-top: var(--ui-space-2);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-primary);
+    font-family: var(--ui-font-sans);
+    font-weight: 500;
+    cursor: pointer;
+}
+.ui-notification-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--sys-on-bg-tertiary);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-notification-close svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-notification-close:hover {
+    color: var(--sys-on-bg);
+}
+@keyframes ui-notification-in {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+</style>

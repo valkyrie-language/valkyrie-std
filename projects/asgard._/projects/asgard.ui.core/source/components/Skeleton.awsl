@@ -1,0 +1,65 @@
+<widget Skeleton>
+<Box class="ui-skeleton-wrap">
+    <loop item="i" :each="{skeletonList}">
+        <Box :style="itemStyle" @class="ui-skeleton {circle ? 'ui-skeleton-circle' : ''} {animate ? 'ui-skeleton-animate' : ''}"></Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let width: utf8 = "100%"
+let height: utf8 = "20px"
+let circle: bool = false
+let animate: bool = true
+let count: utf8 = "1"
+
+let mut itemStyle: utf8 = ""
+let mut skeletonList: list = []
+
+micro onMount() {
+    let countNum: i32 = count
+    let i: i32 = 0
+    let arr: list = []
+    while i < countNum {
+        arr = arr + [{}]
+        i = i + 1
+    }
+skeletonList = arr
+if circle {
+    itemStyle = "width: " + height + "; height: " + height + ";"
+} else {
+itemStyle = "width: " + width + "; height: " + height + ";"
+}
+}
+</script>
+<style>
+.ui-skeleton-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-2);
+}
+.ui-skeleton {
+    background: var(--sys-surface-hover);
+    border-radius: var(--sys-radius-sm);
+    display: block;
+}
+.ui-skeleton-circle {
+    border-radius: var(--sys-radius-full);
+}
+.ui-skeleton-animate {
+    position: relative;
+    overflow: hidden;
+}
+.ui-skeleton-animate::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, var(--sys-surface) 50%, transparent 100%);
+    animation: ui-skeleton-shimmer 1.6s infinite;
+}
+@keyframes ui-skeleton-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+</style>

@@ -2,6 +2,9 @@ namespace std.math.graph_theory;
 
 # std.math.graph_theory: 有向图邻接表数据结构
 # 使用边列表表示法，适合依赖解析等小规模图（< 100 节点）
+#
+# CLR 自举阶段：避免 iterator HOF（any/filter/map），改用显式 while。
+# 高阶函数值调用尚未完成 CLR 降级。
 
 class DirectedGraph {
     _nodes: [utf8]
@@ -35,18 +38,21 @@ micro directed_graph_add_edge(mut graph: DirectedGraph, from: utf8, to: utf8) ->
 
 # 检查节点是否存在
 micro directed_graph_has_node(graph: DirectedGraph, node: utf8) -> bool {
-    return graph._nodes
-        .into_iterator()
-        .any(micro(current_node: utf8) -> bool {
-            return current_node == node
-        })
+    let mut i: usize = 0
+    while i < graph._nodes.length() {
+        if graph._nodes⁅i⁆ == node {
+            return true
+        }
+        i = i + 1
+    }
+    return false
 }
 
 # 检查边是否存在
 micro directed_graph_has_edge(graph: DirectedGraph, from: utf8, to: utf8) -> bool {
     let mut i: usize = 0
     while i < graph._edge_sources.length() {
-        if graph._edge_sources[i] == from && graph._edge_targets[i] == to {
+        if graph._edge_sources⁅i⁆ == from && graph._edge_targets⁅i⁆ == to {
             return true
         }
         i = i + 1
@@ -59,8 +65,8 @@ micro directed_graph_remove_node(mut graph: DirectedGraph, node: utf8) -> unit {
     let mut new_nodes: [utf8] = []
     let mut i: usize = 0
     while i < graph._nodes.length() {
-        if graph._nodes[i] != node {
-            push(new_nodes, graph._nodes[i])
+        if graph._nodes⁅i⁆ != node {
+            push(new_nodes, graph._nodes⁅i⁆)
         }
         i = i + 1
     }
@@ -70,9 +76,9 @@ micro directed_graph_remove_node(mut graph: DirectedGraph, node: utf8) -> unit {
     let mut new_targets: [utf8] = []
     i = 0
     while i < graph._edge_sources.length() {
-        if graph._edge_sources[i] != node && graph._edge_targets[i] != node {
-            push(new_sources, graph._edge_sources[i])
-            push(new_targets, graph._edge_targets[i])
+        if graph._edge_sources⁅i⁆ != node && graph._edge_targets⁅i⁆ != node {
+            push(new_sources, graph._edge_sources⁅i⁆)
+            push(new_targets, graph._edge_targets⁅i⁆)
         }
         i = i + 1
     }
@@ -86,9 +92,9 @@ micro directed_graph_remove_edge(mut graph: DirectedGraph, from: utf8, to: utf8)
     let mut new_targets: [utf8] = []
     let mut i: usize = 0
     while i < graph._edge_sources.length() {
-        if graph._edge_sources[i] != from || graph._edge_targets[i] != to {
-            push(new_sources, graph._edge_sources[i])
-            push(new_targets, graph._edge_targets[i])
+        if graph._edge_sources⁅i⁆ != from || graph._edge_targets⁅i⁆ != to {
+            push(new_sources, graph._edge_sources⁅i⁆)
+            push(new_targets, graph._edge_targets⁅i⁆)
         }
         i = i + 1
     }
@@ -101,8 +107,8 @@ micro directed_graph_successors(graph: DirectedGraph, node: utf8) -> [utf8] {
     let mut result: [utf8] = []
     let mut i: usize = 0
     while i < graph._edge_sources.length() {
-        if graph._edge_sources[i] == node {
-            push(result, graph._edge_targets[i])
+        if graph._edge_sources⁅i⁆ == node {
+            push(result, graph._edge_targets⁅i⁆)
         }
         i = i + 1
     }
@@ -114,8 +120,8 @@ micro directed_graph_predecessors(graph: DirectedGraph, node: utf8) -> [utf8] {
     let mut result: [utf8] = []
     let mut i: usize = 0
     while i < graph._edge_sources.length() {
-        if graph._edge_targets[i] == node {
-            push(result, graph._edge_sources[i])
+        if graph._edge_targets⁅i⁆ == node {
+            push(result, graph._edge_sources⁅i⁆)
         }
         i = i + 1
     }
@@ -139,20 +145,26 @@ micro directed_graph_nodes(graph: DirectedGraph) -> [utf8] {
 
 # 获取节点的出度
 micro directed_graph_out_degree(graph: DirectedGraph, node: utf8) -> usize {
-    return graph._edge_sources
-        .into_iterator()
-        .filter(micro(source: utf8) -> bool {
-            return source == node
-        })
-        .count()
+    let mut count: usize = 0
+    let mut i: usize = 0
+    while i < graph._edge_sources.length() {
+        if graph._edge_sources⁅i⁆ == node {
+            count = count + 1
+        }
+        i = i + 1
+    }
+    return count
 }
 
 # 获取节点的入度
 micro directed_graph_in_degree(graph: DirectedGraph, node: utf8) -> usize {
-    return graph._edge_targets
-        .into_iterator()
-        .filter(micro(target: utf8) -> bool {
-            return target == node
-        })
-        .count()
+    let mut count: usize = 0
+    let mut i: usize = 0
+    while i < graph._edge_targets.length() {
+        if graph._edge_targets⁅i⁆ == node {
+            count = count + 1
+        }
+        i = i + 1
+    }
+    return count
 }

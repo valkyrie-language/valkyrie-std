@@ -1,8 +1,6 @@
 namespace std.net;
 
-# std.net: http - HTTP 客户端
-# 稳定 contract 优先使用 utf8，由宿主 provider 负责下沉到底层绑定
-
+# std.net: http client contracts
 [host_contract]
 micro get(url: utf8): utf8
 
@@ -18,7 +16,7 @@ micro delete(url: utf8): utf8
 micro get_json(url: utf8): Option<Value> {
     let text: utf8 = get(url)
     if text == "" {
-        return None
+        return option_none::<Value>()
     }
     let val: Value = parse(text)
     return Some(val)

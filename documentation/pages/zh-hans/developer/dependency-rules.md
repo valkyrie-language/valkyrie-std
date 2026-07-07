@@ -58,16 +58,33 @@ flowchart TD
 
 - 只放目标格式数据模型与编码契约
 - 不承担语言语义解释
+- 包名按真实格式：如 `std.data.binary.class`、`std.data.binary.jar`；禁止写成 `std.data.binary.jvm`（无 `jvm` 格式）
 
-### `projects/nyar.vm.*`
+### `projects/std.data.text.*`
+
+- 文本格式模型；Valkyrie（`.v`）AST/CST/span 在 **`std.data.text.valkyrie`**
+- **禁止**平行包 `std.data.text.v`（`.v` 只是后缀，不是第二门语言 / 独立 crate）
+- `nyar.language` 消费上述模型，不长期私有一份平行 AST
+
+### `projects/nyar._/projects/nyar.vm.*`
 
 - 只放执行环境或特定 family 运行契约
+- **只消费** `nyar.emitter` 产物，**不得**依赖 `nyar.language` / AST
 
-### `projects/legion.tools`
+### `projects/nyar._/projects/nyar.language` → `nyar.analyzer` → `nyar.optimizer` → `nyar.emitter`
+
+- 同构主线；emitter 各 lane 输入为 **`ExecutableModule`**（全称，禁止 `Exec` / `ExecModule` 简写）
+- 禁止把 `body_source` / `clr_body_lowering` 旁路或 type-name 特判当作正式依赖边
+
+### `projects/legion._/projects/legion.tools`
 
 - 只放工程工具链能力
 - 不反向承担前端语义、middle-end 或 lowering 责任
+- 物理路径在 `legion._` 下；报告包为同级 `legion.report`
 
+### `projects/unity._/projects/{unity.engine.sdk,valkyrie.unity}`
+
+- Unity SDK 与插件源码均在 `unity._` 子 workspace，不在顶层 `projects/`
 ## 明确禁止
 
 - 禁止后端依赖前端补丁式语义兜底
@@ -75,7 +92,8 @@ flowchart TD
 - 禁止某个 family 的数据结构泄漏成全部公共层的必选字段
 - 禁止把编码格式层反向抬升成统一低层 `IR`
 - 禁止把宿主绑定塞回 `std` 本体
-
+- 禁止 `nyar.vm.*` 依赖 `nyar.language`
+- 禁止用旁路 lowering 替代 `ExecutableModule`→emitter 同构边
 ## 编译器与包管理分离
 
 这是必须长期维持的规则：

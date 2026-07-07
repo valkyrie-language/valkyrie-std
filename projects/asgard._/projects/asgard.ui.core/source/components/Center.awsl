@@ -1,0 +1,21 @@
+<widget Center>
+<Box @class="ui-center {inline ? 'ui-center-inline' : ''}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let inline: bool = false
+</script>
+<style>
+.ui-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+.ui-center-inline {
+    display: inline-flex;
+}
+
+</style>

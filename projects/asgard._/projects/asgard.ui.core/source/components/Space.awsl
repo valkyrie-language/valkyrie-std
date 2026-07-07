@@ -1,0 +1,16 @@
+<widget Space>
+<Box @class="ui-space" :style="f\&quot;width: {w}; height: {h}\&quot;"></Box>
+</widget>
+
+<script>
+let w: utf8 = ""
+let h: utf8 = ""
+</script>
+<style>
+.ui-space {
+    display: block;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+</style>

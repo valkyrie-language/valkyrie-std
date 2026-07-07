@@ -1,0 +1,108 @@
+<widget RadioField>
+<label @class="ui-radio ui-radio-{size} {disabled ? 'ui-radio-disabled' : ''}">
+    <Text @class="ui-radio-box {checked ? 'ui-radio-checked' : ''}">
+        <input class="ui-radio-input" type="radio" :checked="checked" :value="value" :disabled="disabled" @change="handleChange" />
+        <if :condition="checked">
+            <Text class="ui-radio-dot"></Text>
+            <else />
+        </if>
+    </Text>
+    <if :condition="label">
+        <Text class="ui-radio-label">{label}</Text>
+        <else />
+    </if>
+</label>
+</widget>
+
+<script>
+let checked: bool = false
+let disabled: bool = false
+let label: utf8 = ""
+let value: utf8 = ""
+let size: utf8 = "md"
+
+micro handleChange() {
+    if disabled { return }
+    emit("change", { value: value, checked: true })
+}
+</script>
+<style>
+.ui-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    cursor: pointer;
+    user-select: none;
+    font-family: var(--ui-font-sans);
+    color: var(--sys-on-bg);
+}
+.ui-radio-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+.ui-radio-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-surface);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    flex-shrink: 0;
+}
+.ui-radio-box:hover {
+    border-color: var(--sys-outline-focus);
+}
+.ui-radio-checked {
+    border-color: var(--sys-primary);
+}
+.ui-radio-dot {
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-primary);
+    width: 50%;
+    height: 50%;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-radio-xs .ui-radio-box {
+    width: var(--ui-fs-sm);
+    height: var(--ui-fs-sm);
+}
+.ui-radio-xs .ui-radio-label {
+    font-size: var(--ui-fs-xs);
+}
+.ui-radio-sm .ui-radio-box {
+    width: var(--ui-fs-base);
+    height: var(--ui-fs-base);
+}
+.ui-radio-sm .ui-radio-label {
+    font-size: var(--ui-fs-sm);
+}
+.ui-radio-md .ui-radio-box {
+    width: var(--ui-fs-lg);
+    height: var(--ui-fs-lg);
+}
+.ui-radio-md .ui-radio-label {
+    font-size: var(--ui-fs-base);
+}
+.ui-radio-lg .ui-radio-box {
+    width: var(--ui-fs-h3);
+    height: var(--ui-fs-h3);
+}
+.ui-radio-lg .ui-radio-label {
+    font-size: var(--ui-fs-lg);
+}
+.ui-radio-label {
+    line-height: var(--ui-lh-tight);
+}
+.ui-radio-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-radio:focus-within .ui-radio-box {
+    box-shadow: 0 0 0 2px var(--sys-bg), 0 0 0 4px var(--sys-outline-focus);
+}
+
+</style>

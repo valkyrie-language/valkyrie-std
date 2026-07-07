@@ -1,0 +1,84 @@
+<widget Statistic>
+<Box class="ui-stat">
+    <if :condition="label">
+        <Box class="ui-stat-label">{label}</Box>
+        <else />
+    </if>
+    <Box class="ui-stat-value">
+        <if :condition="loading">
+            <Box class="ui-stat-loading"></Box>
+            <else />
+            <if :condition="prefix">
+                <Text class="ui-stat-prefix">{prefix}</Text>
+                <else />
+            </if>
+            <Text class="ui-stat-num">{value}</Text>
+            <if :condition="suffix">
+                <Text class="ui-stat-suffix">{suffix}</Text>
+                <else />
+            </if>
+        </if>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let value: utf8 = ""
+let label: utf8 = ""
+let prefix: utf8 = ""
+let suffix: utf8 = ""
+let loading: bool = false
+</script>
+<style>
+.ui-stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+    font-family: var(--ui-font-sans);
+}
+.ui-stat-label {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-tight);
+}
+.ui-stat-value {
+    display: flex;
+    align-items: baseline;
+    gap: var(--ui-space-1);
+    font-size: var(--ui-fs-h2);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    line-height: var(--ui-lh-tight);
+}
+.ui-stat-prefix {
+    font-size: var(--ui-fs-lg);
+    color: var(--sys-on-bg-secondary);
+}
+.ui-stat-num {
+    font-variant-numeric: tabular-nums;
+}
+.ui-stat-suffix {
+    font-size: var(--ui-fs-lg);
+    color: var(--sys-on-bg-secondary);
+}
+.ui-stat-loading {
+    width: 120px;
+    height: var(--ui-fs-h2);
+    background: var(--sys-surface-hover);
+    border-radius: var(--sys-radius-sm);
+    position: relative;
+    overflow: hidden;
+}
+.ui-stat-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent 0%, var(--sys-surface) 50%, transparent 100%);
+    animation: ui-stat-shimmer 1.6s infinite;
+}
+@keyframes ui-stat-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+</style>

@@ -37,14 +37,16 @@ flowchart TD
 核心约束如下：
 
 - `Parse -> Partition` 是语义主线，所有 target 共享。
+- 包分层同构于 Rust：`nyar.language` → `nyar.analyzer` → `nyar.optimizer` → `nyar.emitter`；lane 消费 **`ExecutableModule`**（全称，禁止 `Exec` / `ExecModule`）。
 - target 分叉从 `Partition` 开始，而不是从 parser、类型检查器或后端内部开始。
 - `Validate` 是强约束，不是可选步骤。
+- `nyar.vm.*` 只消费产物；`body_source` / type-name 特判旁路不是正式主线。
 
 ## 阶段 1：Parse
 
 ### 输入
 
-- `.v`
+- `.v`（Valkyrie 源码后缀；语言名与后缀是同一事物，解析模型在 `std.data.text.valkyrie`）
 - `.awsl`
 - 其他正式语言源文件
 

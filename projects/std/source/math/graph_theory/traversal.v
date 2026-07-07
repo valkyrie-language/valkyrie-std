@@ -2,6 +2,7 @@ namespace std.math.graph_theory;
 
 # DFS 深度优先遍历
 # 从 start 节点出发进行深度优先搜索，返回访问顺序的节点列表
+# CLR 自举阶段：避免 iterator HOF（any），改用显式 while。
 micro dfs(graph: DirectedGraph, start: utf8) -> [utf8] {
     let mut result: [utf8] = []
     let mut visited: [utf8] = []
@@ -13,14 +14,12 @@ micro dfs(graph: DirectedGraph, start: utf8) -> [utf8] {
 
 # DFS 辅助递归函数
 micro dfs_visit(graph: DirectedGraph, node: utf8, visited: [utf8], result: [utf8]) -> unit {
-    # 检查是否已访问
-    if visited
-        .into_iterator()
-        .any(micro(visited_node: utf8) -> bool {
-            return visited_node == node
-        })
-    {
-        return
+    let mut i: usize = 0
+    while i < visited.length() {
+        if visited⁅i⁆ == node {
+            return
+        }
+        i = i + 1
     }
 
     push(visited, node)
@@ -43,17 +42,20 @@ micro bfs(graph: DirectedGraph, start: utf8) -> [utf8] {
     push(queue, start)
 
     while queue.length() > 0 {
-        let current: utf8 = queue[0]
+        let current: utf8 = queue⁅0⁆
         queue = array_remove_first(queue)
         push(result, current)
 
         let successors: [utf8] = directed_graph_successors(graph, current)
         loop succ in successors {
-            let is_visited: bool = visited
-                .into_iterator()
-                .any(micro(visited_node: utf8) -> bool {
-                    return visited_node == succ
-                })
+            let mut is_visited: bool = false
+            let mut j: usize = 0
+            while j < visited.length() {
+                if visited⁅j⁆ == succ {
+                    is_visited = true
+                }
+                j = j + 1
+            }
 
             if !is_visited {
                 push(visited, succ)

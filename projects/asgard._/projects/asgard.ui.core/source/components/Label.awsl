@@ -1,0 +1,38 @@
+<widget Label>
+<label class="ui-label" :for="htmlFor">
+    <Text class="ui-label-text">
+        <slot />
+    </Text>
+    <if :condition="required">
+        <Text class="ui-label-required">*</Text>
+        <else />
+    </if>
+</label>
+</widget>
+
+<script>
+let required: bool = false
+let htmlFor: utf8 = ""
+</script>
+<style>
+.ui-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    font-weight: 500;
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-tight);
+}
+.ui-label-text {
+    display: inline-flex;
+    align-items: center;
+}
+.ui-label-required {
+    color: var(--sys-error);
+    font-weight: 600;
+    line-height: 1;
+}
+
+</style>

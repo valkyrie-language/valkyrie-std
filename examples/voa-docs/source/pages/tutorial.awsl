@@ -1,48 +1,48 @@
-<widget>
-    <div class="tutorial-page">
-        <h1 class="page-title">交互式教程</h1>
-        <p class="page-desc">6 步掌握 VOA 全栈开发，从创建项目到部署上线。</p>
+<widget tutorial>
+<div class="tutorial-page">
+    <h1 class="page-title">交互式教程</h1>
+    <p class="page-desc">6 步掌握 VOA 全栈开发，从创建项目到部署上线。</p>
 
-        <div class="tutorial-steps">
-            <for each={steps}>
-                <div class="tutorial-step">
-                    <div class="tutorial-step-header">
-                        <span class="tutorial-step-num">Step {step.order}</span>
-                        <h2 class="tutorial-step-title">{step.title}</h2>
-                    </div>
-                    <p class="tutorial-step-desc">{step.description}</p>
-
-                    <div class="tutorial-code-block">
-                        <div class="tutorial-code-header">
-                            <span>代码</span>
-                            <button class="tutorial-copy-btn" on:click={() => copy_code(step.code)}>
-                                复制
-                            </button>
-                        </div>
-                        <pre class="tutorial-code">{step.code}</pre>
-                    </div>
-
-                    <div class="tutorial-output">
-                        <div class="tutorial-output-header">预期输出</div>
-                        <pre class="tutorial-output-code">{step.expected_output}</pre>
-                    </div>
-
-                    <details class="tutorial-hint">
-                        <summary>💡 提示</summary>
-                        <p>{step.hint}</p>
-                    </details>
+    <div class="tutorial-steps">
+        <loop step in steps>
+            <div class="tutorial-step">
+                <div class="tutorial-step-header">
+                    <span class="tutorial-step-num">Step {step.order}</span>
+                    <h2 class="tutorial-step-title">{step.title}</h2>
                 </div>
-            </for>
+                <p class="tutorial-step-desc">{step.description}</p>
+
+                <div class="tutorial-code-block">
+                    <div class="tutorial-code-header">
+                        <span>代码</span>
+                        <button class="tutorial-copy-btn" @click="() => copy_code(step.code)">
+                        复制
+                    </button>
+                </div>
+                <pre class="tutorial-code">{step.code}</pre>
+            </div>
+
+            <div class="tutorial-output">
+                <div class="tutorial-output-header">预期输出</div>
+                <pre class="tutorial-output-code">{step.expected_output}</pre>
+            </div>
+
+            <details class="tutorial-hint">
+                <summary>💡 提示</summary>
+                <p>{step.hint}</p>
+            </details>
         </div>
-    </div>
+    </loop>
+</div>
+</div>
 </widget>
 
 <script>
-    let steps = get_tutorial_steps()
+let steps = get_tutorial_steps()
 
-    micro copy_code(code: string): void {
-        __voa_clipboard_write__(code)
-    }
+micro copy_code(code: utf8): void {
+    __voa_clipboard_write__(code)
+}
 </script>
 
 <style>

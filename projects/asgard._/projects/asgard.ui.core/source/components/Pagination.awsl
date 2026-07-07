@@ -1,0 +1,214 @@
+<widget Pagination>
+<Box @class="ui-pagination">
+    <button @class="ui-pagination-nav" type="button" @click="handlePrev" :disabled="currentNum <= 1" aria-label="Previous">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" />
+        </svg>
+    </button>
+    <loop page in {pages}>
+        <if page == "...">
+            <Text @class="ui-pagination-ellipsis">...</Text>
+            <else/>
+            <if page == currentNum>
+                <button @class="ui-pagination-item ui-pagination-item-active" type="button" disabled>{page}</button>
+                <else/>
+                <button @class="ui-pagination-item" type="button" @click="handlePage(page)">{page}</button>
+            </if>
+        </if>
+    </loop>
+    <button @class="ui-pagination-nav" type="button" @click="handleNext" :disabled="currentNum >= totalPages" aria-label="Next">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="m9 18 6-6-6-6" />
+        </svg>
+    </button>
+    <if showSizeChanger>
+        <select @class="ui-pagination-size" @change="handleSizeChange">
+            <option value="10">10 / page</option>
+            <option value="20">20 / page</option>
+            <option value="50">50 / page</option>
+        </select>
+        <else/>
+    </if>
+    <if showQuickJumper>
+        <Text @class="ui-pagination-jumper">Jump to <input @class="ui-pagination-input" type="number" @change="handleJumper" /></Text>
+        <else/>
+    </if>
+</Box>
+</widget>
+
+<script>
+let total: utf8 = "0"
+let current: utf8 = "1"
+let pageSize: utf8 = "10"
+let showSizeChanger: bool = false
+let showQuickJumper: bool = false
+let siblingCount: utf8 = "1"
+let mut currentNum: i32 = 1
+let mut totalPages: i32 = 1
+let mut pages: list = []
+
+micro computePages() {
+    let t: i32 = parseInt(total)
+    let ps: i32 = pageSizeNum
+    let s: i32 = parseInt(siblingCount)
+    if s < 0 { s = 1 }
+    totalPages = Math.ceil(t / ps)
+    if totalPages < 1 { totalPages = 1 }
+    let c: i32 = currentNum
+    if c < 1 { c = 1 }
+    if c > totalPages { c = totalPages }
+    let left: i32 = c - s
+    let right: i32 = c + s
+    pages = []
+    pages.push(1)
+    if left > 2 { pages.push("...") }
+    let mut i: i32 = left
+    if i < 2 { i = 2 }
+    while i <= right && i <= totalPages - 1 {
+        pages.push(i)
+        i = i + 1
+    }
+if right < totalPages - 1 { pages.push("...") }
+if totalPages > 1 { pages.push(totalPages) }
+}
+
+let mut pageSizeNum: i32 = 10
+
+micro handlePage(p: i32) {
+    currentNum = p
+    computePages()
+    emit("change", {page: p, pageSize: pageSizeNum})
+}
+
+micro handlePrev() {
+    if currentNum > 1 { handlePage(currentNum - 1) }
+}
+
+micro handleNext() {
+    if currentNum < totalPages { handlePage(currentNum + 1) }
+}
+
+micro handleSizeChange(e) {
+    pageSizeNum = parseInt(e.target.value)
+    currentNum = 1
+    computePages()
+    emit("change", {page: 1, pageSize: pageSizeNum})
+}
+
+micro handleJumper(e) {
+    let p: i32 = parseInt(e.target.value)
+    if p >= 1 && p <= totalPages { handlePage(p) }
+}
+
+micro onMount() {
+    pageSizeNum = parseInt(pageSize)
+    let c: i32 = parseInt(current)
+    if c < 1 { c = 1 }
+    currentNum = c
+    computePages()
+}
+</script>
+
+<style>
+.ui-pagination {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+}
+.ui-pagination-nav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ui-control-h-sm);
+    height: var(--ui-control-h-sm);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-pagination-nav svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-pagination-nav:hover:not(:disabled) {
+    border-color: var(--sys-outline-focus);
+    color: var(--sys-primary);
+}
+.ui-pagination-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ui-pagination-item {
+    min-width: var(--ui-control-h-sm);
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-2);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-pagination-item:hover {
+    border-color: var(--sys-outline-focus);
+    color: var(--sys-primary);
+}
+.ui-pagination-item-active {
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+    color: var(--sys-on-primary);
+    cursor: default;
+}
+.ui-pagination-item-active:hover {
+    color: var(--sys-on-primary);
+}
+.ui-pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--ui-control-h-sm);
+    height: var(--ui-control-h-sm);
+    color: var(--sys-on-bg-tertiary);
+}
+.ui-pagination-size {
+    height: var(--ui-control-h-sm);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    padding: 0 var(--ui-space-2);
+    cursor: pointer;
+}
+.ui-pagination-jumper {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    color: var(--sys-on-bg-secondary);
+    margin-left: var(--ui-space-2);
+}
+.ui-pagination-input {
+    width: 56px;
+    height: var(--ui-control-h-sm);
+    border: 1px solid var(--sys-outline);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+    padding: 0 var(--ui-space-2);
+    text-align: center;
+}
+.ui-pagination-input:focus {
+    outline: none;
+    border-color: var(--sys-outline-focus);
+}
+</style>

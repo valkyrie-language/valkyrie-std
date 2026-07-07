@@ -1,0 +1,563 @@
+<widget Home>
+<Box class="qa-home">
+    <Box class="qa-home-layout">
+        <Box class="qa-main">
+            <Box class="qa-filter-bar">
+                <Box class="qa-filter-tabs">
+                    <loop item="tab" :each="{tabs}">
+                        <button type="button" @class="qa-filter-tab {activeTab == tab.id ? 'qa-filter-tab-active' : ''}" @click="() => pickTab(tab.id)">
+                            <Text class="qa-filter-tab-text">{tab.label}</Text>
+                        </button>
+                    </loop>
+                </Box>
+                <Box class="qa-filter-select-wrap">
+                    <select class="qa-filter-select" :value="tagFilter" @change="onTagFilterChange">
+                        <option value="all">全部标签</option>
+                        <option value="新手">新手</option>
+                        <option value="原理">原理</option>
+                        <option value="响应式">响应式</option>
+                        <option value="小程序">小程序</option>
+                        <option value="跨平台">跨平台</option>
+                        <option value="AOT">AOT</option>
+                        <option value="主题">主题</option>
+                        <option value="动效">动效</option>
+                    </select>
+                </Box>
+            </Box>
+            <Box class="qa-question-list">
+                <loop item="q" :each="{questions}">
+                    <Box class="qa-question-card">
+                        <button type="button" class="qa-question-title" @click="() => openQuestion(q)">
+                            <Text class="qa-question-title-text">{q.title}</Text>
+                        </button>
+                        <Text class="qa-question-excerpt">{q.excerpt}</Text>
+                        <Box class="qa-question-tags">
+                            <loop item="tag" :each="{q.tags}">
+                                <Box class="qa-question-tag">
+                                    <Text class="qa-question-tag-text">{tag}</Text>
+                                </Box>
+                            </loop>
+                        </Box>
+                        <Box class="qa-question-footer">
+                            <Box class="qa-question-author">
+                                <Box class="qa-question-avatar">
+                                    <Text class="qa-question-avatar-text">{q.initial}</Text>
+                                </Box>
+                                <Text class="qa-question-author-name">{q.author}</Text>
+                            </Box>
+                            <Box class="qa-question-stats">
+                                <Box class="qa-stat">
+                                    <svg class="qa-stat-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                        <path d="M12 19V5M5 12l7-7 7 7" fill="none" stroke="currentColor" stroke-width="var(--ui-icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <Text class="qa-stat-text">{q.votes}</Text>
+                                </Box>
+                                <Box class="qa-stat">
+                                    <svg class="qa-stat-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="var(--ui-icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <Text class="qa-stat-text">{q.answers}</Text>
+                                </Box>
+                                <Box class="qa-stat">
+                                    <svg class="qa-stat-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" fill="none" stroke="currentColor" stroke-width="var(--ui-icon-stroke, 2)" stroke-linecap="round" stroke-linejoin="round" />
+                                        <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="var(--ui-icon-stroke, 2)" />
+                                    </svg>
+                                    <Text class="qa-stat-text">{q.views}</Text>
+                                </Box>
+                            </Box>
+                        </Box>
+                    </Box>
+                </loop>
+            </Box>
+        </Box>
+        <Box class="qa-sidebar">
+            <Box class="qa-side-card">
+                <Text class="qa-side-card-title">热门标签</Text>
+                <Box class="qa-hot-tags">
+                    <loop item="t" :each="{hotTags}">
+                        <button type="button" class="qa-hot-tag" @click="() => onTagClick(t.label)">
+                            <Text @class="qa-hot-tag-text qa-hot-tag-text-{t.tier}">{t.label}</Text>
+                        </button>
+                    </loop>
+                </Box>
+            </Box>
+            <Box class="qa-side-card">
+                <Text class="qa-side-card-title">本周活跃用户</Text>
+                <Box class="qa-user-list">
+                    <loop item="u" :each="{activeUsers}">
+                        <Box class="qa-user-item">
+                            <Text class="qa-user-rank">{u.rank}</Text>
+                            <Box class="qa-user-avatar">
+                                <Text class="qa-user-avatar-text">{u.initial}</Text>
+                            </Box>
+                            <Box class="qa-user-info">
+                                <Text class="qa-user-name">{u.name}</Text>
+                                <Text class="qa-user-stat">答题 {u.answers}</Text>
+                            </Box>
+                        </Box>
+                    </loop>
+                </Box>
+            </Box>
+            <Box class="qa-side-card">
+                <Text class="qa-side-card-title">社区公告</Text>
+                <Text class="qa-notice-text">本周六晚 20:00 社区将举办 Asgard 主题分享会，话题：AOT 主题内联与跨端 CSS 变量。欢迎在「板块」页面预约参与。</Text>
+                <Text class="qa-notice-meta">发布于 2026-07-06 · 置顶</Text>
+            </Box>
+        </Box>
+    </Box>
+    <Box class="qa-footer">
+        <Box class="qa-footer-links">
+            <a class="qa-footer-link" href="#">关于</a>
+            <a class="qa-footer-link" href="#">帮助</a>
+            <a class="qa-footer-link" href="#">规范</a>
+            <a class="qa-footer-link" href="#">反馈</a>
+            <a class="qa-footer-link" href="#">隐私</a>
+        </Box>
+        <Text class="qa-footer-copy">© 2026 羁绊问答 · Powered by Asgard</Text>
+    </Box>
+</Box>
+</widget>
+
+<script>
+let mut activeTab: utf8 = "new"
+let mut tagFilter: utf8 = "all"
+let tabs: list = [
+    { id: "new", label: "最新" },
+    { id: "hot", label: "热门" },
+    { id: "unanswered", label: "未回答" }
+]
+let questions: list = [
+    {
+        title: "新手如何快速上手 Asgard 框架？",
+        excerpt: "刚接触 Asgard，想了解从零开始搭建一个应用的完整流程，包括 legion.von、asgard.config.v 与 awsl 组件之间的关系，有没有推荐的入门路径？",
+        tags: ["新手", "入门"],
+        author: "Saber",
+        initial: "S",
+        votes: 12,
+        answers: 3,
+        views: 256
+    },
+    {
+        title: "AWSL 的响应式原理和 Solid 有什么区别？",
+        excerpt: "听说 AWSL 借鉴了 Solid 的细粒度响应式，又引入了 algebraic effects，二者在依赖追踪与更新调度上具体有何差异？性能孰优？",
+        tags: ["原理", "响应式"],
+        author: "Archer",
+        initial: "A",
+        votes: 28,
+        answers: 7,
+        views: 890
+    },
+    {
+        title: "微信小程序端 CSS 变量支持情况如何？",
+        excerpt: "想把 Asgard 应用编译到微信小程序，WXSS 对 CSS 自定义属性的支持是否完整？px 到 rpx 的自动转换规则又是怎样的？",
+        tags: ["小程序", "跨平台"],
+        author: "Lancer",
+        initial: "L",
+        votes: 9,
+        answers: 2,
+        views: 143
+    },
+    {
+        title: "AOT 主题内联优化具体是怎么工作的？",
+        excerpt: "生产部署时 ThemeProvider 会内联单一主题以减小体积，这个 AOT 阶段是如何分析依赖并裁剪未使用主题的？能否保留多主题切换能力？",
+        tags: ["AOT", "优化"],
+        author: "Rider",
+        initial: "R",
+        votes: 15,
+        answers: 4,
+        views: 312
+    },
+    {
+        title: "如何自定义 ThemeProvider 的 motion 等级？",
+        excerpt: "narrative、response、none 三档动效分别适用什么场景？能否为单个组件单独指定 motion 等级，而不是全局统一？",
+        tags: ["主题", "动效"],
+        author: "Caster",
+        initial: "C",
+        votes: 6,
+        answers: 1,
+        views: 88
+    },
+    {
+        title: "algebraic effects 在前端框架中的应用前景？",
+        excerpt: "algebraic effects 让副作用与计算分离，AWSL 在这一方向上的尝试能否成为下一代响应式框架的范式？有哪些现实约束？",
+        tags: ["原理", "效果系统"],
+        author: "Berserker",
+        initial: "B",
+        votes: 41,
+        answers: 11,
+        views: 1204
+    }
+]
+let hotTags: list = [
+    { label: "原理", tier: 4 },
+    { label: "响应式", tier: 3 },
+    { label: "小程序", tier: 3 },
+    { label: "新手", tier: 2 },
+    { label: "AOT", tier: 3 },
+    { label: "主题", tier: 2 },
+    { label: "跨平台", tier: 2 },
+    { label: "入门", tier: 1 },
+    { label: "动效", tier: 1 },
+    { label: "效果系统", tier: 1 }
+]
+let activeUsers: list = [
+    { name: "Saber", initial: "S", answers: 128, rank: 1 },
+    { name: "Archer", initial: "A", answers: 96, rank: 2 },
+    { name: "Rider", initial: "R", answers: 73, rank: 3 },
+    { name: "Lancer", initial: "L", answers: 51, rank: 4 },
+    { name: "Caster", initial: "C", answers: 39, rank: 5 }
+]
+
+micro pickTab(id: utf8) {
+    activeTab = id
+    emit("tabChange", { tab: id })
+}
+
+micro onTagFilterChange(e: Event) {
+    tagFilter = e.target.value
+    emit("tagFilter", { tag: tagFilter })
+}
+
+micro onTagClick(tag: utf8) {
+    emit("tagClick", { tag: tag })
+}
+
+micro openQuestion(q: any) {
+    emit("openQuestion", { title: q.title })
+}
+</script>
+<style>
+.qa-home {
+    background: var(--sys-bg);
+    min-height: 100vh;
+}
+.qa-home-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--ui-space-6);
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--ui-space-6);
+    align-items: start;
+}
+.qa-main {
+    min-width: 0;
+}
+.qa-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-4);
+    margin-bottom: var(--ui-space-5);
+}
+.qa-filter-tabs {
+    display: flex;
+    gap: var(--ui-space-2);
+}
+.qa-filter-tab {
+    display: inline-flex;
+    align-items: center;
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-4);
+    background: transparent;
+    color: var(--sys-on-bg-secondary);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.qa-filter-tab:hover {
+    color: var(--sys-on-bg);
+    border-color: var(--sys-outline-focus);
+}
+.qa-filter-tab-active {
+    color: var(--sys-on-primary);
+    background: var(--sys-primary);
+    border-color: var(--sys-primary);
+}
+.qa-filter-tab-active:hover {
+    color: var(--sys-on-primary);
+    background: var(--sys-primary-hover);
+}
+.qa-filter-tab-text {
+    font-size: var(--ui-fs-sm);
+    color: inherit;
+}
+.qa-filter-select-wrap {
+    display: inline-flex;
+}
+.qa-filter-select {
+    height: var(--ui-control-h-sm);
+    padding: 0 var(--ui-space-3);
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-sm);
+    font-size: var(--ui-fs-sm);
+    cursor: pointer;
+    outline: none;
+}
+.qa-filter-select:focus {
+    border-color: var(--sys-outline-focus);
+}
+.qa-question-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-4);
+}
+.qa-question-card {
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    padding: var(--ui-space-5);
+    box-shadow: var(--sys-shadow);
+    transition: box-shadow var(--ui-duration-1) var(--ui-easing), border-color var(--ui-duration-1) var(--ui-easing);
+}
+.qa-question-card:hover {
+    box-shadow: var(--sys-shadow-lg);
+    border-color: var(--sys-outline-focus);
+}
+.qa-question-title {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+.qa-question-title-text {
+    font-size: var(--ui-fs-h3);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+}
+.qa-question-title:hover .qa-question-title-text {
+    color: var(--sys-primary);
+}
+.qa-question-excerpt {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: var(--ui-space-2);
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-normal);
+}
+.qa-question-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ui-space-2);
+    margin-top: var(--ui-space-3);
+}
+.qa-question-tag {
+    background: var(--sys-primary-container);
+    border-radius: var(--sys-radius-sm);
+    padding: var(--ui-space-1) var(--ui-space-2);
+}
+.qa-question-tag-text {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-primary);
+}
+.qa-question-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui-space-3);
+    margin-top: var(--ui-space-4);
+}
+.qa-question-author {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+}
+.qa-question-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.qa-question-avatar-text {
+    font-size: var(--ui-fs-xs);
+    font-weight: 600;
+    color: var(--sys-primary);
+}
+.qa-question-author-name {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+}
+.qa-question-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-3);
+}
+.qa-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    color: var(--sys-on-bg-tertiary);
+}
+.qa-stat-icon {
+    color: var(--sys-on-bg-tertiary);
+    flex-shrink: 0;
+}
+.qa-stat-text {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.qa-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-4);
+    position: sticky;
+    top: calc(var(--ui-control-h-md) + var(--ui-space-4));
+}
+.qa-side-card {
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-md);
+    padding: var(--ui-space-5);
+    box-shadow: var(--sys-shadow);
+}
+.qa-side-card-title {
+    font-size: var(--ui-fs-lg);
+    font-weight: 600;
+    color: var(--sys-on-bg);
+    margin-bottom: var(--ui-space-3);
+}
+.qa-hot-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui-space-2) var(--ui-space-3);
+}
+.qa-hot-tag {
+    display: inline-flex;
+    align-items: center;
+    background: var(--sys-surface-hover);
+    border: 1px solid var(--sys-outline);
+    border-radius: var(--sys-radius-full);
+    padding: var(--ui-space-1) var(--ui-space-3);
+    cursor: pointer;
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-tight);
+    transition: color var(--ui-duration-1) var(--ui-easing), border-color var(--ui-duration-1) var(--ui-easing);
+}
+.qa-hot-tag:hover {
+    color: var(--sys-primary);
+    border-color: var(--sys-outline-focus);
+}
+.qa-hot-tag-text {
+    color: inherit;
+}
+.qa-hot-tag-text-1 {
+    font-size: var(--ui-fs-xs);
+}
+.qa-hot-tag-text-2 {
+    font-size: var(--ui-fs-sm);
+}
+.qa-hot-tag-text-3 {
+    font-size: var(--ui-fs-lg);
+}
+.qa-hot-tag-text-4 {
+    font-size: var(--ui-fs-h3);
+    font-weight: 600;
+}
+.qa-user-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-3);
+}
+.qa-user-item {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-3);
+}
+.qa-user-rank {
+    width: var(--ui-space-5);
+    text-align: center;
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--sys-on-bg-tertiary);
+}
+.qa-user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.qa-user-avatar-text {
+    font-size: var(--ui-fs-sm);
+    font-weight: 600;
+    color: var(--sys-primary);
+}
+.qa-user-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+}
+.qa-user-name {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg);
+}
+.qa-user-stat {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+.qa-notice-text {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    line-height: var(--ui-lh-normal);
+}
+.qa-notice-meta {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+    margin-top: var(--ui-space-3);
+}
+.qa-footer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--ui-space-6);
+    border-top: 1px solid var(--sys-outline);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-space-2);
+}
+.qa-footer-links {
+    display: flex;
+    gap: var(--ui-space-4);
+}
+.qa-footer-link {
+    font-size: var(--ui-fs-sm);
+    color: var(--sys-on-bg-secondary);
+    text-decoration: none;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.qa-footer-link:hover {
+    color: var(--sys-primary);
+}
+.qa-footer-copy {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+}
+@media (max-width: 960px) {
+    .qa-home-layout {
+        grid-template-columns: 1fr;
+    }
+    .qa-sidebar {
+        position: static;
+    }
+}
+</style>

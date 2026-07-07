@@ -1,0 +1,77 @@
+<widget Link>
+<a :href="disabled ? '' : href" :target="external ? '_blank' : ''" @class="ui-link ui-link-{variant} {disabled ? 'ui-link-disabled' : ''} {underline ? 'ui-link-underline' : ''}" @click="handleClick">
+    <Text @class="ui-link-content">
+        <slot />
+    </Text>
+    <if :condition="external">
+        <svg @class="ui-link-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+            <path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        </svg>
+        <else />
+    </if>
+</a>
+</widget>
+
+<script>
+let href: utf8 = ""
+let external: bool = false
+let disabled: bool = false
+let underline: bool = false
+let variant: utf8 = "primary"
+
+micro handleClick(e: MouseEvent) {
+    if disabled {
+        e.preventDefault()
+    }
+}
+</script>
+<style>
+.ui-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    color: var(--sys-primary);
+    text-decoration: none;
+    cursor: pointer;
+    font-family: var(--ui-font-sans);
+    font-size: inherit;
+    transition: color var(--ui-duration-1) var(--ui-easing);
+}
+.ui-link:hover {
+    color: var(--sys-primary-hover);
+}
+.ui-link-primary {
+    color: var(--sys-primary);
+}
+.ui-link-primary:hover {
+    color: var(--sys-primary-hover);
+}
+.ui-link-default {
+    color: var(--sys-on-bg);
+}
+.ui-link-default:hover {
+    color: var(--sys-on-bg-secondary);
+}
+.ui-link-muted {
+    color: var(--sys-on-bg-secondary);
+}
+.ui-link-muted:hover {
+    color: var(--sys-on-bg);
+}
+.ui-link-underline {
+    text-decoration: underline;
+}
+.ui-link-disabled {
+    color: var(--sys-on-bg-tertiary);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.ui-link-icon {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+</style>

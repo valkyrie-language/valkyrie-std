@@ -52,7 +52,7 @@ let _posts: list = [
         slug: "ssr-ssg-isp"
         title: "SSR vs SSG vs ISR：如何选择渲染模式？"
         excerpt: "深入对比三种服务端渲染策略的优缺点，以及 VOA 中的最佳实践。"
-        content: "选择正确的渲染模式对性能和用户体验至关重要。\n\n## SSR（服务端渲染）\n\n每次请求时在服务器生成 HTML。适合个性化内容、实时数据。\n\n## SSG（静态站点生成）\n\n构建时生成 HTML。适合博客、文档等不常变化的内容。\n\n## ISR（增量静态再生成）\n\n结合 SSG 的性能和 SSR 的时效性。设置 revalidate 时间，后台重新生成。\n\n## VOA 中的配置\n\n在 voa.config.v 中按路由设置渲染模式：\n\n```\nroutes: [\n  { path: \"/\", mode: \"ssg\" },\n  { path: \"/dashboard\", mode: \"ssr\" },\n  { path: \"/products\", mode: \"isr\", revalidate: 3600 }\n]\n```"
+        content: "选择正确的渲染模式对性能和用户体验至关重要。\n\n## SSR（服务端渲染）\n\n每次请求时在服务器生成 HTML。适合个性化内容、实时数据。\n\n## SSG（静态站点生成）\n\n构建时生成 HTML。适合博客、文档等不常变化的内容。\n\n## ISR（增量静态再生成）\n\n结合 SSG 的性能和 SSR 的时效性。设置 revalidate 时间，后台重新生成。\n\n## VOA 中的配置\n\n在 asgard.config.v 中按路由设置渲染模式：\n\n```\nroutes: [\n  { path: \"/\", mode: \"ssg\" },\n  { path: \"/dashboard\", mode: \"ssr\" },\n  { path: \"/products\", mode: \"isr\", revalidate: 3600 }\n]\n```"
         author: "Asgard 团队"
         date: "2027-02-10"
         tags: ["ssr", "ssg", "isr", "性能"]

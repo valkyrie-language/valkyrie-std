@@ -1,7 +1,6 @@
 namespace std.collections;
 
-# std.collections: PriorityQueue - 优先队列（最小堆）
-
+# std.collections: PriorityQueue (min-heap)
 [clr("System.Collections", "System.Collections.Generic.PriorityQueue`2")]
 [jvm("java.util.PriorityQueue")]
 class PriorityQueue<T> {

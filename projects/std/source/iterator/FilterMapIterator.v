@@ -1,3 +1,8 @@
+<% match arch %>
+<% case "clr" %>
+namespace std.iterator;
+# CLR: function-valued iterator adapters deferred (field call → DynamicInvoke).
+<% else %>
 namespace std.iterator;
 
 structure FilterMapIterator<T, U, I> {
@@ -21,6 +26,8 @@ imply FilterMapIterator<T, U, I>: Iterator {
             }
         }
 
-        return None
+        return option_none::<Item>()
     }
 }
+
+<% end %>

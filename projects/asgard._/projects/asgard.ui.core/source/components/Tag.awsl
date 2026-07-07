@@ -1,0 +1,110 @@
+<widget Tag>
+<Text @class="ui-tag ui-tag-{variant} ui-tag-{size} {closable ? 'ui-tag-closable' : ''}">
+    <Text class="ui-tag-content">
+        <slot />
+    </Text>
+    <if :condition="closable">
+        <button class="ui-tag-close" type="button" aria-label="close" @click="handleClose">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+        </button>
+        <else />
+    </if>
+</Text>
+</widget>
+
+<script>
+let variant: utf8 = "default"
+let closable: bool = false
+let size: utf8 = "md"
+
+micro handleClose() {
+    emit("close", {})
+}
+</script>
+<style>
+.ui-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-space-1);
+    border: 1px solid transparent;
+    border-radius: var(--sys-radius-sm);
+    font-family: var(--ui-font-sans);
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+}
+.ui-tag-sm {
+    height: 20px;
+    padding: 0 var(--ui-space-1);
+    font-size: var(--ui-fs-xs);
+}
+.ui-tag-md {
+    height: 24px;
+    padding: 0 var(--ui-space-2);
+    font-size: var(--ui-fs-sm);
+}
+.ui-tag-lg {
+    height: 28px;
+    padding: 0 var(--ui-space-3);
+    font-size: var(--ui-fs-base);
+}
+.ui-tag-default {
+    background: var(--sys-surface);
+    color: var(--sys-on-bg);
+    border-color: var(--sys-outline);
+}
+.ui-tag-primary {
+    background: var(--sys-primary-container);
+    color: var(--sys-primary);
+    border-color: transparent;
+}
+.ui-tag-success {
+    background: var(--sys-success);
+    color: var(--sys-on-primary);
+    border-color: transparent;
+}
+.ui-tag-error {
+    background: var(--sys-error);
+    color: var(--sys-on-primary);
+    border-color: transparent;
+}
+.ui-tag-warning {
+    background: var(--sys-warning);
+    color: var(--sys-on-primary);
+    border-color: transparent;
+}
+.ui-tag-info {
+    background: var(--sys-info);
+    color: var(--sys-on-primary);
+    border-color: transparent;
+}
+.ui-tag-content {
+    display: inline-flex;
+    align-items: center;
+}
+.ui-tag-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: currentColor;
+    opacity: 0.7;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-tag-close:hover {
+    opacity: 1;
+}
+.ui-tag-close svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+</style>

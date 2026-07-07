@@ -1,0 +1,93 @@
+<widget BackTop>
+<if :condition="visible">
+    <button @class="ui-backtop" type="button" aria-label="Back to top" @click="handleClick">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path d="M12 19V5M5 12l7-7 7 7" />
+        </svg>
+    </button>
+    <else />
+</if>
+</widget>
+
+<script>
+let visibilityHeight: utf8 = "400"
+let target: utf8 = ""
+let mut visible: bool = false
+
+micro handleScroll() {
+    let y: i32 = 0
+    if target != "" {
+        let el = document.querySelector(target)
+        if el {
+            y = el.scrollTop
+        }
+    } else {
+        y = window.scrollY
+    }
+    if y >= parseInt(visibilityHeight) {
+        visible = true
+    } else {
+        visible = false
+    }
+}
+
+micro handleClick() {
+    if target != "" {
+        let el = document.querySelector(target)
+        if el {
+            el.scrollTop = 0
+        }
+    } else {
+        window.scrollTo({top: 0, behavior: "smooth"})
+    }
+    emit("click", {})
+}
+
+micro onMount() {
+    if target != "" {
+        let el = document.querySelector(target)
+        if el {
+            el.addEventListener("scroll", handleScroll)
+        }
+    } else {
+        window.addEventListener("scroll", handleScroll)
+    }
+    handleScroll()
+}
+</script>
+<style>
+.ui-backtop {
+    position: fixed;
+    bottom: var(--ui-space-8);
+    right: var(--ui-space-8);
+    z-index: var(--ui-z-sticky);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--sys-primary);
+    color: var(--sys-on-primary);
+    border-radius: var(--sys-radius-full);
+    box-shadow: var(--sys-shadow-lg);
+    cursor: pointer;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+    animation: ui-backtop-in var(--ui-duration-1) var(--ui-easing);
+}
+.ui-backtop:hover {
+    background: var(--sys-primary-hover);
+    transform: translateY(-2px);
+}
+.ui-backtop svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+@keyframes ui-backtop-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>

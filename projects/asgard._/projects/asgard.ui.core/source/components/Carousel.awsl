@@ -1,0 +1,223 @@
+<widget Carousel>
+<Box @class="ui-carousel" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave">
+    <Box :style="trackStyle" @class="ui-carousel-track ui-carousel-track-{effect}">
+        <slot />
+    </Box>
+    <if :condition="arrow != &quot;never&quot;">
+        <Box @class="ui-carousel-arrows {arrow == 'hover' ? 'ui-carousel-arrows-hover' : ''}">
+            <button @class="ui-carousel-arrow ui-carousel-arrow-left" type="button" @click="prev">
+                <svg @class="ui-carousel-arrow-svg" viewBox="0 0 24 24" width="20" height="20">
+                    <path d="m15 18-6-6 6-6" />
+                </svg>
+            </button>
+            <button @class="ui-carousel-arrow ui-carousel-arrow-right" type="button" @click="next">
+                <svg @class="ui-carousel-arrow-svg" viewBox="0 0 24 24" width="20" height="20">
+                    <path d="m9 18 6-6-6-6" />
+                </svg>
+            </button>
+        </Box>
+        <else />
+    </if>
+    <if :condition="dot != &quot;never&quot;">
+        <Box @class="ui-carousel-dots {dot == 'hover' ? 'ui-carousel-dots-hover' : ''}">
+            <loop item="i" :each="{dotList}">
+                <button type="button" @class="ui-carousel-dot {current == i ? 'ui-carousel-dot-active' : ''}" @click="goTo(i)"></button>
+            </loop>
+        </Box>
+        <else />
+    </if>
+</Box>
+</widget>
+
+<script>
+let autoplay: bool = false
+let interval: utf8 = "3000"
+let loop: bool = true
+let arrow: utf8 = "hover"
+let dot: utf8 = "always"
+let effect: utf8 = "slide"
+
+let mut current: i32 = 0
+let mut count: i32 = 0
+let mut timerId: i32 = 0
+
+micro dotList() {
+    let arr: list = []
+    let i: i32 = 0
+    while i < count {
+        arr = push(arr, i)
+        i = i + 1
+    }
+return arr
+}
+
+micro trackStyle() {
+    if effect == "fade" {
+        return "opacity: 1"
+    }
+return f"transform: translateX(-{current * 100}%)"
+}
+
+micro prev() {
+    if current == 0 {
+        if loop && count > 0 {
+            current = count - 1
+        }
+} else {
+current = current - 1
+}
+emit("change", { current: current })
+}
+
+micro next() {
+    if current >= count - 1 {
+        if loop && count > 0 {
+            current = 0
+        }
+} else {
+current = current + 1
+}
+emit("change", { current: current })
+}
+
+micro goTo(index: i32) {
+    if index < 0 || index >= count {
+        return
+    }
+current = index
+emit("change", { current: current })
+}
+
+micro onMouseEnter() {
+    stopAutoplay()
+}
+
+micro onMouseLeave() {
+    startAutoplay()
+}
+
+micro startAutoplay() {
+    if !autoplay || count <= 1 {
+        return
+    }
+stopAutoplay()
+let ms: i32 = toI32(interval)
+timerId = setInterval(next, ms)
+}
+
+micro stopAutoplay() {
+    if timerId != 0 {
+        clearInterval(timerId)
+        timerId = 0
+    }
+}
+
+micro onMount() {
+    let slots = getSlotCount()
+    count = slots
+    if count < 1 {
+        count = 1
+    }
+current = 0
+startAutoplay()
+}
+</script>
+<style>
+.ui-carousel {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--sys-radius-md);
+    font-family: var(--ui-font-sans);
+}
+.ui-carousel-track {
+    display: flex;
+    width: 100%;
+    transition: transform var(--ui-duration-2) var(--ui-easing);
+}
+.ui-carousel-track-fade {
+    position: relative;
+    transition: opacity var(--ui-duration-2) var(--ui-easing);
+}
+.ui-carousel-arrows {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--ui-space-2);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity var(--ui-duration-1) var(--ui-easing);
+}
+.ui-carousel-arrows-hover {
+    opacity: 0;
+}
+.ui-carousel:hover .ui-carousel-arrows-hover {
+    opacity: 1;
+}
+.ui-carousel-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-surface);
+    box-shadow: var(--sys-shadow-lg);
+    color: var(--sys-on-bg);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-carousel-arrow:hover {
+    background: var(--sys-surface-hover);
+}
+.ui-carousel-arrow-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ui-carousel-dots {
+    position: absolute;
+    bottom: var(--ui-space-3);
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui-space-1);
+    opacity: 1;
+    transition: opacity var(--ui-duration-1) var(--ui-easing);
+}
+.ui-carousel-dots-hover {
+    opacity: 0;
+}
+.ui-carousel:hover .ui-carousel-dots-hover {
+    opacity: 1;
+}
+.ui-carousel-dot {
+    width: 8px;
+    height: 8px;
+    border: none;
+    border-radius: var(--sys-radius-full);
+    background: var(--sys-outline);
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-carousel-dot:hover {
+    background: var(--sys-on-bg-secondary);
+}
+.ui-carousel-dot-active {
+    width: 24px;
+    background: var(--sys-on-bg);
+}
+
+</style>

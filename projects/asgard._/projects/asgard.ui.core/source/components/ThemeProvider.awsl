@@ -1,0 +1,77 @@
+<widget ThemeProvider>
+<Box @class="asgard-root motion-{motion}">
+    <slot />
+</Box>
+</widget>
+
+<script>
+let motion: utf8 = "narrative"
+
+micro setMotion(m: utf8) {
+    motion = m
+    emit("motionChange", { motion: motion })
+}
+</script>
+<style>
+.asgard-root {
+    --ui-control-h-xs: 28px;
+    --ui-control-h-sm: 34px;
+    --ui-control-h-md: 44px;
+    --ui-control-h-lg: 52px;
+    --ui-control-px-xs: 12px;
+    --ui-control-px-sm: 16px;
+    --ui-control-px-md: 20px;
+    --ui-control-px-lg: 24px;
+    --ui-fs-xs: 11px;
+    --ui-fs-sm: 13px;
+    --ui-fs-base: 14px;
+    --ui-fs-lg: 16px;
+    --ui-fs-h3: 20px;
+    --ui-fs-h2: 28px;
+    --ui-fs-h1: 36px;
+    --ui-lh-tight: 1.1;
+    --ui-lh-snug: 1.3;
+    --ui-lh-normal: 1.6;
+    --ui-space-1: 4px;
+    --ui-space-2: 8px;
+    --ui-space-3: 12px;
+    --ui-space-4: 16px;
+    --ui-space-5: 20px;
+    --ui-space-6: 24px;
+    --ui-space-7: 28px;
+    --ui-space-8: 32px;
+    --ui-space-10: 40px;
+    --ui-space-12: 48px;
+    --ui-z-dropdown: 1000;
+    --ui-z-sticky: 1100;
+    --ui-z-overlay: 1200;
+    --ui-z-modal: 1300;
+    --ui-z-toast: 1400;
+    --ui-duration-1: 150ms;
+    --ui-duration-2: 300ms;
+    --ui-glass-blur: none;
+    --ui-icon-stroke: 2;
+    font-family: var(--ui-font-sans, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
+    font-size: var(--ui-fs-base);
+    line-height: var(--ui-lh-normal);
+    color: var(--sys-on-bg, #111);
+    background: var(--sys-bg, #fff);
+    min-height: 100%;
+}
+.asgard-root * {
+    box-sizing: border-box;
+}
+.motion-none {
+    --ui-duration-1: 0.01ms;
+    --ui-duration-2: 0.01ms;
+    --ui-easing: linear;
+}
+.motion-response {
+    --ui-duration-1: 150ms;
+    --ui-duration-2: 200ms;
+}
+.motion-narrative {
+    --ui-duration-1: 150ms;
+    --ui-duration-2: 300ms;
+}
+</style>

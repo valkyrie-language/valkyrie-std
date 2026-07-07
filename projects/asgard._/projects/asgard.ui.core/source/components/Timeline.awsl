@@ -1,0 +1,152 @@
+<widget Timeline>
+<Box @class="ui-timeline ui-timeline-{mode}">
+    <loop item="item" :each="{resolvedItems}">
+        <Box @class="ui-timeline-item ui-timeline-{item.side}">
+            <Box class="ui-timeline-dot-wrap">
+                <Text @class="ui-timeline-dot {item.color != '' ? 'ui-timeline-dot-' + item.color : 'ui-timeline-dot-primary'}">
+                    <if :condition="item.icon">
+                        <Text class="ui-timeline-dot-icon">{item.icon}</Text>
+                        <else />
+                    </if>
+                </Text>
+                <Text class="ui-timeline-line"></Text>
+            </Box>
+            <Box class="ui-timeline-content">
+                <if :condition="item.label">
+                    <Box class="ui-timeline-label">{item.label}</Box>
+                    <else />
+                </if>
+                <if :condition="item.time">
+                    <Box class="ui-timeline-time">{item.time}</Box>
+                    <else />
+                </if>
+            </Box>
+        </Box>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+let mode: utf8 = "left"
+
+micro resolvedItems() {
+    let side: utf8 = "left"
+    if mode == "right" {
+        side = "right"
+    }
+    let alternateSide: utf8 = "left"
+    let normalized: list = []
+    let i: i32 = 0
+    while i < len(items) {
+        let item = items[i]
+        let itemSide: utf8 = side
+        if mode == "alternate" {
+            itemSide = alternateSide
+            if alternateSide == "left" {
+                alternateSide = "right"
+            } else {
+                alternateSide = "left"
+            }
+        }
+        normalized = normalized + [{
+            label: item.label,
+            time: item.time,
+            color: item.color,
+            icon: item.icon,
+            side: itemSide
+        }]
+    i = i + 1
+}
+return normalized
+}
+</script>
+<style>
+.ui-timeline {
+    display: flex;
+    flex-direction: column;
+    font-family: var(--ui-font-sans);
+}
+.ui-timeline-item {
+    display: flex;
+    gap: var(--ui-space-4);
+    position: relative;
+    padding-bottom: var(--ui-space-5);
+}
+.ui-timeline-item:last-child {
+    padding-bottom: 0;
+}
+.ui-timeline-item:last-child .ui-timeline-line {
+    display: none;
+}
+.ui-timeline-left {
+    flex-direction: row;
+}
+.ui-timeline-right {
+    flex-direction: row-reverse;
+    text-align: right;
+}
+.ui-timeline-dot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+}
+.ui-timeline-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    border-radius: var(--sys-radius-full);
+    z-index: 1;
+    box-shadow: 0 0 0 3px var(--sys-bg);
+}
+.ui-timeline-dot-primary {
+    background: var(--sys-primary);
+}
+.ui-timeline-dot-success {
+    background: var(--sys-success);
+}
+.ui-timeline-dot-error {
+    background: var(--sys-error);
+}
+.ui-timeline-dot-warning {
+    background: var(--sys-warning);
+}
+.ui-timeline-dot-info {
+    background: var(--sys-info);
+}
+.ui-timeline-dot-icon {
+    color: var(--sys-on-primary);
+    font-size: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.ui-timeline-line {
+    position: absolute;
+    top: 12px;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    background: var(--sys-outline);
+}
+.ui-timeline-content {
+    flex: 1;
+    padding-top: 0;
+}
+.ui-timeline-label {
+    font-size: var(--ui-fs-base);
+    font-weight: 500;
+    color: var(--sys-on-bg);
+    line-height: var(--ui-lh-tight);
+}
+.ui-timeline-time {
+    font-size: var(--ui-fs-xs);
+    color: var(--sys-on-bg-tertiary);
+    margin-top: var(--ui-space-1);
+}
+</style>

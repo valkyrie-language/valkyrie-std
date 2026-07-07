@@ -1,5 +1,3 @@
-# std.collections: HashMap semantics
-
 namespace std.collections;
 
 [clr("System.Collections", "System.Collections.Generic.Dictionary`2")]

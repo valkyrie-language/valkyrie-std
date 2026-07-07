@@ -1,0 +1,20 @@
+{
+    name: "asgard_demo_portal",
+    version: "0.1.0.0",
+    description: "Asgard Portal Demo — 商务门户，默认 Apex/Light",
+    license: "MIT",
+    type: "application",
+    target: "web",
+    dependencies: {
+        "voa-core": "0.1.*",
+        "asgard.ui.core": "0.1.*",
+        "asgard.ui.icon": "0.1.*",
+        "asgard.theme.aether": "0.1.*",
+        "asgard.theme.zen": "0.1.*",
+        "asgard.theme.apex": "0.1.*",
+        "asgard.theme.fate": "0.1.*",
+        "asgard.theme.matrix": "0.1.*",
+        "asgard.theme.kumo": "0.1.*"
+    },
+    devDependencies: {}
+}

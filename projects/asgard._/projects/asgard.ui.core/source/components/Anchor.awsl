@@ -1,0 +1,50 @@
+<widget Anchor>
+<Box @class="ui-anchor">
+    <loop item="item" :each="{items}">
+        <Text @class="ui-anchor-link {activeKey == item.key ? 'ui-anchor-link-active' : ''}" @click="handleClick(item)">{item.label}</Text>
+    </loop>
+</Box>
+</widget>
+
+<script>
+let items: list = []
+let offsetTop: utf8 = "0"
+let mut activeKey: utf8 = ""
+
+micro handleClick(item) {
+    activeKey = item.key
+    emit("click", {key: item.key, href: item.href, offsetTop: offsetTop})
+}
+
+micro onMount() {
+    if items.length > 0 {
+        activeKey = items[0].key
+    }
+}
+</script>
+<style>
+.ui-anchor {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-space-1);
+    padding-left: var(--ui-space-2);
+    border-left: 1px solid var(--sys-outline);
+    font-family: var(--ui-font-sans);
+    font-size: var(--ui-fs-sm);
+}
+.ui-anchor-link {
+    display: block;
+    padding: var(--ui-space-1) var(--ui-space-3);
+    color: var(--sys-on-bg-secondary);
+    cursor: pointer;
+    border-radius: var(--sys-radius-sm);
+    transition: all var(--ui-duration-1) var(--ui-easing);
+}
+.ui-anchor-link:hover {
+    color: var(--sys-on-bg);
+}
+.ui-anchor-link-active {
+    color: var(--sys-primary);
+    font-weight: 500;
+}
+</style>

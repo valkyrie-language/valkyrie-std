@@ -1,0 +1,509 @@
+<widget Home>
+<Box class="portal-home">
+    <Box class="portal-hero">
+        <Box class="portal-hero-inner">
+            <Text class="portal-hero-badge">Asgard UI Framework</Text>
+            <Text class="portal-hero-title">构建下一代全栈应用</Text>
+            <Text class="portal-hero-subtitle">一套类型安全的声明式 UI 框架，支持 AOT 一体化优化，覆盖 9 个平台目标，让全栈开发体验如丝般顺滑。</Text>
+            <Box class="portal-hero-actions">
+                <button class="portal-btn portal-btn-primary portal-btn-lg">开始使用</button>
+                <button class="portal-btn portal-btn-outline portal-btn-lg">查看文档</button>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box class="portal-stats">
+        <Box class="portal-stats-inner">
+            <Box class="portal-stat">
+                <Text class="portal-stat-number">12万+</Text>
+                <Text class="portal-stat-label">开发者</Text>
+            </Box>
+            <Box class="portal-stat">
+                <Text class="portal-stat-number">98%</Text>
+                <Text class="portal-stat-label">部署成功率</Text>
+            </Box>
+            <Box class="portal-stat">
+                <Text class="portal-stat-number">89</Text>
+                <Text class="portal-stat-label">组件</Text>
+            </Box>
+            <Box class="portal-stat">
+                <Text class="portal-stat-number">9</Text>
+                <Text class="portal-stat-label">平台目标</Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box class="portal-section">
+        <Box class="portal-section-inner">
+            <Box class="portal-section-head">
+                <Text class="portal-section-eyebrow">特性</Text>
+                <Text class="portal-section-title">核心特性</Text>
+                <Text class="portal-section-subtitle">为现代全栈应用而生的工程能力</Text>
+            </Box>
+            <Box class="portal-features-grid">
+                <Box class="portal-feature-card">
+                    <Box class="portal-feature-icon-wrap">
+                        <svg class="portal-feature-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <line x1="8" y1="21" x2="16" y2="21" />
+                            <line x1="12" y1="17" x2="12" y2="21" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-feature-title">跨平台一致</Text>
+                    <Text class="portal-feature-desc">一套代码，九个平台目标。Web、小程序、原生应用共享同一组件树与样式系统。</Text>
+                </Box>
+                <Box class="portal-feature-card">
+                    <Box class="portal-feature-icon-wrap">
+                        <svg class="portal-feature-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-feature-title">AOT 一体化优化</Text>
+                    <Text class="portal-feature-desc">提前编译消除运行时开销，组件树、样式与脚本统一优化，产出极致体积与性能。</Text>
+                </Box>
+                <Box class="portal-feature-card">
+                    <Box class="portal-feature-icon-wrap">
+                        <svg class="portal-feature-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-feature-title">类型安全</Text>
+                    <Text class="portal-feature-desc">从 props 到事件，从样式到状态，全链路静态类型检查，错误在编译期暴露。</Text>
+                </Box>
+                <Box class="portal-feature-card">
+                    <Box class="portal-feature-icon-wrap">
+                        <svg class="portal-feature-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+                            <path d="M2 12h20" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-feature-title">响应式主题</Text>
+                    <Text class="portal-feature-desc">六套主题、明暗双模、CSS 变量驱动，运行时切换无重渲染，系统偏好自动适配。</Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box class="portal-section portal-section-alt">
+        <Box class="portal-section-inner">
+            <Box class="portal-section-head">
+                <Text class="portal-section-eyebrow">方案</Text>
+                <Text class="portal-section-title">解决方案</Text>
+                <Text class="portal-section-subtitle">覆盖典型业务场景的开箱即用方案</Text>
+            </Box>
+            <Box class="portal-solutions-grid">
+                <Box class="portal-solution-card">
+                    <Box class="portal-solution-icon-wrap">
+                        <svg class="portal-solution-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="4" y="2" width="16" height="20" rx="2" />
+                            <path d="M9 22v-4h6v4" />
+                            <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-solution-title">企业门户</Text>
+                    <Text class="portal-solution-desc">面向企业的品牌门户与内部协同入口，支持多语言、权限分级与单点登录集成。</Text>
+                    <a class="portal-solution-link" href="#">
+                        了解更多
+                        <svg class="portal-solution-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </a>
+                </Box>
+                <Box class="portal-solution-card">
+                    <Box class="portal-solution-icon-wrap">
+                        <svg class="portal-solution-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-solution-title">社区运营</Text>
+                    <Text class="portal-solution-desc">为社群与内容创作者打造的高互动运营平台，内置会员体系、活动管理与数据看板。</Text>
+                    <a class="portal-solution-link" href="#">
+                        了解更多
+                        <svg class="portal-solution-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </a>
+                </Box>
+                <Box class="portal-solution-card">
+                    <Box class="portal-solution-icon-wrap">
+                        <svg class="portal-solution-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                            <polyline points="2 17 12 22 22 17" />
+                            <polyline points="2 12 12 17 22 12" />
+                        </svg>
+                    </Box>
+                    <Text class="portal-solution-title">内容平台</Text>
+                    <Text class="portal-solution-desc">支持富文本、多媒体与多端分发的内容管理平台，提供编辑工作流与发布审批能力。</Text>
+                    <a class="portal-solution-link" href="#">
+                        了解更多
+                        <svg class="portal-solution-link-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </a>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box class="portal-cta-banner">
+        <Box class="portal-cta-inner">
+            <Text class="portal-cta-title">准备好开始了吗？</Text>
+            <Text class="portal-cta-subtitle">几分钟内初始化项目，立刻体验全栈一致的开发流程。</Text>
+            <button class="portal-btn portal-btn-primary portal-btn-lg">立即开始</button>
+        </Box>
+    </Box>
+
+    <Box class="portal-footer">
+        <Box class="portal-footer-inner">
+            <Box class="portal-footer-grid">
+                <Box class="portal-footer-col">
+                    <Text class="portal-footer-title">产品</Text>
+                    <a class="portal-footer-link" href="#">组件库</a>
+                    <a class="portal-footer-link" href="#">主题系统</a>
+                    <a class="portal-footer-link" href="#">CLI 工具</a>
+                </Box>
+                <Box class="portal-footer-col">
+                    <Text class="portal-footer-title">资源</Text>
+                    <a class="portal-footer-link" href="#">文档</a>
+                    <a class="portal-footer-link" href="#">教程</a>
+                    <a class="portal-footer-link" href="#">示例</a>
+                </Box>
+                <Box class="portal-footer-col">
+                    <Text class="portal-footer-title">公司</Text>
+                    <a class="portal-footer-link" href="#">关于</a>
+                    <a class="portal-footer-link" href="#">博客</a>
+                    <a class="portal-footer-link" href="#">联系</a>
+                </Box>
+            </Box>
+            <Box class="portal-footer-bottom">
+                <Text class="portal-footer-copy">© 2026 Asgard Portal. 保留所有权利。</Text>
+            </Box>
+        </Box>
+    </Box>
+</Box>
+</widget>
+
+<style>
+.portal-home {
+    width: 100%;
+}
+
+.portal-hero {
+    background: var(--sys-surface);
+    padding: var(--ui-spacing-3xl) var(--ui-spacing-lg);
+    border-bottom: 1px solid var(--sys-border);
+}
+.portal-hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--ui-spacing-md);
+}
+.portal-hero-badge {
+    display: inline-block;
+    padding: var(--ui-spacing-xs) var(--ui-spacing-md);
+    background: var(--sys-primary-soft);
+    color: var(--sys-primary);
+    border-radius: var(--ui-radius-pill);
+    font-size: var(--ui-font-size-sm);
+    font-weight: var(--ui-font-weight-medium);
+}
+.portal-hero-title {
+    font-size: var(--ui-font-size-4xl);
+    font-weight: var(--ui-font-weight-bold);
+    color: var(--sys-text);
+    line-height: 1.2;
+    max-width: 720px;
+}
+.portal-hero-subtitle {
+    font-size: var(--ui-font-size-lg);
+    color: var(--sys-text-secondary);
+    line-height: 1.6;
+    max-width: 640px;
+}
+.portal-hero-actions {
+    display: flex;
+    gap: var(--ui-spacing-md);
+    margin-top: var(--ui-spacing-md);
+}
+
+.portal-btn {
+    font-size: var(--ui-font-size-md);
+    padding: var(--ui-spacing-sm) var(--ui-spacing-md);
+    border-radius: var(--ui-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.portal-btn-lg {
+    padding: var(--ui-spacing-md) var(--ui-spacing-xl);
+    font-size: var(--ui-font-size-lg);
+}
+.portal-btn-primary {
+    background: var(--sys-primary);
+    color: var(--sys-primary-fg);
+    border-color: var(--sys-primary);
+}
+.portal-btn-primary:hover {
+    background: var(--sys-primary-hover);
+}
+.portal-btn-outline {
+    background: transparent;
+    color: var(--sys-text);
+    border-color: var(--sys-border);
+}
+.portal-btn-outline:hover {
+    border-color: var(--sys-primary);
+    color: var(--sys-primary);
+}
+
+.portal-stats {
+    background: var(--sys-background);
+    padding: var(--ui-spacing-2xl) var(--ui-spacing-lg);
+}
+.portal-stats-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ui-spacing-lg);
+}
+.portal-stat {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-spacing-xs);
+}
+.portal-stat-number {
+    font-size: var(--ui-font-size-3xl);
+    font-weight: var(--ui-font-weight-bold);
+    color: var(--sys-primary);
+}
+.portal-stat-label {
+    font-size: var(--ui-font-size-md);
+    color: var(--sys-text-secondary);
+}
+
+.portal-section {
+    padding: var(--ui-spacing-3xl) var(--ui-spacing-lg);
+    background: var(--sys-surface);
+}
+.portal-section-alt {
+    background: var(--sys-background);
+}
+.portal-section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.portal-section-head {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ui-spacing-xs);
+    margin-bottom: var(--ui-spacing-2xl);
+}
+.portal-section-eyebrow {
+    font-size: var(--ui-font-size-sm);
+    color: var(--sys-primary);
+    font-weight: var(--ui-font-weight-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.portal-section-title {
+    font-size: var(--ui-font-size-3xl);
+    font-weight: var(--ui-font-weight-bold);
+    color: var(--sys-text);
+}
+.portal-section-subtitle {
+    font-size: var(--ui-font-size-lg);
+    color: var(--sys-text-secondary);
+}
+
+.portal-features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--ui-spacing-lg);
+}
+.portal-feature-card {
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-border);
+    border-radius: var(--ui-radius-lg);
+    padding: var(--ui-spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-spacing-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.portal-feature-card:hover {
+    border-color: var(--sys-primary);
+    box-shadow: var(--ui-shadow-md);
+}
+.portal-feature-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--ui-radius-md);
+    background: var(--sys-primary-soft);
+    color: var(--sys-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--ui-spacing-xs);
+}
+.portal-feature-icon {
+    stroke-width: var(--ui-icon-stroke, 2);
+}
+.portal-feature-title {
+    font-size: var(--ui-font-size-lg);
+    font-weight: var(--ui-font-weight-semibold);
+    color: var(--sys-text);
+}
+.portal-feature-desc {
+    font-size: var(--ui-font-size-md);
+    color: var(--sys-text-secondary);
+    line-height: 1.6;
+}
+
+.portal-solutions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ui-spacing-lg);
+}
+.portal-solution-card {
+    background: var(--sys-surface);
+    border: 1px solid var(--sys-border);
+    border-radius: var(--ui-radius-lg);
+    padding: var(--ui-spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-spacing-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.portal-solution-card:hover {
+    border-color: var(--sys-primary);
+    box-shadow: var(--ui-shadow-md);
+}
+.portal-solution-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--ui-radius-md);
+    background: var(--sys-primary-soft);
+    color: var(--sys-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--ui-spacing-xs);
+}
+.portal-solution-icon {
+    stroke-width: var(--ui-icon-stroke, 2);
+}
+.portal-solution-title {
+    font-size: var(--ui-font-size-xl);
+    font-weight: var(--ui-font-weight-semibold);
+    color: var(--sys-text);
+}
+.portal-solution-desc {
+    font-size: var(--ui-font-size-md);
+    color: var(--sys-text-secondary);
+    line-height: 1.6;
+    flex-grow: 1;
+}
+.portal-solution-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui-spacing-xs);
+    color: var(--sys-primary);
+    text-decoration: none;
+    font-size: var(--ui-font-size-md);
+    font-weight: var(--ui-font-weight-medium);
+    margin-top: var(--ui-spacing-sm);
+}
+.portal-solution-link:hover {
+    text-decoration: underline;
+}
+.portal-solution-link-icon {
+    stroke-width: var(--ui-icon-stroke, 2);
+}
+
+.portal-cta-banner {
+    background: var(--sys-primary);
+    padding: var(--ui-spacing-3xl) var(--ui-spacing-lg);
+}
+.portal-cta-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--ui-spacing-md);
+}
+.portal-cta-title {
+    font-size: var(--ui-font-size-3xl);
+    font-weight: var(--ui-font-weight-bold);
+    color: var(--sys-primary-fg);
+}
+.portal-cta-subtitle {
+    font-size: var(--ui-font-size-lg);
+    color: var(--sys-primary-fg);
+    opacity: 0.9;
+    max-width: 560px;
+}
+
+.portal-footer {
+    background: var(--sys-surface);
+    border-top: 1px solid var(--sys-border);
+    padding: var(--ui-spacing-2xl) var(--ui-spacing-lg) var(--ui-spacing-lg);
+}
+.portal-footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.portal-footer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--ui-spacing-xl);
+    margin-bottom: var(--ui-spacing-xl);
+}
+.portal-footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui-spacing-sm);
+}
+.portal-footer-title {
+    font-size: var(--ui-font-size-md);
+    font-weight: var(--ui-font-weight-semibold);
+    color: var(--sys-text);
+}
+.portal-footer-link {
+    color: var(--sys-text-secondary);
+    text-decoration: none;
+    font-size: var(--ui-font-size-md);
+    transition: color 0.2s ease;
+}
+.portal-footer-link:hover {
+    color: var(--sys-primary);
+}
+.portal-footer-bottom {
+    border-top: 1px solid var(--sys-border);
+    padding-top: var(--ui-spacing-lg);
+}
+.portal-footer-copy {
+    font-size: var(--ui-font-size-sm);
+    color: var(--sys-text-muted);
+}
+</style>

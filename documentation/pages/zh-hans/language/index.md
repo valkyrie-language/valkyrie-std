@@ -2,6 +2,8 @@
 
 Valkyrie 语言是面向 ECS、游戏引擎与 Web 全栈的领域特定语言。参考分为核心语言、领域扩展和规范约定三部分。
 
+语言名是 **Valkyrie**，源码后缀是 **`.v`**——同一事物。AST/CST 归属 `std.data.text.valkyrie`；**不要**再维护或引用平行包 `std.data.text.v`。
+
 ## 核心语言
 
 | 文档 | 说明 |

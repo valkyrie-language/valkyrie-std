@@ -1,0 +1,43 @@
+<widget Collapse>
+<Box @class="ui-collapse">
+    <Box :style="f\&quot;max-height: {isOpen ? '2000px' : collapsedHeight}\&quot;" @class="ui-collapse-content {isOpen ? 'ui-collapse-open' : ''}">
+        <slot />
+    </Box>
+</Box>
+</widget>
+
+<script>
+let open: bool = false
+let collapsedHeight: utf8 = "0px"
+let mut isOpen: bool = false
+
+micro onMount() {
+    isOpen = open
+}
+
+micro toggle() {
+    isOpen = !isOpen
+    emit("toggle", { open: isOpen })
+}
+
+micro open_collapse() {
+    isOpen = true
+    emit("toggle", { open: isOpen })
+}
+
+micro close_collapse() {
+    isOpen = false
+    emit("toggle", { open: isOpen })
+}
+</script>
+<style>
+.ui-collapse {
+    box-sizing: border-box;
+    width: 100%;
+}
+.ui-collapse-content {
+    overflow: hidden;
+    transition: max-height var(--ui-duration-2) var(--ui-easing);
+}
+
+</style>

@@ -1,0 +1,12 @@
+{
+    name: "fullstack-atlas",
+    version: "0.1.0.0",
+    description: "Fullstack 金样例 — Atlas API / 可选 server 岛宿主",
+    license: "MIT",
+    type: "application",
+    target: "native",
+    dependencies: {
+        domain: "^0.1.0.0",
+    },
+    devDependencies: {}
+}

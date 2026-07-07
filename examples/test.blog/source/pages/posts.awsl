@@ -1,28 +1,28 @@
-<widget>
-    <div class="posts-page">
-        <h1 class="posts-title">所有文章</h1>
-        <for each={posts}>
-            <article class="post-item">
-                <div class="post-item-meta">
-                    <span>{post.date}</span>
-                    <span>{post.reading_time} 分钟</span>
-                </div>
-                <h2 class="post-item-title">
-                    <Link href={"/posts/" + post.slug}>{post.title}</Link>
-                </h2>
-                <p class="post-item-excerpt">{post.excerpt}</p>
-                <div class="post-item-tags">
-                    <for each={post.tags}>
-                        <Badge variant="primary" size="small">{tag}</Badge>
-                    </for>
-                </div>
-            </article>
-        </for>
-    </div>
+<widget posts>
+<div class="posts-page">
+    <h1 class="posts-title">所有文章</h1>
+    <loop post in posts>
+        <article class="post-item">
+            <div class="post-item-meta">
+                <span>{post.date}</span>
+                <span>{post.reading_time} 分钟</span>
+            </div>
+            <h2 class="post-item-title">
+                <Link :href='"/posts/" + post.slug'>{post.title}</Link>
+            </h2>
+            <p class="post-item-excerpt">{post.excerpt}</p>
+            <div class="post-item-tags">
+                <loop tag in post.tags>
+                    <Badge variant="primary" size="small">{tag}</Badge>
+                </loop>
+            </div>
+        </article>
+    </loop>
+</div>
 </widget>
 
 <script>
-    let posts = get_all_posts()
+let posts = get_all_posts()
 </script>
 
 <style>

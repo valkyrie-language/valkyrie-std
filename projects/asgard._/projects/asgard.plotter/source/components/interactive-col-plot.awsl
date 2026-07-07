@@ -1,0 +1,217 @@
+<widget interactive_col_plot>
+<div class="asgard-icol">
+    <if title != ''>
+        <h3 class="asgard-icol-title">{title}</h3>
+    </if>
+    <div class="asgard-icol-legend" role="group" aria-label="图例">
+        <loop item in series>
+            <button
+                type="button"
+                @class="asgard-icol-legend-item {item.key == active_key ? 'is-active' : ''} {item.key == hidden_key ? 'is-off' : ''}"
+                @click="toggle(item.key)"
+            >
+                <span class="asgard-icol-swatch" :style="'background: ' + item.fill"></span>
+                <span>{item.label}</span>
+            </button>
+        </loop>
+</div>
+<div class="asgard-icol-canvas">
+    <div class="asgard-icol-plot" role="img" :aria-label="title">
+        <loop item in series>
+            <div @class="asgard-icol-col {item.key == hidden_key ? 'is-hidden' : ''}">
+                <button
+                    type="button"
+                    @class="asgard-icol-bar {item.key == active_key || item.key == pinned_key ? 'is-active' : ''}"
+                    :style="'height: ' + item.height_pct + '%; background: ' + item.fill"
+                    @click="pin(item.key)"
+                    :aria-label="item.label"
+                ></button>
+                <span class="asgard-icol-xlabel">{item.label}</span>
+            </div>
+        </loop>
+    </div>
+    <if tooltip_visible>
+        <div class="asgard-icol-tooltip">
+            <div class="asgard-icol-tooltip-label">{tooltip_label}</div>
+            <div class="asgard-icol-tooltip-value">{tooltip_value}</div>
+            <div class="asgard-icol-tooltip-hint">点击柱体锁定 · 再点取消</div>
+        </div>
+    </if>
+</div>
+</div>
+</widget>
+
+<script>
+let title: utf8 = ""
+let series: list = []
+let mut active_key: utf8 = ""
+let mut pinned_key: utf8 = ""
+let mut hidden_key: utf8 = ""
+let mut tooltip_label: utf8 = ""
+let mut tooltip_value: utf8 = ""
+let mut tooltip_visible: bool = false
+
+micro toggle(key) {
+    if hidden_key == key {
+        hidden_key = ""
+    } else {
+    hidden_key = key
+    if pinned_key == key {
+        pinned_key = ""
+        tooltip_visible = false
+    }
+if active_key == key {
+    active_key = ""
+}
+}
+}
+
+micro pin(key) {
+    if pinned_key == key {
+        pinned_key = ""
+        active_key = ""
+        tooltip_visible = false
+        tooltip_label = ""
+        tooltip_value = ""
+        return
+    }
+pinned_key = key
+active_key = key
+tooltip_visible = true
+tooltip_label = key
+tooltip_value = key
+let mut index: usize = 0
+while index < series.length() {
+    let item = series[index]
+    if item.key == key {
+        tooltip_label = item.label
+        tooltip_value = item.value_text
+    }
+index = index + 1
+}
+}
+</script>
+
+<style>
+.asgard-icol {
+    position: relative;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #1a1a2e;
+}
+.asgard-icol-title {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 600;
+}
+.asgard-icol-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin: 0 0 10px;
+    font-size: 12px;
+}
+.asgard-icol-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+}
+.asgard-icol-legend-item:hover,
+.asgard-icol-legend-item.is-active {
+    border-color: #d1d5db;
+    background: #f8fafc;
+}
+.asgard-icol-legend-item.is-off {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+.asgard-icol-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+}
+.asgard-icol-canvas {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+}
+.asgard-icol-plot {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    min-height: 220px;
+    padding: 16px 12px 8px;
+    border-bottom: 1.5px solid #333;
+    border-left: 1.5px solid #333;
+}
+.asgard-icol-col {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+.asgard-icol-col.is-hidden {
+    opacity: 0.15;
+    pointer-events: none;
+}
+.asgard-icol-bar {
+    width: 70%;
+    min-height: 4px;
+    max-height: 180px;
+    border: none;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    padding: 0;
+    transition: filter 120ms ease, opacity 120ms ease;
+}
+.asgard-icol-bar:hover,
+.asgard-icol-bar.is-active {
+    filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.25));
+    outline: 1.5px solid #111827;
+}
+.asgard-icol-xlabel {
+    font-size: 11px;
+    color: #555;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.asgard-icol-tooltip {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    min-width: 120px;
+    max-width: 240px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(17, 24, 39, 0.92);
+    color: #f9fafb;
+    font-size: 12px;
+    line-height: 1.4;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+    pointer-events: none;
+}
+.asgard-icol-tooltip-label {
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+.asgard-icol-tooltip-value {
+    font-variant-numeric: tabular-nums;
+    color: #e5e7eb;
+}
+.asgard-icol-tooltip-hint {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #9ca3af;
+}
+</style>

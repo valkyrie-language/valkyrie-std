@@ -1,0 +1,13 @@
+{
+    name: "asgard.ui.core",
+    version: "0.1.0.0",
+    description: "Asgard UI 核心组件库 — 跨平台语义原语，无主题绑定",
+    license: "MIT",
+    type: "library",
+    target: "lib",
+    dependencies: {
+        "voa-core": "0.1.*",
+        "asgard.ui.icon": "0.1.*"
+    },
+    devDependencies: {}
+}

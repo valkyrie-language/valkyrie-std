@@ -1,0 +1,22 @@
+{
+    name: "std.adaptor.linux",
+    description: "Valkyrie Linux SDK -- Linux 平台 API 绑定",
+    main: "source/linux.v",
+    dependencies: {
+        "core": "workspace"
+    },
+    sdk-vendor: {
+        organization: "valkyrie",
+        host: "linux",
+        kind: "platform-sdk",
+        targets: ["x86_64-unknown-linux-gnu"]
+    },
+    build: [
+        {
+            target: "nyar"
+        }
+    ],
+    engines: {
+        vcc: "0.1.*"
+    }
+}

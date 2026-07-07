@@ -84,47 +84,46 @@ HIR / MIR → WASM（信号 + dom_* 更新）
 boot.js + 胶水（仅加载与句柄绑定）
 ```
 
-## SSR 与客户端边界
+## SSG 默认、Server 岛与客户端边界
 
-如果同一份模板需要服务端渲染与客户端激活，那么这件事也不能一概而论，而要看最终部署模型：
+锁定模型（非 LiveView / 非 SSR-first）：
 
-- 如果是 `CDN` 部署，客户端静态资源走 `CDN`，服务端仍然是独立服务交付
-- 如果是 `SSR` 部署，才允许在交付阶段按运行契约把服务端与客户端资源组织成同一组部署单元
-- 不管采用哪种模式，语义层都只保留必要边界
-- `Partition` 之后再决定进入哪些 family 路线
+- **默认**：`static` / 页面壳走 **SSG**（构建期 HTML），`hydrated` 岛客户端激活。
+- **可选**：`server` 岛 = Atlas 在 **请求时** 返回 HTML **片段**（partial），不是整站 SSR。
+- 流水线：**Asgard/VOA**（客户端 GUI 制品）∥ **Atlas**（服务 / server 岛）；由 **deploy profile** 选拓扑。
+- 多平台 = 多份制品进入 `ArtifactSet` / 部署矩阵，**不是**一个二进制通吃。
 
-也就是说，是否“合一”是部署与交付策略，不是模板前置转换阶段的职责。
+部署维度（`cdn+serverless` vs `portable` 等）只影响交付组合，不改变模板前置转换：
+
+- `CDN + serverless`：SSG/hydrated → CDN；server 岛 → Atlas/serverless（server 腿 **planned**）
+- `portable`：单宿主挂静态 + Atlas（**planned**）
+- 语义层只保留岛边界；`Partition` 之后再进各 family；最终以 `ArtifactSet` 交付
 
 ```mermaid
 flowchart TD
-    Template[模板语义]
+    Template[模板语义 SSG 默认]
     Partition[Partition]
-    ServerLane[服务端 Family]
-    ClientLane[客户端 Family]
-    ServerPackage[Server Package]
-    ServerArtifact[服务端服务交付物]
-    CdnPackage[CDN Package]
-    CdnClient[客户端静态交付物]
-    SsrPackage[SSR Package]
-    UnifiedArtifact[统一部署单元]
+    AsgardLane[Asgard / VOA 客户端]
+    AtlasLane[Atlas 服务 / server 岛]
+    StaticArt[SSG + hydrated 制品]
+    ServerArt[Server partial 制品 planned]
+    Profile[deploy profile 拓扑]
+    ArtifactSet[ArtifactSet / 部署矩阵]
 
     Template --> Partition
-    Partition --> ServerLane
-    Partition --> ClientLane
-    ServerLane --> ServerPackage --> ServerArtifact
-    ClientLane --> CdnPackage
-    CdnPackage --> CdnClient
-    ServerLane --> SsrPackage
-    ClientLane --> SsrPackage
-    SsrPackage --> UnifiedArtifact
+    Partition --> AsgardLane --> StaticArt
+    Partition --> AtlasLane --> ServerArt
+    StaticArt --> Profile
+    ServerArt --> Profile
+    Profile --> ArtifactSet
 
     classDef phase fill:#f6f9fc,stroke:#8a9aad,stroke-width:1.2px,color:#1f2937;
     classDef boundary fill:#fff8e8,stroke:#d6a93d,stroke-width:1.2px,color:#5c4400;
     classDef delivery fill:#f3fbf6,stroke:#7fb77e,stroke-width:1.2px,color:#1f5130;
 
-    class Template,ServerLane,ClientLane phase;
-    class Partition boundary;
-    class ServerPackage,ServerArtifact,CdnPackage,CdnClient,SsrPackage,UnifiedArtifact delivery;
+    class Template,AsgardLane,AtlasLane phase;
+    class Partition,Profile boundary;
+    class StaticArt,ServerArt,ArtifactSet delivery;
 ```
 
 ## 与主线的关系

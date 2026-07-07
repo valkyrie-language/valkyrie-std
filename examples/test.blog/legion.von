@@ -5,10 +5,10 @@
     "type": "application",
     "target": "static",
     "dependencies": {
-        "voa-core": ">=0.2.0",
-        "voa-router": ">=0.2.0",
-        "voa-effect": ">=0.2.0",
-        "voa-fetch": ">=0.1.0",
-        "voa-seo": ">=0.1.0"
+        "voa-core": "0.2.*",
+        "voa-router": "0.2.*",
+        "voa-effect": "0.2.*",
+        "voa-fetch": "0.1.*",
+        "voa-seo": "0.1.*"
     }
 }

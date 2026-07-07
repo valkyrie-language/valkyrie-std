@@ -1,0 +1,11 @@
+{
+    name: "std.data.text.valkyrie",
+    version: "workspace",
+    description: "Valkyrie 源码文本（语言名 Valkyrie，源文件后缀 .v）— AST/CST/词法/span；同构自 std-data/text/valkyrie",
+    type: "library",
+    dependencies: {},
+    build: [
+        { target: "nyar" },
+        { target: "clr" }
+    ]
+}
